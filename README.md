@@ -47,7 +47,6 @@ The repo ships its own agent setup, so a fresh clone is ready to go:
 - `.claude/agents/onchain-verifier.md` spot-checks live totals against transactions on Etherscan.
 - `.claude/skills/live-pillar` takes one pillar from mock to live data, end to end.
 - `.claude/settings.json` turns on the TypeScript LSP, frontend-design, PR review, commit, security, and Playwright plugins.
-- Mention `@claude` in an issue or PR to have the GitHub Action pick it up.
 
 ## License
 
