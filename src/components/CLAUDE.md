@@ -1,9 +1,9 @@
 # Component Conventions
 
 ## Design System
-- Dark terminal aesthetic: bg #0A0E17, monospace data typography
-- No purple gradients. Accent color: green or amber (TBD Phase 2)
-- Bloomberg Terminal meets Dune Analytics — institutional, not consumer crypto
+- Follow `/DESIGN.md`. Use the CSS tokens in `src/app/globals.css` (light + dark); never hardcode hex.
+- Shared page frame: `src/components/ui/PageShell.tsx`. Sans for text, mono only for small labels and numbers.
+- Institutional, not consumer crypto
 
 ## Data Integrity
 - Every metric rendered with `DataSourceBadge` component
