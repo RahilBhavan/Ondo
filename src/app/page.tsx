@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { MOCK_DATA } from '@/lib/mockData';
 import { formatUsdCompact, formatNumberCompact, relativeTime } from '@/lib/format';
 import { MetricCard } from '@/components/ui/MetricCard';
@@ -8,7 +7,13 @@ import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
 import { CompetitiveBenchmark } from '@/components/dashboard/CompetitiveBenchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
+import { PageShell } from '@/components/ui/PageShell';
 import type { DashboardData } from '@/lib/types';
+
+const NAV_LINKS = [
+  { label: 'Instant flows', href: '/flows' },
+  { label: 'Methodology', href: '#methodology' },
+];
 
 async function getDashboardData(): Promise<DashboardData> {
   // Server component — fetch from internal API route.
@@ -22,28 +27,18 @@ export default async function DashboardPage() {
   const { metrics } = data;
 
   return (
-    <div className="min-h-screen bg-nexus-bg">
-      {/* Top bar */}
-      <header className="border-b border-nexus-border px-6 py-4">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-mono font-semibold text-slate-100 tracking-tight">
-              Nexus Adoption Intelligence
-            </h1>
-            <p className="text-xs font-mono text-slate-500 mt-0.5">
-              Ondo Finance — OUSG + USDY Institutional Analytics
-            </p>
-          </div>
-          <div className="flex items-center gap-4 text-xs font-mono text-slate-500">
-            <Link href="/flows" className="hover:text-slate-300 transition-colors">
-              Weekly flows
-            </Link>
-            <span>Updated {relativeTime(metrics.lastUpdated)}</span>
-          </div>
-        </div>
-      </header>
+    <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
+      <section className="space-y-4 pt-10 md:pt-16">
+        <h1 className="max-w-[880px] text-[32px] font-semibold leading-[1.15] tracking-[-1.28px] text-[color:var(--ink)] md:text-[48px] md:leading-[48px] md:tracking-[-2.4px]">
+          Institutional adoption of Ondo Nexus.
+        </h1>
+        <p className="max-w-[640px] text-lg text-[color:var(--body)]">
+          OUSG and USDY analytics from Ondo Finance: TVL, chains, liquidity, flows, and competitors.
+        </p>
+        <p className="text-sm text-[color:var(--mute)]">Updated {relativeTime(metrics.lastUpdated)}</p>
+      </section>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+      <div className="space-y-6">
         {/* KPI row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
@@ -53,19 +48,19 @@ export default async function DashboardPage() {
             trend={{ direction: 'up', label: '+12.3% 30d' }}
           />
           <MetricCard
-            label="Active Issuers"
+            label="Active issuers"
             value={String(metrics.activeIssuers)}
             dataSource="estimated"
             subValue="Across OUSG + USDY"
           />
           <MetricCard
-            label="30d Volume"
+            label="30d volume"
             value={formatUsdCompact(metrics.volume30dUsd)}
             dataSource="mocked"
             trend={{ direction: 'up', label: '+8.7% vs prior' }}
           />
           <MetricCard
-            label="Avg Tx Size"
+            label="Avg tx size"
             value={formatUsdCompact(metrics.avgTxSizeUsd)}
             dataSource="mocked"
             subValue={`${formatNumberCompact(Math.round(metrics.volume30dUsd / metrics.avgTxSizeUsd))} txns`}
@@ -90,15 +85,17 @@ export default async function DashboardPage() {
 
         {/* Benchmark — full width */}
         <CompetitiveBenchmark data={data.competitorBenchmark} />
-      </main>
 
-      {/* Footer with methodology */}
-      <footer className="max-w-[1400px] mx-auto">
         <MethodologyDrawer />
-        <div className="px-5 py-3 text-[10px] font-mono text-slate-600 text-center border-t border-nexus-border/50">
-          Ondo Nexus Adoption Intelligence Dashboard — Open Source Portfolio Project
-        </div>
+      </div>
+
+      <footer className="border-t border-[color:var(--hairline)] py-8 text-sm text-[color:var(--mute)]">
+        Ondo Nexus Adoption Intelligence Dashboard, open source portfolio project. Source on{' '}
+        <a href="https://github.com/RahilBhavan/Ondo" className="text-[color:var(--link)] hover:underline">
+          GitHub
+        </a>
+        .
       </footer>
-    </div>
+    </PageShell>
   );
 }

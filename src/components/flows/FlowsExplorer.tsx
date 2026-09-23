@@ -95,7 +95,7 @@ function TokenSection({ token, rows, weeks, dataSource }: TokenSectionProps) {
           {lastComplete && (
             <div className="space-y-3">
               <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--mute)]">
-                <DataSourceBadge source={dataSource} tone="page" />
+                <DataSourceBadge source={dataSource} />
                 <span>Week of {formatWeek(lastComplete.week)}, last complete week</span>
               </p>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">

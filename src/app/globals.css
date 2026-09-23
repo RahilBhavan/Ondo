@@ -2,39 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Site tokens (Vercel-style light/dark, see DESIGN.md). */
 :root {
-  --background: #0A0E17;
-  --foreground: #E2E8F0;
-  --surface: #0F1629;
-  --border: #1E293B;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-}
-
-/* Scrollbar styling for terminal aesthetic */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--background);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #2D3A52;
-}
-
-/* /flows page tokens (Vercel-style light/dark). Scoped so the terminal dashboard at / is untouched. */
-.flows {
   --canvas: #ffffff;
   --canvas-soft: #fafafa;
   --ink: #171717;
@@ -57,7 +26,7 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
-  .flows {
+  :root {
     --canvas: #0a0a0a;
     --canvas-soft: #111111;
     --ink: #ededed;
@@ -77,10 +46,7 @@ body {
   }
 }
 
-.flows ::-webkit-scrollbar-track {
+body {
+  color: var(--body);
   background: var(--canvas-soft);
-}
-
-.flows ::-webkit-scrollbar-thumb {
-  background: var(--hairline);
 }

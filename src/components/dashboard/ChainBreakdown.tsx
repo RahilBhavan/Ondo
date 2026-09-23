@@ -10,7 +10,7 @@ interface ChainBreakdownProps {
 
 const CHAIN_COLORS: Record<string, string> = {
   ethereum: '#627EEA',
-  mantle: '#000000',
+  mantle: 'var(--ink)',
   arbitrum: '#28A0F0',
   polygon: '#8247E5',
   solana: '#14F195',
@@ -23,10 +23,10 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
   const totalTvl = sorted.reduce((sum, d) => sum + d.tvlUsd, 0);
 
   return (
-    <div className="bg-nexus-card border border-nexus-border rounded-lg p-5">
+    <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-mono text-slate-300 uppercase tracking-wider">
-          Chain Breakdown
+        <h3 className="text-base font-semibold tracking-[-0.32px] text-[color:var(--ink)]">
+          Chain breakdown
         </h3>
         <DataSourceBadge source={sorted[0]?.dataSource ?? 'mocked'} />
       </div>
@@ -42,7 +42,7 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
               className="h-full first:rounded-l-full last:rounded-r-full"
               style={{
                 width: `${pct}%`,
-                backgroundColor: CHAIN_COLORS[chain.chain] ?? '#64748B',
+                backgroundColor: CHAIN_COLORS[chain.chain] ?? 'var(--mute)',
                 opacity: 0.8,
               }}
             />
@@ -56,17 +56,17 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
           const pct = totalTvl > 0 ? chain.tvlUsd / totalTvl : 0;
           const isMocked = chain.dataSource === 'mocked';
           return (
-            <div key={chain.chain} className="flex items-center justify-between text-xs font-mono">
+            <div key={chain.chain} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span
                   className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: CHAIN_COLORS[chain.chain] ?? '#64748B' }}
+                  style={{ backgroundColor: CHAIN_COLORS[chain.chain] ?? 'var(--mute)' }}
                 />
-                <span className="text-slate-300 capitalize">{chain.chain}</span>
+                <span className="text-[color:var(--ink)] capitalize">{chain.chain}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-slate-500">{formatPercent(pct)}</span>
-                <span className="text-slate-300 w-16 text-right">
+                <span className="font-mono text-[13px] tabular-nums text-[color:var(--mute)]">{formatPercent(pct)}</span>
+                <span className="font-mono text-[13px] tabular-nums text-[color:var(--ink)] w-16 text-right">
                   {isMocked ? '~' : ''}{formatUsdCompact(chain.tvlUsd)}
                 </span>
               </div>
@@ -76,16 +76,16 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
       </div>
 
       {/* Holder stats */}
-      <div className="mt-4 pt-3 border-t border-nexus-border/50 grid grid-cols-2 gap-3">
+      <div className="mt-4 pt-3 border-t border-[color:var(--hairline)] grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Total Holders</p>
-          <p className="text-sm font-mono text-slate-200">
+          <p className="text-sm text-[color:var(--mute)]">Total holders</p>
+          <p className="mt-1 text-lg font-semibold tracking-[-0.32px] tabular-nums text-[color:var(--ink)]">
             {sorted.reduce((sum, d) => sum + d.holderCount, 0).toLocaleString()}
           </p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">30d Transactions</p>
-          <p className="text-sm font-mono text-slate-200">
+          <p className="text-sm text-[color:var(--mute)]">30d transactions</p>
+          <p className="mt-1 text-lg font-semibold tracking-[-0.32px] tabular-nums text-[color:var(--ink)]">
             {sorted.reduce((sum, d) => sum + d.txCount30d, 0).toLocaleString()}
           </p>
         </div>

@@ -28,7 +28,7 @@ export default async function FlowsPage() {
           OUSG and USDY on Ethereum, from InstantManager Subscription and Redemption events.
         </p>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--mute)]">
-          <DataSourceBadge source={dataSource} tone="page" />
+          <DataSourceBadge source={dataSource} />
           {asOf && <span>as of {formatWeek(asOf)}</span>}
           {dataSource === 'live' && queryUrl && (
             <a href={queryUrl} className="text-[color:var(--link)] hover:underline">

@@ -17,7 +17,7 @@ Run /project:log-session — writes DEVLOG entry + updates STATUS.md automatical
 - Every metric needs a DataSourceBadge: live | estimated | mocked
 - Mock data lives only in /src/lib/mockData.ts with source + asOf date
 - No PDF generation — deferred to v2
-- No purple gradients. Dark terminal aesthetic.
+- Design system: `DESIGN.md` (tokens in `src/app/globals.css`).
 
 ## Structure
 - /queries     — Dune SQL source of truth
