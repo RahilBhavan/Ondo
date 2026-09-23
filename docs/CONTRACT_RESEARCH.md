@@ -150,10 +150,10 @@ Same event pattern with USDY/rUSDY field names instead of OUSG/rOUSG. `Subscript
 ### Legacy OUSG InstantManager (`0x28269899...`, Apr 2024 to Apr 2025)
 Four events, each with `sender` (the wallet) and a USDC amount (1e6-scaled):
 ```
-InstantMintOUSG(sender, usdcAmountIn, ...)
-InstantMintRebasingOUSG(sender, usdcAmountIn, ...)
-InstantRedemptionOUSG(sender, usdcAmountOut, ...)
-InstantRedemptionRebasingOUSG(sender, usdcAmountOut, ...)
+InstantMintOUSG(sender, usdcAmountIn, ousgAmountOut)
+InstantMintRebasingOUSG(sender, usdcAmountIn, ousgAmountOut, rousgAmountOut)
+InstantRedemptionOUSG(sender, ousgAmountIn, usdcAmountOut)
+InstantRedemptionRebasingOUSG(sender, ousgAmountIn, rousgAmountIn, usdcAmountOut)
 ```
 Plain and rebasing events never share a transaction, so summing both does not double count.
 
