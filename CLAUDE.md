@@ -8,7 +8,7 @@ Portfolio project. Solo. Stack: Next.js 14, TypeScript, Tailwind, Recharts, Dune
 1. Read @STATUS.md — current phase, active blockers, next goal
 2. If writing data logic: read @src/lib/CLAUDE.md
 3. If writing components: read @src/components/CLAUDE.md
-4. If writing Dune SQL: read @docs/DUNE_QUERIES.md + @docs/CONTRACT_RESEARCH.md
+4. If writing Dune SQL: read @docs/CONTRACT_RESEARCH.md and the file in /queries, or delegate to the `dune-analyst` agent
 
 ## End Every Session
 Run /project:log-session — writes DEVLOG entry + updates STATUS.md automatically.
@@ -24,6 +24,12 @@ Run /project:log-session — writes DEVLOG entry + updates STATUS.md automatical
 - /docs        — RAG context, reference with @docs/filename.md
 - /src/lib     — data layer (dune.ts, types.ts, mockData.ts, addressRegistry.ts)
 - /src/components — UI (see subdirectory CLAUDE.md)
+
+## Tooling
+- Dune MCP server in `.mcp.json` (needs `DUNE_API_KEY` in env)
+- Agents: `dune-analyst` (SQL + Dune), `onchain-verifier` (Etherscan spot check, read-only)
+- Skill: `live-pillar`, the mock-to-live flow for one pillar
+- Work is tracked as GitHub issues; the PR template holds the merge checklist
 
 ## Key Docs
 - PRD: @Ondo Nexus Adoption Intelligence.md

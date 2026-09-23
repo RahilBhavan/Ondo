@@ -1,0 +1,31 @@
+name: New metric / pillar
+description: Propose a new metric or pillar for the dashboard
+title: "New metric / pillar: "
+labels: [metric]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question it answers
+    validations:
+      required: true
+  - type: textarea
+    id: data-source
+    attributes:
+      label: Data source (public only)
+      description: Dune query, contract address, public API, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: build-steps
+    attributes:
+      label: Build steps
+    validations:
+      required: true
+  - type: textarea
+    id: done-check
+    attributes:
+      label: Done check
+      description: How we know it is correct and finished.
+    validations:
+      required: true
