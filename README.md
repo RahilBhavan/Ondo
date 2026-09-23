@@ -3,7 +3,7 @@
 [![CI](https://github.com/RahilBhavan/Ondo/actions/workflows/ci.yml/badge.svg)](https://github.com/RahilBhavan/Ondo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Live:** not deployed yet ([#5](https://github.com/RahilBhavan/Ondo/issues/5))
+**Live:** [ondo-nexus.vercel.app/flows](https://ondo-nexus.vercel.app/flows)
 
 How much money moves through Ondo's instant mint and redeem for OUSG and USDY each week, from how many wallets, and is it growing?
 
