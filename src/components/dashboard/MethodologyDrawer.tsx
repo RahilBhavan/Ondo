@@ -16,7 +16,7 @@ const SECTIONS = [
   {
     title: 'Mint/Redeem Velocity (Pillar 2)',
     content:
-      'Volume and frequency metrics from InstantManager Subscription and Redemption events on Ethereum. Redemptions are atomic (single transaction) — settlement time delta is not applicable. USD values are emitted directly by the contract.',
+      'Weekly volume, counts, and wallets over full history from Ethereum InstantManager events: OUSG 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a and USDY 0xa42613C243b67BF6194Ac327795b926B4b491f15. Subscription is a mint, Redemption is a redeem. USD value is depositUSDValue / redemptionUSDValue, 1e18-scaled and emitted by the contract (no price oracle). Weeks start Monday 00:00 UTC (DuneSQL DATE_TRUNC(\'week\')); the current week is partial. Wallets are distinct subscriber / redeemer addresses; KYC ids are not used. Scope: instant mint and redeem only, not secondary transfers, DEX trades, bridged balances, or other chains (ADR-005). Legacy OUSG InstantManager coverage pending (#1). Redemptions are atomic, so there is no settlement delay to measure.',
   },
   {
     title: 'Liquidity Heatmap (Pillar 3)',

@@ -12,6 +12,7 @@
 import type {
   IssuerMetric,
   VelocityDataPoint,
+  WeeklyFlow,
   LiquidityCell,
   ChainTVL,
   CompetitorMetric,
@@ -128,6 +129,75 @@ function generateVelocityData(): VelocityDataPoint[] {
       asOf: MOCK_AS_OF,
       source: 'Synthetic data modeled on Ondo InstantManager event patterns',
     });
+  }
+
+  return data;
+}
+
+/** Tiny seeded PRNG (mulberry32) so weekly mocks are identical across renders and servers. */
+function seededRandom(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const WEEKLY_FLOW_SOURCE =
+  'Illustrative mock shaped from Ondo public disclosures, not on-chain data';
+
+function generateWeeklyFlows(): WeeklyFlow[] {
+  const rand = seededRandom(20260409);
+  const data: WeeklyFlow[] = [];
+  const WEEKS = 78;
+  // Monday (UTC) of the MOCK_AS_OF week; the last bucket is a partial week, like live data.
+  const lastMonday = new Date(`${MOCK_AS_OF}T00:00:00Z`);
+  lastMonday.setUTCDate(lastMonday.getUTCDate() - ((lastMonday.getUTCDay() + 6) % 7));
+
+  const profiles = [
+    { token: 'OUSG' as const, mintBase: 14_000_000, redeemBase: 11_000_000, wallets: 14 },
+    { token: 'USDY' as const, mintBase: 3_200_000, redeemBase: 2_600_000, wallets: 22 },
+  ];
+
+  for (let i = WEEKS - 1; i >= 0; i--) {
+    const monday = new Date(lastMonday);
+    monday.setUTCDate(monday.getUTCDate() - i * 7);
+    const week = monday.toISOString().split('T')[0];
+    const trendFactor = 1 + (WEEKS - 1 - i) * 0.01;
+    // The newest bucket is the partial current week (Mon-Thu of a 7-day week).
+    const partial = i === 0 ? 0.5 : 1;
+
+    for (const p of profiles) {
+      // Occasional lumpy weeks: one large subscriber or redeemer dominates.
+      const mintSpike = rand() < 0.12 ? 1.4 + rand() * 0.8 : 1;
+      const redeemSpike = rand() < 0.1 ? 1.5 + rand() * 0.9 : 1;
+      const mintVolumeUsd = Math.round(p.mintBase * trendFactor * partial * mintSpike * (0.35 + rand() * 0.9));
+      const redeemVolumeUsd = Math.round(p.redeemBase * trendFactor * partial * redeemSpike * (0.3 + rand() * 0.95));
+      const mintCount = Math.max(1, Math.round(p.wallets * 1.6 * trendFactor * partial * (0.5 + rand() * 0.8)));
+      const redeemCount = Math.max(1, Math.round(p.wallets * 1.2 * trendFactor * partial * (0.4 + rand() * 0.8)));
+      const uniqueMinters = Math.max(1, Math.round(mintCount * (0.55 + rand() * 0.3)));
+      const uniqueRedeemers = Math.max(1, Math.round(redeemCount * (0.55 + rand() * 0.3)));
+      // Some wallets both mint and redeem in the same week.
+      const overlap = Math.round(Math.min(uniqueMinters, uniqueRedeemers) * rand() * 0.35);
+
+      data.push({
+        week,
+        token: p.token,
+        mintVolumeUsd,
+        redeemVolumeUsd,
+        netFlowUsd: mintVolumeUsd - redeemVolumeUsd,
+        mintCount,
+        redeemCount,
+        uniqueMinters,
+        uniqueRedeemers,
+        uniqueWallets: uniqueMinters + uniqueRedeemers - overlap,
+        dataSource: 'mocked',
+        asOf: MOCK_AS_OF,
+        source: WEEKLY_FLOW_SOURCE,
+      });
+    }
   }
 
   return data;
@@ -277,6 +347,7 @@ export const MOCK_DATA: DashboardData = {
   metrics: dashboardMetrics,
   issuerMetrics,
   velocityData: generateVelocityData(),
+  weeklyFlows: generateWeeklyFlows(),
   liquidityCells: generateLiquidityCells(),
   chainBreakdown,
   competitorBenchmark,

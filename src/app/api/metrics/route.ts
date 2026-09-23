@@ -3,8 +3,9 @@
  * GET /api/metrics — returns all 4 pillars of dashboard data.
  *
  * Strategy:
- * - If DUNE_API_KEY is set: fetch live data from Dune, fill gaps with mock
- * - If no API key: return full mock data set
+ * - weeklyFlows: live from Dune via getWeeklyFlows() when DUNE_API_KEY and
+ *   DUNE_MINT_REDEEM_QUERY_ID are set, else labeled mock (see src/lib/weeklyFlows.ts)
+ * - Every other field: mock data until its pillar is wired to Dune
  *
  * This ensures the dashboard is always functional regardless of Dune availability.
  */
@@ -12,9 +13,11 @@
 import { NextResponse } from 'next/server';
 import { isDuneConfigured } from '@/lib/dune';
 import { MOCK_DATA } from '@/lib/mockData';
+import { getWeeklyFlows } from '@/lib/weeklyFlows';
 import type { DashboardData } from '@/lib/types';
 
 const CACHE_MAX_AGE = 3600; // 1 hour
+export const revalidate = 3600;
 
 export async function GET() {
   let data: DashboardData;
@@ -33,6 +36,8 @@ export async function GET() {
   } else {
     data = MOCK_DATA;
   }
+
+  data = { ...data, weeklyFlows: (await getWeeklyFlows()).rows };
 
   return NextResponse.json(data, {
     headers: {
