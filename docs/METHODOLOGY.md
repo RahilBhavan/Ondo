@@ -43,24 +43,38 @@ The `DataSourceBadge` component renders this label inline with every metric. The
 
 ## Pillar 2: Mint/Redemption Volume & Frequency
 
-**What we track:** Daily aggregate USD volume and transaction count for mints and redemptions, with 90-day rolling window.
+**What we track:** Weekly USD volume, transaction counts, and unique wallets for instant mints and redemptions of OUSG and USDY, over full history. Served on the `/flows` page and in `weeklyFlows` of `/api/metrics`.
 
-**Data source:** `Subscription` and `Redemption` events from:
-- OUSG InstantManager (`0x93358db7...`)
-- USDY InstantManager (`0xa42613C2...`)
+**Contracts (Ethereum):**
+- OUSG InstantManager: [`0x93358db73B6cd4b98D89c8F5f230E81a95c2643a`](https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a)
+- OUSG InstantManager (legacy, Apr 2024 to Apr 2025): [`0x2826989983e3a66F0622132D019c2Ae173eb6A43`](https://etherscan.io/address/0x2826989983e3a66F0622132D019c2Ae173eb6A43)
+- USDY InstantManager: [`0xa42613C243b67BF6194Ac327795b926B4b491f15`](https://etherscan.io/address/0xa42613C243b67BF6194Ac327795b926B4b491f15)
 
-Both emit `depositUSDValue` / `redemptionUSDValue` fields directly — no price oracle needed.
+**Events:** `Subscription` (mint) and `Redemption` (redeem). USD value is `depositUSDValue` / `redemptionUSDValue`, 1e18-scaled and emitted by the contract, so no price oracle is needed.
 
-**Data source label:** **Live** — all values sourced directly from decoded event logs.
+**Legacy OUSG:** The legacy contract emits `InstantMint[Rebasing]OUSG` and `InstantRedemption[Rebasing]OUSG`. USD value is the USDC amount in or out (1e6), with USDC taken at $1. The wallet is `sender`.
 
-**Design note (PRD deviation):** The PRD originally specified settlement time delta (time between redemption request and settlement). Research found that InstantManager redemptions are **atomic** — they execute in a single transaction with zero settlement delay. There is no `RedemptionRequested`/`RedemptionSettled` event pair to measure.
+**USDY:** The USDY InstantManager is not decoded on Dune, so the query reads `ethereum.logs` with the `Subscription` / `Redemption` topic0 (topic1 = wallet, data word 4 = USD value). The same raw decode reproduced the decoded OUSG totals exactly (checked 2026-09-23). USDY history starts Dec 2025, when this contract went live. See ADR-006.
+
+**Week:** Monday 00:00 UTC (DuneSQL `DATE_TRUNC('week')`). The current week is partial; headline figures use the last complete week. Weeks with no events are shown as zero.
+
+**Wallets:** Distinct `subscriber` / `redeemer` addresses. `unique_wallets` counts an address once per week across both sides, so it is not minters + redeemers. The `subscriberId` / `redeemerId` KYC ids are not used.
+
+**Scope:** Instant mint and redeem only. Not secondary transfers, DEX trades, bridged balances, or other chains (ADR-005).
+
+**Query:** `queries/mint_redeem_volume.sql`, saved on Dune as [query 8822192](https://dune.com/queries/8822192). Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
+
+**Data source label:** **Live** when `DUNE_API_KEY` and `DUNE_MINT_REDEEM_QUERY_ID` are set and the query returns rows. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason.
+
+**Design note (PRD deviation):** The PRD originally specified settlement time delta (time between redemption request and settlement). Research found that InstantManager redemptions are **atomic**: they execute in a single transaction with zero settlement delay. There is no `RedemptionRequested`/`RedemptionSettled` event pair to measure.
 
 Pillar 2 was redesigned to track **volume and frequency metrics**:
-- Daily mint volume (USD)
-- Daily redeem volume (USD)
-- Daily transaction count (mint + redeem separately)
-- Average transaction size (USD)
+- Weekly mint volume (USD)
+- Weekly redeem volume (USD)
 - Net flow (mint - redeem) as adoption signal
+- Weekly transaction count (mint + redeem separately)
+- Weekly unique wallets (minters, redeemers, and either side)
+- Growth: total volume of the last 12 complete weeks vs the 12 before
 
 See ADR-004 in DECISIONS.md.
 

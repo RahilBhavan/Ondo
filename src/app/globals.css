@@ -32,3 +32,55 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #2D3A52;
 }
+
+/* /flows page tokens (Vercel-style light/dark). Scoped so the terminal dashboard at / is untouched. */
+.flows {
+  --canvas: #ffffff;
+  --canvas-soft: #fafafa;
+  --ink: #171717;
+  --body: #4d4d4d;
+  --mute: #6b6b6b;
+  --hairline: #ebebeb;
+  --link: #0070f3;
+  --series-mint: #0070f3;
+  --series-redeem: #ab570a;
+  --series-net: var(--ink);
+  --series-wallets: var(--mute);
+  --elevation: 0 1px 1px #00000005, 0 2px 2px #0000000a;
+  --badge-live-fg: #107d32;
+  --badge-live-bg: #e8f6ec;
+  --badge-estimated-fg: #8a5300;
+  --badge-estimated-bg: #fdf3e1;
+  --badge-mocked-fg: #4d4d4d;
+  --badge-mocked-bg: #f0f0f0;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .flows {
+    --canvas: #0a0a0a;
+    --canvas-soft: #111111;
+    --ink: #ededed;
+    --body: #a1a1a1;
+    --mute: #8f8f8f;
+    --hairline: #262626;
+    --link: #3291ff;
+    --series-mint: #3291ff;
+    --series-redeem: #c97a12;
+    --badge-live-fg: #4ac26b;
+    --badge-live-bg: #0f2a18;
+    --badge-estimated-fg: #e3a43a;
+    --badge-estimated-bg: #2e210a;
+    --badge-mocked-fg: #a1a1a1;
+    --badge-mocked-bg: #1f1f1f;
+    color-scheme: dark;
+  }
+}
+
+.flows ::-webkit-scrollbar-track {
+  background: var(--canvas-soft);
+}
+
+.flows ::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+}

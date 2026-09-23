@@ -145,13 +145,32 @@ InstantRedemptionRebasingOUSG(
 ```
 
 ### USDY InstantManager (`0xa42613C2...`)
-Same event pattern with USDY/rUSDY field names instead of OUSG/rOUSG.
+Same event pattern with USDY/rUSDY field names instead of OUSG/rOUSG. `Subscription` and `Redemption` share the OUSG signatures, so they have the same topic0.
 
-### Legacy OUSG InstantManager (`0x28269899...` — deprecated)
+### Legacy OUSG InstantManager (`0x28269899...`, Apr 2024 to Apr 2025)
+Four events, each with `sender` (the wallet) and a USDC amount (1e6-scaled):
 ```
-InstantMintOUSG(indexed address user, uint256 usdcAmount, uint256 ousgAmount)
-InstantRedemptionOUSG(indexed address user, uint256 ousgAmount, uint256 usdcAmount)
+InstantMintOUSG(sender, usdcAmountIn, ousgAmountOut)
+InstantMintRebasingOUSG(sender, usdcAmountIn, ousgAmountOut, rousgAmountOut)
+InstantRedemptionOUSG(sender, ousgAmountIn, usdcAmountOut)
+InstantRedemptionRebasingOUSG(sender, ousgAmountIn, rousgAmountIn, usdcAmountOut)
 ```
+Plain and rebasing events never share a transaction, so summing both does not double count.
+
+### Dune tables (Verified on Dune 2026-09-23)
+The Ondo docs name `ondofinance_ethereum.OUSGInstantManager_evt_*` for the current contract. That is wrong. Verified names:
+
+| Contract | Dune source | Wallet | USD value |
+|----------|-------------|--------|-----------|
+| OUSG InstantManager `0x93358db7...` | `ondo_ethereum.ousg_instantmanager_evt_subscription`, `ondo_ethereum.ousg_instantmanager_evt_redemption` | `subscriber` / `redeemer` | `depositUSDValue` / `redemptionUSDValue`, 1e18 |
+| Legacy OUSG InstantManager `0x28269899...` | `ondofinance_ethereum.ousginstantmanager_evt_instantmintousg`, `_evt_instantmintrebasingousg`, `_evt_instantredemptionousg`, `_evt_instantredemptionrebasingousg` | `sender` | `usdcAmountIn` / `usdcAmountOut`, 1e6, USDC taken at $1 |
+| USDY InstantManager `0xa42613C2...` | Not decoded. Read from `ethereum.logs` | `topic1` | data word 4, 1e18 |
+
+USDY raw-log filter: `contract_address = 0xa42613C243b67BF6194Ac327795b926B4b491f15` and topic0 `0x5c88561b046569d4773b016d48f154d22685738bfb692bb0f8478ec2ef36b79f` (Subscription) or `0x7023b7bcd020761014c9e1590603f4effceabc102cf0b8023c3f2b14db9ffb6e` (Redemption). Running the same raw decode on the OUSG contract reproduced the decoded totals exactly: $879.79M minted, $514.45M redeemed, 222 of 222 wallets.
+
+Totals as of 2026-09-23: OUSG 395 mints / 498 redeems, $1,334.3M minted / $743.1M redeemed since Apr 2024. USDY 664 mints / 635 redeems, $174.5M minted / $62.9M redeemed since Dec 2025 (USDY InstantManager history starts Dec 2025).
+
+Saved query: [dune.com/queries/8822192](https://dune.com/queries/8822192) (`queries/mint_redeem_volume.sql`).
 
 ---
 
@@ -179,7 +198,7 @@ Strong coverage:
 - **steakhouse/tokenized-securities** — competitive benchmark data (Pillar 4 fork candidate)
 - **hashed_official/usdy** — USDY-focused
 
-Needs verification: whether InstantManager contracts specifically are in decoded tables (vs. just token contracts).
+Verified on Dune 2026-09-23: both OUSG InstantManagers are decoded, USDY InstantManager is not. See "Dune tables" above.
 
 ---
 

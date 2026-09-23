@@ -20,13 +20,32 @@ const CONFIG: Record<DataSource, { label: string; color: string; bg: string }> =
   },
 };
 
+/** 'page' tone reads the /flows CSS variables (globals.css) so labels pass AA in light and dark. */
+const PAGE_TONE: Record<DataSource, string> = {
+  live: 'text-[color:var(--badge-live-fg)] bg-[var(--badge-live-bg)]',
+  estimated: 'text-[color:var(--badge-estimated-fg)] bg-[var(--badge-estimated-bg)]',
+  mocked: 'text-[color:var(--badge-mocked-fg)] bg-[var(--badge-mocked-bg)]',
+};
+
 interface DataSourceBadgeProps {
   source: DataSource;
   className?: string;
+  tone?: 'terminal' | 'page';
 }
 
-export function DataSourceBadge({ source, className = '' }: DataSourceBadgeProps) {
+export function DataSourceBadge({ source, className = '', tone = 'terminal' }: DataSourceBadgeProps) {
   const { label, color, bg } = CONFIG[source];
+
+  if (tone === 'page') {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] text-xs font-sans font-medium ${PAGE_TONE[source]} ${className}`}
+      >
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
+        {label}
+      </span>
+    );
+  }
 
   return (
     <span

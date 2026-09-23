@@ -48,6 +48,29 @@ export interface VelocityDataPoint extends Sourced {
   redeemCount: number;
 }
 
+export interface WeeklyFlow extends Sourced {
+  /** ISO date (YYYY-MM-DD) of the week start, Monday 00:00 UTC */
+  week: string;
+  /** Token: OUSG or USDY */
+  token: 'OUSG' | 'USDY';
+  /** Total mint (Subscription) volume in USD for this week */
+  mintVolumeUsd: number;
+  /** Total redeem (Redemption) volume in USD for this week */
+  redeemVolumeUsd: number;
+  /** Mint volume minus redeem volume in USD (can be negative) */
+  netFlowUsd: number;
+  /** Number of mint transactions */
+  mintCount: number;
+  /** Number of redeem transactions */
+  redeemCount: number;
+  /** Distinct subscriber addresses */
+  uniqueMinters: number;
+  /** Distinct redeemer addresses */
+  uniqueRedeemers: number;
+  /** Distinct addresses across both sides (not minters + redeemers) */
+  uniqueWallets: number;
+}
+
 export interface MintRedeemEvent {
   type: 'mint' | 'redeem';
   /** Wallet address of subscriber/redeemer */
@@ -146,6 +169,7 @@ export interface DashboardData {
   metrics: DashboardMetrics;
   issuerMetrics: IssuerMetric[];
   velocityData: VelocityDataPoint[];
+  weeklyFlows: WeeklyFlow[];
   liquidityCells: LiquidityCell[];
   chainBreakdown: ChainTVL[];
   competitorBenchmark: CompetitorMetric[];
@@ -157,6 +181,8 @@ export interface DuneQueryResult<T = Record<string, unknown>> {
   execution_id: string;
   query_id: number;
   state: 'QUERY_STATE_COMPLETED' | 'QUERY_STATE_EXECUTING' | 'QUERY_STATE_FAILED';
+  execution_started_at?: string;
+  execution_ended_at?: string;
   result?: {
     rows: T[];
     metadata: {

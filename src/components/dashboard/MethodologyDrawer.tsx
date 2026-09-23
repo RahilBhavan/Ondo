@@ -16,7 +16,7 @@ const SECTIONS = [
   {
     title: 'Mint/Redeem Velocity (Pillar 2)',
     content:
-      'Volume and frequency metrics from InstantManager Subscription and Redemption events on Ethereum. Redemptions are atomic (single transaction) — settlement time delta is not applicable. USD values are emitted directly by the contract.',
+      'Weekly volume, counts, and wallets over full history from Ethereum InstantManager events: OUSG 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a, legacy OUSG 0x2826989983e3a66F0622132D019c2Ae173eb6A43 (Apr 2024 to Apr 2025), and USDY 0xa42613C243b67BF6194Ac327795b926B4b491f15. Subscription is a mint, Redemption is a redeem. USD value is depositUSDValue / redemptionUSDValue, 1e18-scaled and emitted by the contract (no price oracle). Weeks start Monday 00:00 UTC (DuneSQL DATE_TRUNC(\'week\')); the current week is partial. Wallets are distinct subscriber / redeemer addresses; KYC ids are not used. Scope: instant mint and redeem only, not secondary transfers, DEX trades, bridged balances, or other chains (ADR-005). Legacy OUSG USD value is the USDC amount in or out, with USDC taken at $1. USDY is not decoded on Dune, so it is read from raw logs with the OUSG event signatures, a method validated against the decoded OUSG totals; USDY history starts Dec 2025. Query: https://dune.com/queries/8822192. Redemptions are atomic, so there is no settlement delay to measure.',
   },
   {
     title: 'Liquidity Heatmap (Pillar 3)',

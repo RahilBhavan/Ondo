@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { MOCK_DATA } from '@/lib/mockData';
 import { formatUsdCompact, formatNumberCompact, relativeTime } from '@/lib/format';
 import { MetricCard } from '@/components/ui/MetricCard';
@@ -33,8 +34,11 @@ export default async function DashboardPage() {
               Ondo Finance — OUSG + USDY Institutional Analytics
             </p>
           </div>
-          <div className="text-xs font-mono text-slate-500">
-            Updated {relativeTime(metrics.lastUpdated)}
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-500">
+            <Link href="/flows" className="hover:text-slate-300 transition-colors">
+              Weekly flows
+            </Link>
+            <span>Updated {relativeTime(metrics.lastUpdated)}</span>
           </div>
         </div>
       </header>
