@@ -15,9 +15,9 @@ interface MetricCardProps {
 }
 
 const TREND_STYLES = {
-  up: 'text-accent-green',
-  down: 'text-accent-red',
-  flat: 'text-slate-400',
+  up: 'text-[color:var(--badge-live-fg)]',
+  down: 'text-[color:var(--series-redeem)]',
+  flat: 'text-[color:var(--mute)]',
 } as const;
 
 const TREND_ARROWS = {
@@ -30,22 +30,22 @@ export function MetricCard({ label, value, subValue, dataSource, trend }: Metric
   const prefix = dataSource === 'mocked' ? '~' : '';
 
   return (
-    <div className="bg-nexus-card border border-nexus-border rounded-lg p-5 hover:border-nexus-border-light transition-colors">
+    <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-slate-400 uppercase tracking-wider">{label}</span>
+        <span className="text-sm text-[color:var(--mute)]">{label}</span>
         <DataSourceBadge source={dataSource} />
       </div>
-      <div className="text-2xl font-mono font-semibold text-slate-100 mb-1">
+      <div className="text-2xl font-semibold tracking-[-0.96px] tabular-nums text-[color:var(--ink)] mb-1">
         {prefix}{value}
       </div>
       <div className="flex items-center gap-2">
         {trend && (
-          <span className={`text-xs font-mono ${TREND_STYLES[trend.direction]}`}>
+          <span className={`text-[13px] font-medium ${TREND_STYLES[trend.direction]}`}>
             {TREND_ARROWS[trend.direction]} {trend.label}
           </span>
         )}
         {subValue && (
-          <span className="text-xs text-slate-500">{subValue}</span>
+          <span className="text-[13px] text-[color:var(--mute)]">{subValue}</span>
         )}
       </div>
     </div>
