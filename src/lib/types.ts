@@ -181,6 +181,8 @@ export interface DuneQueryResult<T = Record<string, unknown>> {
   execution_id: string;
   query_id: number;
   state: 'QUERY_STATE_COMPLETED' | 'QUERY_STATE_EXECUTING' | 'QUERY_STATE_FAILED';
+  execution_started_at?: string;
+  execution_ended_at?: string;
   result?: {
     rows: T[];
     metadata: {

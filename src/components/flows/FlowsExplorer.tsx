@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { DataSource, WeeklyFlow } from '@/lib/types';
 import { formatNumberCompact, formatPercent, formatUsd, formatUsdCompact } from '@/lib/format';
 import { formatWeek, growth12w, isCompleteWeek, weeklySeries } from '@/lib/flowStats';
+import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { FlowCharts } from './FlowCharts';
 
 const RANGES = [
@@ -51,7 +52,7 @@ export function FlowsExplorer({ rows, dataSource }: FlowsExplorerProps) {
       </div>
 
       {TOKENS.map((token) => (
-        <TokenSection key={token} token={token} rows={rows} weeks={weeks} prefix={prefix} />
+        <TokenSection key={token} token={token} rows={rows} weeks={weeks} dataSource={dataSource} />
       ))}
     </>
   );
@@ -61,10 +62,11 @@ interface TokenSectionProps {
   token: WeeklyFlow['token'];
   rows: WeeklyFlow[];
   weeks: number;
-  prefix: string;
+  dataSource: DataSource;
 }
 
-function TokenSection({ token, rows, weeks, prefix }: TokenSectionProps) {
+function TokenSection({ token, rows, weeks, dataSource }: TokenSectionProps) {
+  const prefix = dataSource === 'mocked' ? '~' : '';
   const series = useMemo(() => weeklySeries(rows, token), [rows, token]);
   const visible = useMemo(
     () => (Number.isFinite(weeks) ? series.slice(-weeks) : series),
@@ -73,7 +75,7 @@ function TokenSection({ token, rows, weeks, prefix }: TokenSectionProps) {
   const asOf = series[series.length - 1]?.asOf ?? '';
   const hasEvents = visible.some((r) => r.mintCount + r.redeemCount > 0);
   const lastComplete = [...visible].reverse().find((r) => isCompleteWeek(r.week, asOf));
-  const growth = growth12w(visible, asOf);
+  const growth = growth12w(series, asOf);
 
   return (
     <section aria-labelledby={`${token}-heading`} className="space-y-6">
@@ -92,8 +94,9 @@ function TokenSection({ token, rows, weeks, prefix }: TokenSectionProps) {
         <>
           {lastComplete && (
             <div className="space-y-3">
-              <p className="text-sm text-[color:var(--mute)]">
-                Week of {formatWeek(lastComplete.week)}, last complete week
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--mute)]">
+                <DataSourceBadge source={dataSource} tone="page" />
+                <span>Week of {formatWeek(lastComplete.week)}, last complete week</span>
               </p>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">
                 <Figure label="Mint" value={`${prefix}${formatUsdCompact(lastComplete.mintVolumeUsd)}`} />
@@ -119,7 +122,7 @@ function TokenSection({ token, rows, weeks, prefix }: TokenSectionProps) {
           )}
 
           <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-4 shadow-[var(--elevation)] md:p-6">
-            <FlowCharts token={token} data={visible} asOf={asOf} />
+            <FlowCharts token={token} data={visible} asOf={asOf} prefix={prefix} />
           </div>
 
           <details className="group min-w-0 rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)]">
@@ -150,12 +153,12 @@ function TokenSection({ token, rows, weeks, prefix }: TokenSectionProps) {
                           <span className="ml-2 text-[color:var(--mute)]">partial</span>
                         )}
                       </td>
-                      <td className="px-4 py-2 text-right">{formatUsd(r.mintVolumeUsd)}</td>
-                      <td className="px-4 py-2 text-right">{formatUsd(r.redeemVolumeUsd)}</td>
-                      <td className="px-4 py-2 text-right">{formatUsd(r.netFlowUsd)}</td>
-                      <td className="px-4 py-2 text-right">{formatNumberCompact(r.mintCount)}</td>
-                      <td className="px-4 py-2 text-right">{formatNumberCompact(r.redeemCount)}</td>
-                      <td className="px-4 py-2 text-right">{formatNumberCompact(r.uniqueWallets)}</td>
+                      <td className="px-4 py-2 text-right">{`${prefix}${formatUsd(r.mintVolumeUsd)}`}</td>
+                      <td className="px-4 py-2 text-right">{`${prefix}${formatUsd(r.redeemVolumeUsd)}`}</td>
+                      <td className="px-4 py-2 text-right">{`${prefix}${formatUsd(r.netFlowUsd)}`}</td>
+                      <td className="px-4 py-2 text-right">{`${prefix}${formatNumberCompact(r.mintCount)}`}</td>
+                      <td className="px-4 py-2 text-right">{`${prefix}${formatNumberCompact(r.redeemCount)}`}</td>
+                      <td className="px-4 py-2 text-right">{`${prefix}${formatNumberCompact(r.uniqueWallets)}`}</td>
                     </tr>
                   ))}
                 </tbody>

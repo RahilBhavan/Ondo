@@ -31,6 +31,7 @@ assert.equal(row.dataSource, 'live');
 assert.equal(row.source, meta.source);
 
 assert.throws(() => mapDuneRow({ week: 'nope', token: 'OUSG' }, meta));
+assert.throws(() => mapDuneRow({ week: '2026-04-01', token: 'OUSG' }, meta), /bad week/);
 assert.throws(() => mapDuneRow({ week: '2026-03-30', token: 'BUIDL' }, meta));
 assert.throws(() => mapDuneRow({ week: '2026-03-30', token: 'USDY', mint_volume_usd: 'x' }, meta));
 
@@ -72,5 +73,17 @@ const flat = Array.from({ length: 25 }, (_, i) => {
 const g = growth12w(flat, flat[24].asOf);
 assert.ok(g !== null && Math.abs(g - 0.5) < 1e-9, `growth ${g}`);
 assert.equal(growth12w(flat.slice(1), flat[24].asOf), null);
+
+// Stale Dune execution: asOf is the execution end, not the wall clock. Weeks after it are
+// neither zero-filled nor complete, so the headline week keeps its real volume.
+const staleMeta = { asOf: '2026-08-27T00:00:00Z', source: meta.source };
+const stale = ['2026-08-10', '2026-08-17', '2026-08-24'].map((week) =>
+  mapDuneRow({ week, token: 'USDY', mint_volume_usd: 5_000_000 }, staleMeta)
+);
+const staleSeries = weeklySeries(stale, 'USDY');
+assert.deepEqual(staleSeries.map((r) => r.week), ['2026-08-10', '2026-08-17', '2026-08-24']);
+const staleLast = [...staleSeries].reverse().find((r) => isCompleteWeek(r.week, r.asOf));
+assert.equal(staleLast?.week, '2026-08-17');
+assert.ok(staleLast && staleLast.mintVolumeUsd > 0);
 
 console.log(`weeklyFlows check ok (${mock.length} mock rows)`);

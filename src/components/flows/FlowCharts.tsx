@@ -63,18 +63,20 @@ function FlowTooltip({
   active,
   payload,
   asOf,
+  prefix,
 }: {
   active?: boolean;
   payload?: ReadonlyArray<{ payload?: unknown }>;
   asOf: string;
+  prefix: string;
 }) {
   const row = payload?.[0]?.payload as ChartRow | undefined;
   if (!active || !row) return null;
   const lines: Array<[string, string]> = [
-    ['Mint', formatUsdCompact(row.mintVolumeUsd)],
-    ['Redeem', formatUsdCompact(row.redeemVolumeUsd)],
-    ['Net', formatUsdCompact(row.netFlowUsd)],
-    ['Wallets', String(row.uniqueWallets)],
+    ['Mint', `${prefix}${formatUsdCompact(row.mintVolumeUsd)}`],
+    ['Redeem', `${prefix}${formatUsdCompact(row.redeemVolumeUsd)}`],
+    ['Net', `${prefix}${formatUsdCompact(row.netFlowUsd)}`],
+    ['Wallets', `${prefix}${row.uniqueWallets}`],
   ];
   return (
     <div className="min-w-[180px] rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] px-3 py-2 text-[13px] shadow-[var(--elevation)]">
@@ -96,9 +98,11 @@ interface FlowChartsProps {
   token: WeeklyFlow['token'];
   data: WeeklyFlow[];
   asOf: string;
+  /** '~' when the data is mocked, else '' */
+  prefix: string;
 }
 
-export function FlowCharts({ token, data, asOf }: FlowChartsProps) {
+export function FlowCharts({ token, data, asOf, prefix }: FlowChartsProps) {
   const rows = useMemo<ChartRow[]>(
     () => data.map((d) => ({ ...d, redeemNegUsd: -d.redeemVolumeUsd })),
     [data]
@@ -107,7 +111,7 @@ export function FlowCharts({ token, data, asOf }: FlowChartsProps) {
   const tooltip = (
     <Tooltip
       cursor={<Crosshair />}
-      content={(p) => <FlowTooltip active={p.active} payload={p.payload} asOf={asOf} />}
+      content={(p) => <FlowTooltip active={p.active} payload={p.payload} asOf={asOf} prefix={prefix} />}
       isAnimationActive={false}
     />
   );
@@ -167,7 +171,7 @@ export function FlowCharts({ token, data, asOf }: FlowChartsProps) {
                 name="Redeem"
                 stackId="flow"
                 fill="var(--series-redeem)"
-                radius={[4, 4, 0, 0]}
+                radius={[0, 0, 4, 4]}
                 maxBarSize={14}
                 isAnimationActive={false}
               />

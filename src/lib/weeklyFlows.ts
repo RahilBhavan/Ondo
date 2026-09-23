@@ -7,6 +7,7 @@
  */
 
 import { getLatestResults, isDuneConfigured } from './dune';
+import { mondayOf } from './flowStats';
 import { MOCK_DATA } from './mockData';
 import type { DataSource, WeeklyFlow } from './types';
 
@@ -23,7 +24,7 @@ export function mapDuneRow(
   meta: { asOf: string; source: string }
 ): WeeklyFlow {
   const week = String(row.week ?? '').slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(week)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(week) || mondayOf(week) !== week) {
     throw new Error(`bad week value: ${String(row.week)}`);
   }
   const token = row.token;
@@ -71,7 +72,8 @@ export async function getWeeklyFlows(): Promise<WeeklyFlowsResult> {
     const result = await getLatestResults(queryId);
     const raw = result.result?.rows;
     if (!raw?.length) return mockResult(`Dune query ${queryId} returned no rows (${result.state})`);
-    const meta = { asOf: new Date().toISOString(), source: queryUrl };
+    // asOf is when Dune last ran the query, not now: weeks after it are unknown, not zero.
+    const meta = { asOf: result.execution_ended_at ?? new Date().toISOString(), source: queryUrl };
     const rows = raw
       .map((r) => mapDuneRow(r, meta))
       .sort((a, b) => a.week.localeCompare(b.week) || a.token.localeCompare(b.token));
