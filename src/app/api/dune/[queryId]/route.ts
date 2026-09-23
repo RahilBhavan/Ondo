@@ -13,9 +13,10 @@ const CACHE_MAX_AGE = 3600; // 1 hour
 
 export async function GET(
   _request: Request,
-  { params }: { params: { queryId: string } }
+  { params }: { params: Promise<{ queryId: string }> }
 ) {
-  const queryId = parseInt(params.queryId, 10);
+  const { queryId: raw } = await params;
+  const queryId = parseInt(raw, 10);
 
   if (isNaN(queryId) || queryId <= 0) {
     return NextResponse.json(

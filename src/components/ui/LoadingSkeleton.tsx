@@ -38,6 +38,7 @@ export function ChartSkeleton({ height = 'h-80' }: { height?: string }) {
           <div
             key={i}
             className="flex-1 bg-nexus-border rounded-t"
+            // eslint-disable-next-line react-hooks/purity -- decorative skeleton bar heights
             style={{ height: `${30 + Math.random() * 60}%` }}
           />
         ))}
