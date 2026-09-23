@@ -68,3 +68,24 @@
   - Heatmap has mixed data sources — Live for EVM, Mocked for non-EVM
   - Each cell's data source is labeled via DataSourceBadge
   - v2 could add Solana indexing via Flipside or custom RPC
+
+## ADR-006: Raw-Log Decoding for USDY and Legacy OUSG Inclusion
+**Date:** 2026-09-23
+**Status:** Accepted
+**Context:** Checking Dune showed the current OUSG InstantManager is decoded as
+  `ondo_ethereum.ousg_instantmanager_evt_*`, not the `ondofinance_ethereum` tables the
+  docs name. The legacy OUSG InstantManager (0x28269899..., Apr 2024 to Apr 2025) is
+  decoded under `ondofinance_ethereum`. The USDY InstantManager (0xa42613C2..., Dec 2025
+  onward) is not decoded at all, but emits the same Subscription/Redemption events as OUSG.
+**Decision:**
+  1. Include the legacy OUSG contract. USD value = USDC amount in/out (1e6), USDC at $1.
+  2. Decode USDY from `ethereum.logs` by topic0 (topic1 = wallet, data word 4 = USD value).
+  3. Save the query on Dune as 8822192 (https://dune.com/queries/8822192).
+**Consequences:**
+  - OUSG history now starts Apr 2024 instead of Apr 2025
+  - USDY history starts Dec 2025, when its InstantManager went live
+  - Raw decode was validated by reproducing the decoded OUSG totals exactly
+    ($879.79M minted, $514.45M redeemed, 222/222 wallets on 2026-09-23)
+  - If Ondo changes the USDY event layout, the raw decode breaks silently; recheck against
+    decoded OUSG if totals shift
+  - Legacy USD values assume the USDC peg

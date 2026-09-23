@@ -1,5 +1,6 @@
 const CONTRACTS = [
   { label: 'OUSG InstantManager', address: '0x93358db73B6cd4b98D89c8F5f230E81a95c2643a' },
+  { label: 'OUSG InstantManager (legacy, Apr 2024 to Apr 2025)', address: '0x2826989983e3a66F0622132D019c2Ae173eb6A43' },
   { label: 'USDY InstantManager', address: '0xa42613C243b67BF6194Ac327795b926B4b491f15' },
 ];
 
@@ -41,6 +42,20 @@ export function FlowsMethodology() {
           oracle is involved.
         </dd>
 
+        <dt className="font-medium text-[color:var(--ink)]">Legacy OUSG</dt>
+        <dd>
+          The legacy contract emits <code className={code}>InstantMint</code> and{' '}
+          <code className={code}>InstantRedemption</code> events. USD value is the USDC amount in or out, with
+          USDC taken at $1.
+        </dd>
+
+        <dt className="font-medium text-[color:var(--ink)]">USDY</dt>
+        <dd>
+          Dune does not decode the USDY InstantManager, so the query reads its raw logs using the same event
+          signatures as OUSG. That raw decode reproduced the decoded OUSG totals exactly. USDY history starts Dec
+          2025, when the contract went live.
+        </dd>
+
         <dt className="font-medium text-[color:var(--ink)]">Week</dt>
         <dd>
           Weeks start Monday 00:00 UTC (DuneSQL <code className={code}>DATE_TRUNC(&apos;week&apos;)</code>). The
@@ -57,7 +72,15 @@ export function FlowsMethodology() {
         <dt className="font-medium text-[color:var(--ink)]">Scope</dt>
         <dd>
           Instant mint and redeem only. Not secondary transfers, DEX trades, bridged balances, or other chains
-          (ADR-005). Coverage of the legacy OUSG InstantManager is pending (#1).
+          (ADR-005).
+        </dd>
+
+        <dt className="font-medium text-[color:var(--ink)]">Query</dt>
+        <dd>
+          <a href="https://dune.com/queries/8822192" className="text-[color:var(--link)] hover:underline">
+            Dune query 8822192
+          </a>
+          , source in <code className={code}>queries/mint_redeem_volume.sql</code>.
         </dd>
       </dl>
     </section>

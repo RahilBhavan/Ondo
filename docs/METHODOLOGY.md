@@ -47,17 +47,22 @@ The `DataSourceBadge` component renders this label inline with every metric. The
 
 **Contracts (Ethereum):**
 - OUSG InstantManager: [`0x93358db73B6cd4b98D89c8F5f230E81a95c2643a`](https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a)
+- OUSG InstantManager (legacy, Apr 2024 to Apr 2025): [`0x2826989983e3a66F0622132D019c2Ae173eb6A43`](https://etherscan.io/address/0x2826989983e3a66F0622132D019c2Ae173eb6A43)
 - USDY InstantManager: [`0xa42613C243b67BF6194Ac327795b926B4b491f15`](https://etherscan.io/address/0xa42613C243b67BF6194Ac327795b926B4b491f15)
 
 **Events:** `Subscription` (mint) and `Redemption` (redeem). USD value is `depositUSDValue` / `redemptionUSDValue`, 1e18-scaled and emitted by the contract, so no price oracle is needed.
+
+**Legacy OUSG:** The legacy contract emits `InstantMint[Rebasing]OUSG` and `InstantRedemption[Rebasing]OUSG`. USD value is the USDC amount in or out (1e6), with USDC taken at $1. The wallet is `sender`.
+
+**USDY:** The USDY InstantManager is not decoded on Dune, so the query reads `ethereum.logs` with the `Subscription` / `Redemption` topic0 (topic1 = wallet, data word 4 = USD value). The same raw decode reproduced the decoded OUSG totals exactly (checked 2026-09-23). USDY history starts Dec 2025, when this contract went live. See ADR-006.
 
 **Week:** Monday 00:00 UTC (DuneSQL `DATE_TRUNC('week')`). The current week is partial; headline figures use the last complete week. Weeks with no events are shown as zero.
 
 **Wallets:** Distinct `subscriber` / `redeemer` addresses. `unique_wallets` counts an address once per week across both sides, so it is not minters + redeemers. The `subscriberId` / `redeemerId` KYC ids are not used.
 
-**Scope:** Instant mint and redeem only. Not secondary transfers, DEX trades, bridged balances, or other chains (ADR-005). Coverage of the legacy OUSG InstantManager (`0x2826989983e3a66F0622132D019c2Ae173eb6A43`) is pending (#1).
+**Scope:** Instant mint and redeem only. Not secondary transfers, DEX trades, bridged balances, or other chains (ADR-005).
 
-**Query:** `queries/mint_redeem_volume.sql`. Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
+**Query:** `queries/mint_redeem_volume.sql`, saved on Dune as [query 8822192](https://dune.com/queries/8822192). Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
 
 **Data source label:** **Live** when `DUNE_API_KEY` and `DUNE_MINT_REDEEM_QUERY_ID` are set and the query returns rows. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason.
 

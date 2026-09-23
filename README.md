@@ -14,7 +14,8 @@ This dashboard answers that from public on-chain data. It reads the `Subscriptio
 | Token | Contract (Ethereum) | Events |
 |-------|---------------------|--------|
 | OUSG | [`0x93358db73B6cd4b98D89c8F5f230E81a95c2643a`](https://etherscan.io/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a) | `Subscription`, `Redemption` |
-| USDY | [`0xa42613C243b67BF6194Ac327795b926B4b491f15`](https://etherscan.io/address/0xa42613C243b67BF6194Ac327795b926B4b491f15) | `Subscription`, `Redemption` |
+| OUSG (legacy, Apr 2024 to Apr 2025) | [`0x2826989983e3a66F0622132D019c2Ae173eb6A43`](https://etherscan.io/address/0x2826989983e3a66F0622132D019c2Ae173eb6A43) | `InstantMint[Rebasing]OUSG`, `InstantRedemption[Rebasing]OUSG` |
+| USDY | [`0xa42613C243b67BF6194Ac327795b926B4b491f15`](https://etherscan.io/address/0xa42613C243b67BF6194Ac327795b926B4b491f15) | `Subscription`, `Redemption` (decoded from raw logs; not decoded on Dune) |
 
 It counts instant mints and redemptions only. Secondary transfers, DEX trades, and bridged balances on other chains are out of scope. Why Nexus maps to these contracts: [ADR-003](docs/DECISIONS.md). Full method: [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
