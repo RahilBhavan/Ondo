@@ -1,0 +1,30 @@
+name: Bug report
+description: Something on the dashboard is wrong or broken
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL / page
+  - type: dropdown
+    id: data-source
+    attributes:
+      label: Data source affected
+      options:
+        - live
+        - estimated
+        - mocked
+    validations:
+      required: true
