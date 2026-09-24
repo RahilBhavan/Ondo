@@ -1,6 +1,7 @@
 'use client';
 
-import type { Chain, ChainTVL, DataSource } from '@/lib/types';
+import type { Chain, ChainTVL } from '@/lib/types';
+import { combinedSource } from '@/lib/dataSource';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { formatUsdCompact, formatPercent } from '@/lib/format';
 
@@ -16,6 +17,10 @@ const CHAIN_COLORS: Record<string, string> = {
   solana: '#14F195',
   sui: '#6FBCF0',
   aptos: '#2ED8A3',
+  stellar: 'var(--chain-stellar)',
+  sei: 'var(--chain-sei)',
+  'xrp-ledger': 'var(--chain-xrp)',
+  bnb: 'var(--chain-bnb)',
 };
 
 interface ChainTotal {
@@ -36,12 +41,6 @@ function byChain(rows: ChainTVL[]): ChainTotal[] {
   return [...map.values()];
 }
 
-function overallSource(rows: ChainTVL[]): DataSource {
-  if (rows.length > 0 && rows.every((r) => r.dataSource === 'live')) return 'live';
-  if (rows.every((r) => r.dataSource === 'mocked')) return 'mocked';
-  return 'estimated';
-}
-
 export function ChainBreakdown({ data }: ChainBreakdownProps) {
   const sorted = byChain(data).sort((a, b) => b.tvlUsd - a.tvlUsd);
   const totalTvl = sorted.reduce((sum, d) => sum + d.tvlUsd, 0);
@@ -52,7 +51,7 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
         <h3 className="text-base font-semibold tracking-[-0.32px] text-[color:var(--ink)]">
           Chain breakdown
         </h3>
-        <DataSourceBadge source={overallSource(data)} />
+        <DataSourceBadge source={combinedSource(data)} />
       </div>
 
       {/* Stacked bar */}

@@ -1,5 +1,6 @@
 import { MOCK_DATA } from '@/lib/mockData';
 import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
+import { combinedSource } from '@/lib/dataSource';
 import { formatUsdCompact, formatNumberCompact, relativeTime } from '@/lib/format';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
@@ -31,7 +32,9 @@ export default async function DashboardPage() {
   const { metrics } = data;
   const chainRows = await getChainTVL();
   const totalTvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
-  const tvlAllLive = chainRows.every((r) => r.dataSource === 'live');
+  const tvlSource = combinedSource(chainRows);
+  // MetricCard adds '~' itself only when fully mocked; a mixed total needs it too.
+  const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'mocked') ? '~' : '';
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -50,8 +53,8 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             label="Total TVL"
-            value={formatUsdCompact(totalTvlUsd)}
-            dataSource={tvlAllLive ? 'live' : 'estimated'}
+            value={`${tvlPrefix}${formatUsdCompact(totalTvlUsd)}`}
+            dataSource={tvlSource}
             subValue="13 chains, OUSG + USDY"
           />
           <MetricCard

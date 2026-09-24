@@ -11,7 +11,7 @@
 
 import { createPublicClient, formatUnits, http, parseAbi } from 'viem';
 import { MOCK_DATA } from './mockData';
-import { getTokenPrices, type TokenPrices } from './prices';
+import { ETHEREUM_RPC, getTokenPrices, OUSG_ETHEREUM, USDY_ETHEREUM, type TokenPrices } from './prices';
 import type { Chain, ChainTVL, LiquidityCell } from './types';
 
 type Token = 'OUSG' | 'USDY';
@@ -36,7 +36,6 @@ interface SupplySource {
 const TIMEOUT_MS = 8_000;
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
-const ETH_RPC = 'https://ethereum-rpc.publicnode.com';
 const SOLANA_RPC = 'https://api.mainnet-beta.solana.com';
 const SUI_GRAPHQL = 'https://graphql.mainnet.sui.io/graphql';
 const APTOS_VIEW = 'https://api.mainnet.aptoslabs.com/v1/view';
@@ -52,8 +51,8 @@ const XRPL_OUSG_ISSUER = 'rHuiXXjHLpMP8ZE9sSQU5aADQVWDwv6h5p';
 const evm = (rpc: string, address: `0x${string}`): Reader => ({ kind: 'evm', rpc, address });
 
 export const SUPPLY_SOURCES: SupplySource[] = [
-  { token: 'USDY', chain: 'ethereum', reader: evm(ETH_RPC, '0x96F6eF951840721AdBF46Ac996b59E0235CB985C'), source: 'https://etherscan.io/token/0x96F6eF951840721AdBF46Ac996b59E0235CB985C' },
-  { token: 'OUSG', chain: 'ethereum', reader: evm(ETH_RPC, '0x1B19C19393e2d034D8Ff31ff34c81252FcBbee92'), source: 'https://etherscan.io/token/0x1B19C19393e2d034D8Ff31ff34c81252FcBbee92' },
+  { token: 'USDY', chain: 'ethereum', reader: evm(ETHEREUM_RPC, USDY_ETHEREUM), source: `https://etherscan.io/token/${USDY_ETHEREUM}` },
+  { token: 'OUSG', chain: 'ethereum', reader: evm(ETHEREUM_RPC, OUSG_ETHEREUM), source: `https://etherscan.io/token/${OUSG_ETHEREUM}` },
   { token: 'USDY', chain: 'mantle', reader: evm('https://mantle-rpc.publicnode.com', '0x5bE26527e817998A7206475496fDE1E68957c5A6'), source: 'https://mantlescan.xyz/token/0x5bE26527e817998A7206475496fDE1E68957c5A6' },
   { token: 'USDY', chain: 'arbitrum', reader: evm('https://arbitrum-one-rpc.publicnode.com', '0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D'), source: 'https://arbiscan.io/token/0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D' },
   { token: 'OUSG', chain: 'polygon', reader: evm('https://polygon-bor-rpc.publicnode.com', '0xbA11C5effA33c4D6F8f593CFA394241CfE925811'), source: 'https://polygonscan.com/token/0xbA11C5effA33c4D6F8f593CFA394241CfE925811' },
@@ -76,12 +75,15 @@ export function fromBaseUnits(raw: string | bigint, decimals: number): number {
   return Number(formatUnits(BigInt(raw), decimals));
 }
 
-/** Horizon asset record to circulating supply: every place the asset can sit, as decimal strings. */
+/**
+ * Horizon asset record to circulating supply: every place the asset can sit, as decimal
+ * strings. All balances.* buckets (authorized, maintain-liabilities, unauthorized) count;
+ * the deprecated top-level `amount` is left out.
+ */
 export function stellarSupply(rec: Record<string, unknown>): number {
-  const balances = (rec.balances ?? {}) as Record<string, string | undefined>;
+  const balances = (rec.balances ?? {}) as Record<string, unknown>;
   const parts = [
-    balances.authorized,
-    balances.authorized_to_maintain_liabilities,
+    ...Object.values(balances),
     rec.contracts_amount,
     rec.liquidity_pools_amount,
     rec.claimable_balances_amount,
@@ -248,7 +250,8 @@ export async function getChainTVL(): Promise<ChainTVL[]> {
   const prices = priceResult.status === 'fulfilled' ? (priceResult.value as TokenPrices) : null;
   if (!prices) console.warn('[chainSupply] price read failed, using mock for every row:', String((priceResult as PromiseRejectedResult).reason));
   const data = buildRows(SUPPLY_SOURCES, supplies as PromiseSettledResult<number>[], prices, MOCK_DATA.chainBreakdown, new Date().toISOString());
-  // Only cache a fully live read so a transient failure retries on the next request.
+  // Cache only a fully live read: a read with any fallback retries on the next render
+  // (the next ISR revalidation of /) instead of pinning mock rows for an hour.
   if (data.every((r) => r.dataSource === 'live')) cached = { data, timestamp: Date.now() };
   return data;
 }

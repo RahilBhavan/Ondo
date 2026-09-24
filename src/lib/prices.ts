@@ -28,7 +28,7 @@ let cached: { data: TokenPrices; timestamp: number } | null = null;
 
 export async function getTokenPrices(): Promise<TokenPrices> {
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) return cached.data;
-  const client = createPublicClient({ chain: mainnet, transport: http(ETHEREUM_RPC) });
+  const client = createPublicClient({ chain: mainnet, transport: http(ETHEREUM_RPC, { timeout: 8_000, retryCount: 0 }) });
   const read = (token: `0x${string}`) =>
     client.readContract({ address: ONDO_ORACLE, abi, functionName: 'getAssetPrice', args: [token] });
   const [ousg, usdy] = await Promise.all([read(OUSG_ETHEREUM), read(USDY_ETHEREUM)]);

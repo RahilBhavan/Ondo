@@ -12,7 +12,7 @@ close(fromBaseUnits('157215505095250', 6), 157_215_505.09525);
 close(fromBaseUnits('12773284723262', 6), 12_773_284.723262);
 assert.equal(fromBaseUnits('0', 18), 0);
 
-// Stellar: sum of decimal-string balances in every location; missing fields count as 0.
+// Stellar: sum of decimal-string balances in every location (unauthorized included); missing fields count as 0.
 close(
   stellarSupply({
     balances: { authorized: '461624466.4277304', authorized_to_maintain_liabilities: '0.0000000', unauthorized: '5.0' },
@@ -20,9 +20,10 @@ close(
     liquidity_pools_amount: '284.0253335',
     claimable_balances_amount: '0.0000000',
   }),
-  467_502_151.6966762
+  467_502_156.6966762
 );
 close(stellarSupply({ balances: { authorized: '10.5' } }), 10.5);
+close(stellarSupply({ balances: { unauthorized: '2.5' }, amount: '999' }), 2.5);
 assert.throws(() => stellarSupply({ balances: { authorized: 'x' } }), /bad amount/);
 
 // XRPL: obligations are already token units; absent currency = nothing outstanding.
