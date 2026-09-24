@@ -110,3 +110,31 @@
   - Holders are Ethereum only
   - Flow data is only as fresh as the last Dune run; the page shows its date
   - Each getter falls back to a dated, labeled snapshot in mockData.ts (ADR-002 still holds)
+
+## ADR-008: Weekly Flows from Blockscout Logs Instead of Dune
+**Date:** 2026-09-24
+**Status:** Accepted
+**Context:** The Dune account is over its free datapoint limit, so query 8822192 cannot
+  re-run and weekly flows were frozen at the 2026-09-23 run. The metric only needs the
+  InstantManager event logs, which are public.
+**Decision:** Compute weekly flows in the app (src/lib/flowEvents.ts) from Blockscout's
+  keyless v2 logs API, one series per contract and event, decoded with viem. The definition
+  is unchanged: same contracts, events, USD fields and scaling, wallet fields, Monday UTC
+  weeks and wallet counting as queries/mint_redeem_volume.sql, which stays as the written
+  reference. Dune is removed from the app runtime (dune.ts, /api/dune, env vars).
+  Pages at or below a fixed block cache for a week; newer pages refresh hourly.
+**Consequences:**
+  - Free, no key, and current to the hour instead of frozen
+  - Validated against Dune query 8822192's last result on 2026-09-24: all 157 (week, token)
+    rows through the week of 2026-09-14 match exactly on counts and unique wallets, and
+    volumes match to the cent ($1,483.32M minted, $785.65M redeemed)
+  - A cold load is about 51 calls and 12 seconds; a warm one is 5 calls. A cold build
+    prerenders three routes in separate workers, about 153 calls against a 180 a minute
+    limit. To absorb that: concurrent callers in one process share one load, at most 4
+    pages are in flight per process, and a 429 waits (retry-after or x-ratelimit-reset,
+    else 5s, 15s, 30s) for up to 60s before the mock fallback. staticPageGenerationTimeout
+    is 120s so that wait cannot fail the build
+  - Not used: Blockscout's Etherscan-style /api getLogs (keyless, about 10 calls, then the IP
+    is blocked for up to an hour) and Routescan's Etherscan-style API (its address filter
+    drops 5 legacy OUSG events in the week of 2024-09-23, which Dune and Blockscout have)
+  - If Blockscout fails, the page shows the labeled mock series, as before

@@ -121,3 +121,28 @@ Each entry follows this structure:
 
 **Next Session**
 - Merge the phase5-finish PR, deploy to Vercel (personal scope), rotate the Dune key
+
+### [2026-09-24] — Weekly Flows from On-Chain Logs, Dune Removed
+**Phase:** Phase 3
+**Duration:** ~3hr
+**Goal:** Stop depending on Dune, whose free datapoint limit froze the weekly flows at 2026-09-23
+
+**Shipped**
+- `src/lib/flowEvents.ts`: InstantManager logs from Blockscout's keyless v2 logs API, decoded with viem, grouped by week with the same rules as `queries/mint_redeem_volume.sql`
+- Removed `dune.ts`, `/api/dune/[queryId]`, the Dune types and env vars; Dune text removed from the UI
+- `flowEvents.check.ts`: decodes real logs for each event type and checks wallet dedupe across mint and redeem
+- ADR-008, METHODOLOGY Pillar 2, README and STATUS updated
+
+**Attempted / Blocked**
+- Blockscout's Etherscan-style `/api` getLogs: keyless, it allows about 10 calls, then blocks the IP for 30 to 60 minutes
+- Routescan's Etherscan-style API: its address filter drops some legacy OUSG logs (5 events in the week of 2024-09-23)
+
+**Learned**
+- Blockscout v2 logs pages run newest first; a hand-made cursor (`block_number`, `index`) returns the logs older than it, so pages from a fixed past block have stable URLs and can cache for a long time
+- All 157 Dune rows through the week of 2026-09-14 match the on-chain rows exactly
+
+**Decisions Made**
+- Weekly flows from Blockscout logs instead of Dune (ADR-008)
+
+**Next Session**
+- Deploy to Vercel (personal scope) and watch the first cold render's Blockscout call count

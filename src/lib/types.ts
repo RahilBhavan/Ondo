@@ -1,7 +1,7 @@
 /**
  * Core data types for the Ondo Nexus Adoption Intelligence Dashboard.
  * Derived from contract research (docs/CONTRACT_RESEARCH.md).
- * All Dune query results, mock data, and API responses conform to these shapes.
+ * All live data, mock data, and API responses conform to these shapes.
  */
 
 // --- Data Source Taxonomy ---
@@ -54,6 +54,18 @@ export interface WeeklyFlow extends Sourced {
   uniqueRedeemers: number;
   /** Distinct addresses across both sides (not minters + redeemers) */
   uniqueWallets: number;
+}
+
+/** One counted InstantManager event, before weekly aggregation. */
+export interface FlowEvent {
+  token: 'OUSG' | 'USDY';
+  kind: 'mint' | 'redeem';
+  /** Subscriber / redeemer / sender address (checksummed) */
+  wallet: string;
+  /** USD value of the mint or redeem */
+  usd: number;
+  /** ISO date (YYYY-MM-DD) of the week start, Monday 00:00 UTC of the block time */
+  week: string;
 }
 
 // --- Pillar 3: Liquidity Depth Heatmap ---
@@ -111,28 +123,4 @@ export interface CompetitorMetric extends Sourced {
   redemptionSpeed: string;
   /** Citation URL for redemptionSpeed */
   redemptionSource?: string;
-}
-
-// --- Dune API Types ---
-
-export interface DuneQueryResult<T = Record<string, unknown>> {
-  execution_id: string;
-  query_id: number;
-  state: 'QUERY_STATE_COMPLETED' | 'QUERY_STATE_EXECUTING' | 'QUERY_STATE_FAILED';
-  execution_started_at?: string;
-  execution_ended_at?: string;
-  result?: {
-    rows: T[];
-    metadata: {
-      column_names: string[];
-      column_types: string[];
-      total_row_count: number;
-    };
-  };
-}
-
-export interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  queryId: number;
 }

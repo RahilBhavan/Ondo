@@ -13,7 +13,7 @@ Every data point on the dashboard carries one of three labels:
 
 | Label | Meaning | Criteria |
 |-------|---------|----------|
-| **Live** | Read from its source on this render: on-chain RPC, Blockscout, DefiLlama, or the latest Dune result | No manual assumptions, independently verifiable. Cached up to 1hr; the Dune result is as old as its last run |
+| **Live** | Read from its source on this render: on-chain RPC, Blockscout, or DefiLlama | No manual assumptions, independently verifiable. Cached up to 1hr |
 | **Estimated** | A total that mixes live and mocked rows | Shown when some but not all rows behind a number are live |
 | **Mocked** | Dated snapshot or illustrative value, shown when the source fails | Carries its own source and asOf; prefixed with "~" |
 
@@ -54,17 +54,17 @@ The `DataSourceBadge` component renders this label inline with every metric. The
 
 **Legacy OUSG:** The legacy contract emits `InstantMint[Rebasing]OUSG` and `InstantRedemption[Rebasing]OUSG`. USD value is the USDC amount in or out (1e6), with USDC taken at $1. The wallet is `sender`.
 
-**USDY:** The USDY InstantManager is not decoded on Dune, so the query reads `ethereum.logs` with the `Subscription` / `Redemption` topic0 (topic1 = wallet, data word 4 = USD value). The same raw decode reproduced the decoded OUSG totals exactly (checked 2026-09-23). USDY history starts Dec 2025, when this contract went live. See ADR-006.
+**USDY:** The USDY InstantManager emits the same `Subscription` / `Redemption` events as the OUSG contract (topic1 = wallet, data word 4 = USD value). USDY history starts Dec 2025, when this contract went live. See ADR-006.
 
-**Week:** Monday 00:00 UTC (DuneSQL `DATE_TRUNC('week')`). The current week is partial; headline figures use the last complete week. Weeks with no events are shown as zero.
+**Week:** Monday 00:00 UTC of the block time (the SQL's `DATE_TRUNC('week')`). The current week is partial; headline figures use the last complete week. Weeks with no events are shown as zero.
 
 **Wallets:** Distinct `subscriber` / `redeemer` addresses. `unique_wallets` counts an address once per week across both sides, so it is not minters + redeemers. The `subscriberId` / `redeemerId` KYC ids are not used.
 
 **Scope:** Instant mint and redeem only. Not secondary transfers, DEX trades, bridged balances, or other chains (ADR-005).
 
-**Query:** `queries/mint_redeem_volume.sql`, saved on Dune as [query 8822192](https://dune.com/queries/8822192). Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
+**Source:** event logs from Blockscout's keyless v2 logs API (`/api/v2/addresses/<contract>/logs?topic=<topic0>`, one series per contract and event), decoded with viem and grouped by week in `src/lib/flowEvents.ts` (ADR-008). The definition is written out in SQL in `queries/mint_redeem_volume.sql`, saved on Dune as [query 8822192](https://dune.com/queries/8822192); the app no longer calls Dune. The on-chain rows matched every Dune row through the week of 2026-09-14. Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
 
-**Data source label:** **Live** when `DUNE_API_KEY` and `DUNE_MINT_REDEEM_QUERY_ID` are set and the query returns rows. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason. `asOf` is when Dune last ran the query, not the page render time; the home page shows it as "as of <date>" on the flows section and the net flow KPI, since a Live result can be days old.
+**Data source label:** **Live** when every log read succeeds and returns events. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason. `asOf` is when the logs were read; the home page shows it as "as of <date>" on the flows section and the net flow KPI.
 
 **Home page KPIs:** 4-week volume, net flow and average transaction size sum the last 4 complete weeks of both tokens. The trend compares volume to the 4 complete weeks before; a change that rounds to 0.0% is shown as flat.
 
@@ -140,7 +140,7 @@ InstantManager contracts (mint/redeem events) exist **only on Ethereum**. All ot
 
 | Data Type | Source | Chains |
 |-----------|--------|--------|
-| Mint/Redeem events | Dune, InstantManager events | Ethereum only |
+| Mint/Redeem events | Blockscout logs API, InstantManager events | Ethereum only |
 | Supply / TVL | Direct RPC and API reads (table above) | All 13 chains |
 | Top holders | Blockscout | Ethereum only |
 | Competitor TVL | DefiLlama | As DefiLlama counts them |
@@ -149,7 +149,7 @@ InstantManager contracts (mint/redeem events) exist **only on Ethereum**. All ot
 
 ## Caching Strategy
 
-Each source is cached for 1 hour: chain supply and the oracle price in memory, Blockscout and DefiLlama in the Next fetch cache, Dune in `dune.ts`. The home page and `/flows` re-render hourly (ISR). Chain supply caches only a fully live read, so a partial failure retries on the next render. The Dune path reads the latest saved result and does not re-execute the query, so that data is as old as the last run.
+Each source is cached for 1 hour: chain supply and the oracle price in memory, Blockscout and DefiLlama in the Next fetch cache. Flow log pages at or below a fixed past block (`HISTORY_END_BLOCK`) start from a fixed cursor and never change, so they cache for a week; only the pages newer than that block refresh hourly. A cold load is about 51 calls and 12 seconds; a warm one is 5 calls. The home page and `/flows` re-render hourly (ISR). Chain supply caches only a fully live read, so a partial failure retries on the next render.
 
 ---
 
@@ -158,7 +158,6 @@ Each source is cached for 1 hour: chain supply and the oracle price in memory, B
 All data sources are cited inline in the dashboard via the `MethodologyDrawer` component and each row's badge link. Primary sources:
 - On-chain reads: public RPCs and chain APIs listed in Pillar 3
 - OndoOracle on Ethereum for prices
-- Blockscout (eth.blockscout.com) for Ethereum holders
+- Blockscout (eth.blockscout.com) for Ethereum holders and InstantManager event logs (mint and redeem flows)
 - DefiLlama (api.llama.fi) for competitor TVL
-- Dune query 8822192 for mint and redeem flows
 - Ondo Finance official documentation (docs.ondo.finance) and competitor docs

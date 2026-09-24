@@ -51,15 +51,14 @@ export function FlowsMethodology() {
 
         <dt className="font-medium text-[color:var(--ink)]">USDY</dt>
         <dd>
-          Dune does not decode the USDY InstantManager, so the query reads its raw logs using the same event
-          signatures as OUSG. That raw decode reproduced the decoded OUSG totals exactly. USDY history starts Dec
-          2025, when the contract went live.
+          The USDY InstantManager emits the same <code className={code}>Subscription</code> and{' '}
+          <code className={code}>Redemption</code> events as OUSG. USDY history starts Dec 2025, when the contract
+          went live.
         </dd>
 
         <dt className="font-medium text-[color:var(--ink)]">Week</dt>
         <dd>
-          Weeks start Monday 00:00 UTC (DuneSQL <code className={code}>DATE_TRUNC(&apos;week&apos;)</code>). The
-          current week is partial, so the headline figures use the last complete week.
+          Weeks start Monday 00:00 UTC of the block time. The current week is partial, so the headline figures use the last complete week.
         </dd>
 
         <dt className="font-medium text-[color:var(--ink)]">Wallets</dt>
@@ -75,12 +74,14 @@ export function FlowsMethodology() {
           (ADR-005).
         </dd>
 
-        <dt className="font-medium text-[color:var(--ink)]">Query</dt>
+        <dt className="font-medium text-[color:var(--ink)]">Source</dt>
         <dd>
-          <a href="https://dune.com/queries/8822192" className="text-[color:var(--link)] hover:underline">
-            Dune query 8822192
+          Event logs from the{' '}
+          <a href="https://eth.blockscout.com/api-docs" className="text-[color:var(--link)] hover:underline">
+            Blockscout logs API
           </a>
-          , source in <code className={code}>queries/mint_redeem_volume.sql</code>.
+          , decoded and grouped by week in <code className={code}>src/lib/flowEvents.ts</code>. The same
+          definition in SQL is <code className={code}>queries/mint_redeem_volume.sql</code>.
         </dd>
       </dl>
     </section>

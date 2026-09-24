@@ -115,7 +115,7 @@ export function fourWeekStats(rows: WeeklyFlow[]): FourWeekStats {
   const prior: WeeklyFlow[] = [];
   for (const token of ['OUSG', 'USDY'] as const) {
     const series = weeklySeries(rows, token);
-    // Both tokens' windows line up: every row from one Dune result shares one asOf.
+    // Both tokens' windows line up: every row from one fetch shares one asOf.
     const asOf = series[series.length - 1]?.asOf ?? '';
     const complete = series.filter((r) => isCompleteWeek(r.week, asOf));
     recent.push(...complete.slice(-4));

@@ -207,7 +207,7 @@ Verified on Dune 2026-09-23: both OUSG InstantManagers are decoded, USDY Instant
 | Pillar | Data Available | Source | Gaps |
 |--------|---------------|--------|------|
 | 1: Top Ethereum holders | Top 15 balances per token | Blockscout token holders API, valued at OndoOracle | Ethereum only; names are manual registry or Blockscout tags |
-| 2: Mint/Redeem Volume | Full event logs with USD values | Dune InstantManager events | No settlement delta (atomic); volume + frequency only |
+| 2: Mint/Redeem Volume | Full event logs with USD values | Blockscout v2 logs API, InstantManager events (ADR-008) | No settlement delta (atomic); volume + frequency only |
 | 3: TVL by chain | OUSG + USDY supply on 13 chains | Direct RPC/API supply reads × OndoOracle price | Counts Ondo-held inventory; see METHODOLOGY.md for the per-chain table |
 | 4: Competitive Benchmark | TVL per product | DefiLlama (Ondo row on-chain when all chains live) | Accounting differs by product; BUIDL chain count and redemption not disclosed |
 

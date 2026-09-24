@@ -52,7 +52,7 @@ export default async function DashboardPage() {
           OUSG and USDY analytics from Ondo Finance: TVL, chains, liquidity, flows, and competitors.
         </p>
         <p className="text-sm text-[color:var(--mute)]">
-          Live data from Dune, Blockscout, DefiLlama and on-chain reads. Each section shows its own date.
+          Live data from Blockscout, DefiLlama and on-chain reads. Each section shows its own date.
         </p>
       </section>
 
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
             label="4-week net flow"
             value={`${stats.netFlowUsd > 0 ? '+' : ''}${formatUsdCompact(stats.netFlowUsd)}`}
             dataSource={flows.dataSource}
-            subValue={flowsAsOf ? `Dune, as of ${formatWeek(flowsAsOf)}` : undefined}
+            subValue={flowsAsOf ? `as of ${formatWeek(flowsAsOf)}` : undefined}
           />
           <MetricCard
             label="Avg tx size"
