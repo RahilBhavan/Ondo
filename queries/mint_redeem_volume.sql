@@ -3,7 +3,7 @@
 -- Keep the two in sync; this file stays as the documented metric definition.
 --
 -- Pillar 2: Weekly Mint/Redeem Volume, Frequency & Wallets
--- Saved on Dune: https://dune.com/queries/8822192 (DUNE_MINT_REDEEM_QUERY_ID)
+-- Saved on Dune: https://dune.com/queries/8822192 (formerly DUNE_MINT_REDEEM_QUERY_ID)
 -- Full history, weekly aggregation (DATE_TRUNC('week') = Monday 00:00 UTC). The current week is partial.
 --
 -- Sources (verified on Dune 2026-09-23):

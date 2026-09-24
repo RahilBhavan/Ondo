@@ -1,7 +1,7 @@
 /**
  * Weekly instant mint/redeem flows (Pillar 2) from InstantManager event logs on Ethereum.
  *
- * Same definition as queries/mint_redeem_volume.sql (Dune query 8822192), computed here
+ * Same definition as queries/mint_redeem_volume.sql (the original Dune query), computed here
  * from Blockscout's v2 address logs API (no key, 180 calls a minute, 50 logs a page, newest
  * first). Not the Etherscan-style /api getLogs: keyless, that allows about 10 calls and then
  * blocks the IP for up to an hour (ADR-008).
@@ -236,7 +236,8 @@ async function fetchSeries(address: string, topic: Hex, historyOnly: boolean, lo
     logs.push(...page.items);
     url = page.next ? at(page.next) : null;
   }
-  return logs;
+  // Blockscout's `topic=` matches any topic position; keep only this event's logs.
+  return logs.filter((l) => l.topics[0]?.toLowerCase() === topic.toLowerCase());
 }
 
 export interface FlowEventsLoad {
