@@ -25,9 +25,9 @@ function mockResult(reason: string): WeeklyFlowsResult {
 export async function getWeeklyFlows(): Promise<WeeklyFlowsResult> {
   try {
     const started = Date.now();
-    const events = await fetchFlowEvents();
+    const { events, calls } = await fetchFlowEvents();
     if (!events.length) return mockResult('no InstantManager events returned');
-    console.info(`[weeklyFlows] ${events.length} events in ${Date.now() - started}ms`);
+    console.info(`[weeklyFlows] ${events.length} events, ${calls} page requests, ${Date.now() - started}ms`);
     const rows = aggregateWeekly(events, { asOf: new Date().toISOString(), source: FLOWS_SOURCE_URL });
     return { rows, dataSource: 'live', queryUrl: FLOWS_SOURCE_URL };
   } catch (err) {

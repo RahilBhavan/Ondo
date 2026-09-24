@@ -14,7 +14,9 @@
  *
  * Pages at or below HISTORY_END_BLOCK start from a fixed cursor, so their URLs and contents
  * never change and they cache for a week; only the pages newer than it revalidate hourly.
- * Each call times out after 10s; any failure throws and the caller falls back to mock data.
+ * Each call times out after 10s. A 429 waits (retry-after or x-ratelimit-reset, else 5s, 15s,
+ * 30s) within a 60s budget per load; at most 4 pages are in flight per process. Any other
+ * failure throws and the caller falls back to mock data.
  */
 
 import { decodeEventLog, getAddress, parseAbi, toEventSelector, type Hex } from 'viem';
@@ -165,42 +167,106 @@ interface LogsPage {
   next: { block_number: number; index: number } | null;
 }
 
-async function getPage(url: string, revalidate: number): Promise<LogsPage> {
-  const res = await fetch(url, { next: { revalidate }, signal: AbortSignal.timeout(TIMEOUT_MS) });
-  if (!res.ok) throw new Error(`Blockscout logs: HTTP ${res.status} for ${url}`);
-  const body = (await res.json()) as { items?: unknown; next_page_params?: LogsPage['next'] };
-  if (!Array.isArray(body.items)) throw new Error(`Blockscout logs: no items for ${url}`);
-  return { items: body.items as BlockscoutLog[], next: body.next_page_params ?? null };
+/** Total time one load may spend waiting out 429s before it gives up (caller falls back to mock). */
+export const RETRY_BUDGET_MS = 60_000;
+const BACKOFF_MS = [5_000, 15_000, 30_000];
+/** Page fetches in flight at once, per process. */
+const MAX_CONCURRENT = 4;
+
+let active = 0;
+const queue: (() => void)[] = [];
+async function limited<T>(fn: () => Promise<T>): Promise<T> {
+  if (active >= MAX_CONCURRENT) await new Promise<void>((resolve) => queue.push(resolve));
+  active++;
+  try {
+    return await fn();
+  } finally {
+    active--;
+    queue.shift()?.();
+  }
+}
+
+/** Wait hinted by a 429: retry-after (seconds) or x-ratelimit-reset (ms until reset, as Blockscout sends it). */
+function hintedWaitMs(res: Response): number | null {
+  const retryAfter = Number(res.headers.get('retry-after'));
+  if (retryAfter > 0) return retryAfter * 1000;
+  const reset = Number(res.headers.get('x-ratelimit-reset'));
+  return reset > 0 ? reset : null;
+}
+
+interface Load {
+  deadline: number;
+  calls: number;
+}
+
+async function getPage(url: string, revalidate: number, load: Load): Promise<LogsPage> {
+  for (let attempt = 0; ; attempt++) {
+    load.calls++;
+    const res = await limited(() => fetch(url, { next: { revalidate }, signal: AbortSignal.timeout(TIMEOUT_MS) }));
+    if (res.status === 429) {
+      const backoff = BACKOFF_MS[Math.min(attempt, BACKOFF_MS.length - 1)];
+      const wait = Math.min(hintedWaitMs(res) ?? backoff, load.deadline - Date.now());
+      if (wait <= 0) throw new Error(`Blockscout logs: HTTP 429, retry budget spent, for ${url}`);
+      console.warn(`[flowEvents] HTTP 429, retrying in ${Math.round(wait / 1000)}s`);
+      await new Promise((resolve) => setTimeout(resolve, wait));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Blockscout logs: HTTP ${res.status} for ${url}`);
+    const body = (await res.json()) as { items?: unknown; next_page_params?: LogsPage['next'] };
+    if (!Array.isArray(body.items)) throw new Error(`Blockscout logs: no items for ${url}`);
+    return { items: body.items as BlockscoutLog[], next: body.next_page_params ?? null };
+  }
 }
 
 /** Every log of one event on one contract. Pages run newest first; a cursor returns logs older than it. */
-async function fetchSeries(address: string, topic: Hex, historyOnly: boolean): Promise<BlockscoutLog[]> {
+async function fetchSeries(address: string, topic: Hex, historyOnly: boolean, load: Load): Promise<BlockscoutLog[]> {
   const base = `${BLOCKSCOUT_V2}/addresses/${address}/logs?topic=${topic}`;
   const at = (p: { block_number: number; index: number }) => `${base}&block_number=${p.block_number}&index=${p.index}`;
   const logs: BlockscoutLog[] = [];
   // Newer than HISTORY_END_BLOCK: from the head down, hourly.
   for (let url: string | null = historyOnly ? null : base; url; ) {
-    const page = await getPage(url, LATEST_REVALIDATE_S);
+    const page = await getPage(url, LATEST_REVALIDATE_S, load);
     const fresh = page.items.filter((l) => l.block_number > HISTORY_END_BLOCK);
     logs.push(...fresh);
     url = fresh.length === page.items.length && page.next ? at(page.next) : null;
   }
   // History: a fixed starting cursor, so every page URL is stable.
   for (let url: string | null = at({ block_number: HISTORY_END_BLOCK + 1, index: 0 }); url; ) {
-    const page = await getPage(url, HISTORY_REVALIDATE_S);
+    const page = await getPage(url, HISTORY_REVALIDATE_S, load);
     logs.push(...page.items);
     url = page.next ? at(page.next) : null;
   }
   return logs;
 }
 
-/** Every counted event across the three contracts, full history. */
-export async function fetchFlowEvents(): Promise<FlowEvent[]> {
-  // One sequential chain per (contract, event), 8 in parallel: well under 180 calls a minute.
+export interface FlowEventsLoad {
+  events: FlowEvent[];
+  /** Page requests made, retries included */
+  calls: number;
+}
+
+async function loadFlowEvents(): Promise<FlowEventsLoad> {
+  const load: Load = { deadline: Date.now() + RETRY_BUDGET_MS, calls: 0 };
+  // One sequential chain per (contract, event); `limited` caps pages in flight across all chains.
   const series = FLOW_CONTRACTS.flatMap((c) =>
     c.events.map(async (name) =>
-      (await fetchSeries(c.address, topic0(name), c.retired ?? false)).map((l) => decodeFlowLog(l, c.token))
+      (await fetchSeries(c.address, topic0(name), c.retired ?? false, load)).map((l) => decodeFlowLog(l, c.token))
     )
   );
-  return (await Promise.all(series)).flat();
+  const events = (await Promise.all(series)).flat();
+  return { events, calls: load.calls };
+}
+
+let inflight: Promise<FlowEventsLoad> | null = null;
+
+/**
+ * Every counted event across the three contracts, full history. Concurrent callers in one
+ * process (a build prerenders several routes) share one in-flight load; the memo clears
+ * when it settles, so later calls fetch again (through the fetch cache).
+ */
+export function fetchFlowEvents(): Promise<FlowEventsLoad> {
+  inflight ??= loadFlowEvents().finally(() => {
+    inflight = null;
+  });
+  return inflight;
 }

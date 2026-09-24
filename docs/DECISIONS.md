@@ -129,7 +129,11 @@
     rows through the week of 2026-09-14 match exactly on counts and unique wallets, and
     volumes match to the cent ($1,483.32M minted, $785.65M redeemed)
   - A cold load is about 51 calls and 12 seconds; a warm one is 5 calls. A cold build
-    prerenders three routes in parallel, about 155 calls against a 180 a minute limit
+    prerenders three routes in separate workers, about 153 calls against a 180 a minute
+    limit. To absorb that: concurrent callers in one process share one load, at most 4
+    pages are in flight per process, and a 429 waits (retry-after or x-ratelimit-reset,
+    else 5s, 15s, 30s) for up to 60s before the mock fallback. staticPageGenerationTimeout
+    is 120s so that wait cannot fail the build
   - Not used: Blockscout's Etherscan-style /api getLogs (keyless, about 10 calls, then the IP
     is blocked for up to an hour) and Routescan's Etherscan-style API (its address filter
     drops 5 legacy OUSG events in the week of 2024-09-23, which Dune and Blockscout have)
