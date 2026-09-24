@@ -288,7 +288,7 @@ const competitorBenchmark: CompetitorMetric[] = [
     tvlUsd: 2_560_085_819,
     chainCount: 14,
     chainSource: 'https://docs.ondo.finance/addresses',
-    redemptionSpeed: 'OUSG instant (atomic, limits apply); otherwise next business day',
+    redemptionSpeed: 'OUSG: instant (atomic, limits apply), else typically next business day',
     redemptionSource: 'https://docs.ondo.finance/qualified-access-products/ousg/redeeming',
     dataSource: 'mocked',
     asOf: BENCHMARK_AS_OF,
@@ -298,7 +298,7 @@ const competitorBenchmark: CompetitorMetric[] = [
     protocol: 'superstate',
     protocolName: 'Superstate (Invesco USTB)',
     tvlUsd: 549_663_644,
-    chainCount: 3,
+    chainCount: 3, // "Ethereum, Solana, and Plume"
     chainSource: 'https://docs.superstate.com/investors/tokenized-funds/available-funds/invesco-ustb',
     redemptionSpeed: 'USDC immediate (subject to liquidity); USD same day if before 1pm ET',
     redemptionSource: 'https://docs.superstate.com/investors/tokenized-funds/available-funds/invesco-ustb',

@@ -20,8 +20,8 @@ for (const r of MOCK_DATA.competitorBenchmark) {
   assert.ok(r.chainCount === null || r.chainSource, r.protocol);
 }
 
-// RWA slug: currentChainTvls empty, `chains` is a placeholder, so the cited static count stays.
-const rwa = mapBenchmarkRow(ondo, 2_560_085_819.29, { chains: ['Ethereum'], currentChainTvls: {} }, asOf);
+// Live row: TVL, label, asOf and source change; cited static fields stay.
+const rwa = mapBenchmarkRow(ondo, 2_560_085_819.29, asOf);
 assert.equal(rwa.tvlUsd, 2_560_085_819.29);
 assert.equal(rwa.dataSource, 'live');
 assert.equal(rwa.asOf, asOf);
@@ -30,23 +30,17 @@ assert.equal(rwa.chainCount, 14);
 assert.equal(rwa.chainSource, ondo.chainSource);
 assert.equal(rwa.redemptionSpeed, ondo.redemptionSpeed);
 
-// Per-chain TVL tracked: chain count comes from DefiLlama.
-const tracked = mapBenchmarkRow(
-  ustb,
-  549_663_644,
-  { chains: ['Ethereum', 'Solana'], currentChainTvls: { Ethereum: 1, Solana: 2 } },
-  asOf
-);
-assert.equal(tracked.chainCount, 2);
-assert.equal(tracked.chainSource, 'https://defillama.com/protocol/invesco-ustb');
-
-// Missing metadata keeps the static count; null static count stays null.
-assert.equal(mapBenchmarkRow(tbill, 1, null, asOf).chainCount, 3);
-assert.equal(mapBenchmarkRow(buidl, 1, undefined, asOf).chainCount, null);
+// Chain counts always cite issuer docs, never DefiLlama.
+const live = mapBenchmarkRow(ustb, 549_663_644, asOf);
+assert.equal(live.chainCount, 3);
+assert.equal(live.chainSource, 'https://docs.superstate.com/investors/tokenized-funds/available-funds/invesco-ustb');
+assert.equal(live.source, 'https://defillama.com/protocol/invesco-ustb');
+assert.equal(mapBenchmarkRow(tbill, 1, asOf).chainCount, 3);
+assert.equal(mapBenchmarkRow(buidl, 1, asOf).chainCount, null);
 
 // Bad TVL throws so the caller falls back to the mock row.
 for (const bad of [0, -5, NaN, '123', null, { tvl: 1 }]) {
-  assert.throws(() => mapBenchmarkRow(ondo, bad, null, asOf), /bad tvl/);
+  assert.throws(() => mapBenchmarkRow(ondo, bad, asOf), /bad tvl/);
 }
 
 console.log('benchmark check ok');
