@@ -19,7 +19,7 @@ export interface Sourced {
 // --- Pillar 1: Top Ethereum holders ---
 
 export interface HolderMetric extends Sourced {
-  /** Label from the address registry, or "Unknown wallet (0x…)" */
+  /** Registry label, else Blockscout public name tag, else "Unknown wallet (0x…)" */
   name: string;
   /** Wallet address (checksummed) */
   address: string;
@@ -29,8 +29,6 @@ export interface HolderMetric extends Sourced {
   balance: number;
   /** balance × Ondo oracle price, in USD */
   tvlUsd: number;
-  /** Most recent transfer of this token by the holder (ISO) */
-  lastActivity: string;
 }
 
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---

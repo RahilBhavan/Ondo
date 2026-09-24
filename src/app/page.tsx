@@ -11,7 +11,7 @@ import { PageShell } from '@/components/ui/PageShell';
 import { getTopHolders } from '@/lib/topHolders';
 import type { DashboardData } from '@/lib/types';
 
-// Top holders read Dune + the price oracle; both cache for 1hr.
+// Top holders read Blockscout + the price oracle; both cache for 1hr.
 export const revalidate = 3600;
 
 const NAV_LINKS = [

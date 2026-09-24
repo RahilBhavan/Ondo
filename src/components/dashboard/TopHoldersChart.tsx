@@ -20,7 +20,7 @@ export function TopHoldersChart({ data }: TopHoldersChartProps) {
           Top Ethereum holders
         </h3>
         <p className="text-sm text-[color:var(--mute)] mt-1">
-          Ethereum only. Names come from a manual address registry; unlabeled wallets show their address.
+          Ethereum only. Names come from a manual address registry, then Blockscout public tags; unlabeled wallets show their address.
         </p>
       </div>
 
@@ -38,7 +38,6 @@ export function TopHoldersChart({ data }: TopHoldersChartProps) {
                   </th>
                   <th className="text-right text-[color:var(--mute)] font-medium pb-2 pr-4">Balance</th>
                   <th className="text-right text-[color:var(--mute)] font-medium pb-2 pr-4">Value</th>
-                  <th className="text-right text-[color:var(--mute)] font-medium pb-2 pr-4">Last activity</th>
                   <th className="text-center text-[color:var(--mute)] font-medium pb-2">Source</th>
                 </tr>
               </thead>
@@ -62,9 +61,6 @@ export function TopHoldersChart({ data }: TopHoldersChartProps) {
                       <td className="py-2 pr-4 text-right font-mono text-[13px] tabular-nums text-[color:var(--ink)]">
                         {prefix}{formatUsdCompact(row.tvlUsd)}
                       </td>
-                      <td className="py-2 pr-4 text-right font-mono text-[13px] tabular-nums text-[color:var(--mute)]">
-                        {formatDate(row.lastActivity)}
-                      </td>
                       <td className="py-2 text-center">
                         <DataSourceBadge source={row.dataSource} />
                       </td>
@@ -79,7 +75,7 @@ export function TopHoldersChart({ data }: TopHoldersChartProps) {
 
       {asOf && (
         <p className="text-xs text-[color:var(--mute)] mt-3">
-          Balances as of {formatDate(asOf)}, valued at the Ondo oracle price.
+          Balances from Blockscout as of {formatDate(asOf)}, valued at the Ondo oracle price.
         </p>
       )}
     </div>

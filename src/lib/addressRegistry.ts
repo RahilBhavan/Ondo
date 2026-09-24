@@ -100,6 +100,11 @@ export function resolveAddress(address: string): string {
   return `Unknown wallet (${address.slice(0, 6)}...${address.slice(-4)})`;
 }
 
+/** Registry label first, then an explorer public tag (Blockscout), then "Unknown wallet (0x…)". */
+export function holderName(address: string, tag: string | null): string {
+  return ADDRESS_REGISTRY[address] || !tag ? resolveAddress(address) : tag;
+}
+
 /**
  * Check if an address belongs to Ondo protocol infrastructure
  * (should be excluded from TVL-by-issuer calculations).
