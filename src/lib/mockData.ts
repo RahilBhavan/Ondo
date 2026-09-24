@@ -11,7 +11,6 @@
 
 import type {
   IssuerMetric,
-  VelocityDataPoint,
   WeeklyFlow,
   LiquidityCell,
   ChainTVL,
@@ -90,49 +89,6 @@ const issuerMetrics: IssuerMetric[] = [
 ];
 
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---
-
-function generateVelocityData(): VelocityDataPoint[] {
-  const data: VelocityDataPoint[] = [];
-  const now = new Date('2026-04-09');
-
-  for (let i = 89; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    const weekendFactor = isWeekend ? 0.3 : 1.0;
-    const trendFactor = 1 + (90 - i) * 0.005;
-
-    // OUSG: higher value, lower frequency
-    data.push({
-      date: dateStr,
-      token: 'OUSG',
-      mintVolumeUsd: Math.round(2_500_000 * weekendFactor * trendFactor * (0.7 + Math.random() * 0.6)),
-      redeemVolumeUsd: Math.round(1_800_000 * weekendFactor * trendFactor * (0.5 + Math.random() * 0.8)),
-      mintCount: Math.round(8 * weekendFactor * (0.5 + Math.random())),
-      redeemCount: Math.round(5 * weekendFactor * (0.5 + Math.random())),
-      dataSource: 'mocked',
-      asOf: MOCK_AS_OF,
-      source: 'Synthetic data modeled on Ondo InstantManager event patterns',
-    });
-
-    // USDY: lower value, higher frequency
-    data.push({
-      date: dateStr,
-      token: 'USDY',
-      mintVolumeUsd: Math.round(1_200_000 * weekendFactor * trendFactor * (0.6 + Math.random() * 0.8)),
-      redeemVolumeUsd: Math.round(900_000 * weekendFactor * trendFactor * (0.4 + Math.random() * 0.9)),
-      mintCount: Math.round(15 * weekendFactor * (0.5 + Math.random())),
-      redeemCount: Math.round(12 * weekendFactor * (0.5 + Math.random())),
-      dataSource: 'mocked',
-      asOf: MOCK_AS_OF,
-      source: 'Synthetic data modeled on Ondo InstantManager event patterns',
-    });
-  }
-
-  return data;
-}
 
 /** Tiny seeded PRNG (mulberry32) so weekly mocks are identical across renders and servers. */
 function seededRandom(seed: number): () => number {
@@ -335,9 +291,6 @@ const competitorBenchmark: CompetitorMetric[] = [
 
 const dashboardMetrics: DashboardMetrics = {
   totalTvlUsd: 920_000_000,
-  activeIssuers: 5,
-  volume30dUsd: 145_000_000,
-  avgTxSizeUsd: 185_000,
   lastUpdated: '2026-04-09T14:00:00Z',
 };
 
@@ -346,7 +299,6 @@ const dashboardMetrics: DashboardMetrics = {
 export const MOCK_DATA: DashboardData = {
   metrics: dashboardMetrics,
   issuerMetrics,
-  velocityData: generateVelocityData(),
   weeklyFlows: generateWeeklyFlows(),
   liquidityCells: generateLiquidityCells(),
   chainBreakdown,
@@ -360,7 +312,7 @@ export const MOCK_DATA: DashboardData = {
 export function getMockPillarData(pillar: 1 | 2 | 3 | 4): unknown {
   switch (pillar) {
     case 1: return MOCK_DATA.issuerMetrics;
-    case 2: return MOCK_DATA.velocityData;
+    case 2: return MOCK_DATA.weeklyFlows;
     case 3: return { cells: MOCK_DATA.liquidityCells, breakdown: MOCK_DATA.chainBreakdown };
     case 4: return MOCK_DATA.competitorBenchmark;
   }
