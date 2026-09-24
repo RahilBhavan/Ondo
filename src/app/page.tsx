@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { formatUsdCompact, formatNumberCompact, formatPercent, relativeTime } from '@/lib/format';
 import { getWeeklyFlows } from '@/lib/weeklyFlows';
 import { fourWeekStats, weeklySeries } from '@/lib/flowStats';
+import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
+import { combinedSource } from '@/lib/dataSource';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
 import { FlowCharts } from '@/components/flows/FlowCharts';
@@ -15,6 +17,7 @@ import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
 import type { DashboardData } from '@/lib/types';
 
+// Chain TVL reads on-chain supply; re-render hourly like /flows.
 export const revalidate = 3600;
 
 const NAV_LINKS = [
@@ -38,6 +41,11 @@ export default async function DashboardPage() {
   const stats = fourWeekStats(flows.rows);
   const trend = stats.volumeTrend;
   const prefix = flows.dataSource === 'mocked' ? '~' : '';
+  const chainRows = await getChainTVL();
+  const totalTvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
+  const tvlSource = combinedSource(chainRows);
+  // MetricCard adds '~' itself only when fully mocked; a mixed total needs it too.
+  const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'mocked') ? '~' : '';
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -56,9 +64,9 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             label="Total TVL"
-            value={formatUsdCompact(metrics.totalTvlUsd)}
-            dataSource="mocked"
-            trend={{ direction: 'up', label: '+12.3% 30d' }}
+            value={`${tvlPrefix}${formatUsdCompact(totalTvlUsd)}`}
+            dataSource={tvlSource}
+            subValue="13 chains, OUSG + USDY"
           />
           <MetricCard
             label="4-week volume"
@@ -92,12 +100,12 @@ export default async function DashboardPage() {
             <TVLByIssuerChart data={data.issuerMetrics} />
           </div>
           <div className="lg:col-span-2">
-            <ChainBreakdown data={data.chainBreakdown} />
+            <ChainBreakdown data={chainRows} />
           </div>
         </div>
 
         {/* Heatmap — full width hero */}
-        <LiquidityHeatmap data={data.liquidityCells} />
+        <LiquidityHeatmap data={toLiquidityCells(chainRows)} />
 
         {/* Weekly flows, last 12 weeks per token — full width */}
         <section className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">

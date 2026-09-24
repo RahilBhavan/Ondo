@@ -90,6 +90,7 @@ export type Chain =
   | 'stellar'
   | 'plume'
   | 'sei'
+  | 'bnb'
   | 'xrp-ledger';
 
 export interface LiquidityCell extends Sourced {
@@ -102,14 +103,12 @@ export interface LiquidityCell extends Sourced {
 
 export interface ChainTVL extends Sourced {
   chain: Chain;
-  /** Token: OUSG or USDY (or both aggregated) */
-  token: 'OUSG' | 'USDY' | 'ALL';
+  /** Token: OUSG or USDY */
+  token: 'OUSG' | 'USDY';
+  /** Total supply on this chain, in token units */
+  supply: number;
   tvlUsd: number;
-  /** Number of unique holders */
-  holderCount: number;
-  /** Transaction count in last 30 days */
-  txCount30d: number;
-  /** Percentage of total TVL */
+  /** Percentage of total TVL (0-100) */
   pctOfTotal: number;
 }
 

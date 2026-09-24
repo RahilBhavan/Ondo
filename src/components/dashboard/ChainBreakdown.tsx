@@ -1,6 +1,7 @@
 'use client';
 
-import type { ChainTVL } from '@/lib/types';
+import type { Chain, ChainTVL } from '@/lib/types';
+import { combinedSource } from '@/lib/dataSource';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { formatUsdCompact, formatPercent } from '@/lib/format';
 
@@ -16,10 +17,32 @@ const CHAIN_COLORS: Record<string, string> = {
   solana: '#14F195',
   sui: '#6FBCF0',
   aptos: '#2ED8A3',
+  stellar: 'var(--chain-stellar)',
+  sei: 'var(--chain-sei)',
+  'xrp-ledger': 'var(--chain-xrp)',
+  bnb: 'var(--chain-bnb)',
 };
 
+interface ChainTotal {
+  chain: Chain;
+  tvlUsd: number;
+  mocked: boolean;
+}
+
+/** Sum the per-(token, chain) rows into one entry per chain. */
+function byChain(rows: ChainTVL[]): ChainTotal[] {
+  const map = new Map<Chain, ChainTotal>();
+  for (const r of rows) {
+    const t = map.get(r.chain) ?? { chain: r.chain, tvlUsd: 0, mocked: false };
+    t.tvlUsd += r.tvlUsd;
+    t.mocked ||= r.dataSource === 'mocked';
+    map.set(r.chain, t);
+  }
+  return [...map.values()];
+}
+
 export function ChainBreakdown({ data }: ChainBreakdownProps) {
-  const sorted = [...data].sort((a, b) => b.tvlUsd - a.tvlUsd);
+  const sorted = byChain(data).sort((a, b) => b.tvlUsd - a.tvlUsd);
   const totalTvl = sorted.reduce((sum, d) => sum + d.tvlUsd, 0);
 
   return (
@@ -28,7 +51,7 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
         <h3 className="text-base font-semibold tracking-[-0.32px] text-[color:var(--ink)]">
           Chain breakdown
         </h3>
-        <DataSourceBadge source={sorted[0]?.dataSource ?? 'mocked'} />
+        <DataSourceBadge source={combinedSource(data)} />
       </div>
 
       {/* Stacked bar */}
@@ -54,7 +77,6 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
       <div className="space-y-2">
         {sorted.map((chain) => {
           const pct = totalTvl > 0 ? chain.tvlUsd / totalTvl : 0;
-          const isMocked = chain.dataSource === 'mocked';
           return (
             <div key={chain.chain} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
@@ -65,9 +87,11 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
                 <span className="text-[color:var(--ink)] capitalize">{chain.chain}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[13px] tabular-nums text-[color:var(--mute)]">{formatPercent(pct)}</span>
+                <span className="font-mono text-[13px] tabular-nums text-[color:var(--mute)]">
+                  {chain.tvlUsd === 0 ? '–' : formatPercent(pct)}
+                </span>
                 <span className="font-mono text-[13px] tabular-nums text-[color:var(--ink)] w-16 text-right">
-                  {isMocked ? '~' : ''}{formatUsdCompact(chain.tvlUsd)}
+                  {chain.tvlUsd === 0 ? '–' : `${chain.mocked ? '~' : ''}${formatUsdCompact(chain.tvlUsd)}`}
                 </span>
               </div>
             </div>
@@ -75,21 +99,6 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
         })}
       </div>
 
-      {/* Holder stats */}
-      <div className="mt-4 pt-3 border-t border-[color:var(--hairline)] grid grid-cols-2 gap-3">
-        <div>
-          <p className="text-sm text-[color:var(--mute)]">Total holders</p>
-          <p className="mt-1 text-lg font-semibold tracking-[-0.32px] tabular-nums text-[color:var(--ink)]">
-            {sorted.reduce((sum, d) => sum + d.holderCount, 0).toLocaleString()}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-[color:var(--mute)]">30d transactions</p>
-          <p className="mt-1 text-lg font-semibold tracking-[-0.32px] tabular-nums text-[color:var(--ink)]">
-            {sorted.reduce((sum, d) => sum + d.txCount30d, 0).toLocaleString()}
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
