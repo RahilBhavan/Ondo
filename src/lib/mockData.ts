@@ -10,7 +10,7 @@
  */
 
 import type {
-  IssuerMetric,
+  HolderMetric,
   VelocityDataPoint,
   WeeklyFlow,
   LiquidityCell,
@@ -20,74 +20,65 @@ import type {
   DashboardData,
   Chain,
 } from './types';
+import { resolveAddress } from './addressRegistry';
 
 const MOCK_SOURCE = 'Mock data derived from Ondo public disclosures (April 2026)';
 const MOCK_AS_OF = '2026-04-09';
 
-// --- Pillar 1: TVL by Issuer ---
+// --- Pillar 1: Top Ethereum holders ---
 
-const issuerMetrics: IssuerMetric[] = [
-  {
-    name: 'Ondo Finance (Treasury)',
-    address: '0xF67416a2C49f6A46FEe1c47681C5a3832cf8856c',
-    token: 'OUSG',
-    tvlUsd: 320_000_000,
-    lastActivity: '2026-04-09T14:00:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from Ondo OUSG AUM ~$500M (steakhouse/ondo-finance)',
-  },
-  {
-    name: 'Institutional Holder A',
-    address: '0x1234567890abcdef1234567890abcdef12345678',
-    token: 'OUSG',
-    tvlUsd: 85_000_000,
-    lastActivity: '2026-04-08T10:30:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from top holder analysis on Etherscan',
-  },
-  {
-    name: 'Institutional Holder B',
-    address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-    token: 'OUSG',
-    tvlUsd: 45_000_000,
-    lastActivity: '2026-04-07T16:45:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from top holder analysis on Etherscan',
-  },
-  {
-    name: 'Ondo Finance (USDY Treasury)',
-    address: '0xbDa73A0F13958ee444e0782E1768aB4B76EdaE28',
-    token: 'USDY',
-    tvlUsd: 280_000_000,
-    lastActivity: '2026-04-09T12:00:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from Ondo USDY AUM ~$400M (hashed_official/usdy)',
-  },
-  {
-    name: 'DeFi Protocol Integration',
-    address: '0x9876543210fedcba9876543210fedcba98765432',
-    token: 'USDY',
-    tvlUsd: 62_000_000,
-    lastActivity: '2026-04-09T08:15:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from DeFi protocol TVL on DefiLlama',
-  },
-  {
-    name: 'Institutional Holder C',
-    address: '0xfedcbafedcbafedcbafedcbafedcbafedcbafed0',
-    token: 'USDY',
-    tvlUsd: 28_000_000,
-    lastActivity: '2026-04-06T11:00:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from top holder analysis on Etherscan',
-  },
+// Fallback snapshot when Dune or the price oracle is unavailable. Balances are the top 15
+// holders per token from eth.blockscout.com/api/v2/tokens/<token>/holders on 2026-09-24,
+// last activity from each holder's latest token transfer there, valued at the Ondo oracle
+// price read the same day (OUSG $116.662365, USDY $1.14730001).
+const HOLDERS_AS_OF = '2026-09-24';
+const HOLDERS_SOURCE =
+  'Blockscout top holders snapshot 2026-09-24, valued at OndoOracle.getAssetPrice (0x9Cad45a8BF0Ed41Ff33074449B357C7a1fAb4094)';
+const HOLDERS_PRICE = { OUSG: 116.662365, USDY: 1.14730001 } as const;
+const HOLDERS_SNAPSHOT: Array<['OUSG' | 'USDY', string, number, string]> = [
+  ['OUSG', '0x1dD7950c266fB1be96180a8FDb0591F70200E018', 336339.56, '2026-07-01T18:41:47Z'],
+  ['OUSG', '0x5D87Fa995c54ffF52cfE1C18d8EbF79f0eEb3AeB', 261208.83, '2026-04-17T17:23:35Z'],
+  ['OUSG', '0x56e60979d5934a05D22606B0455d52F59F20A6A0', 187133.34, '2026-09-23T09:53:35Z'],
+  ['OUSG', '0xbd9676EA1D6cAD553E87EC456869633C669ffB03', 75241.51, '2026-06-06T17:15:59Z'],
+  ['OUSG', '0x5eD4EBAF21f83959f81b7e7545e25D313C84081f', 61295.76, '2026-04-14T02:49:23Z'],
+  ['OUSG', '0x54752f87a3f8b6c594C9AFb110b2c491614de204', 38593.42, '2026-09-21T12:12:11Z'],
+  ['OUSG', '0x4307b4C9D5A48AC7CB112eF6af7fbEFf5EFA6AF7', 33150.53, '2025-07-26T07:02:59Z'],
+  ['OUSG', '0x0f365d86809A00761a8DF914c812dbFDF481C149', 23923.62, '2026-09-17T09:00:47Z'],
+  ['OUSG', '0x3Ee60C57d70a6EC4877Dc24AA7d0e6FaC61cd11a', 17178.79, '2026-09-02T17:16:23Z'],
+  ['OUSG', '0x233F8aBDcC60088634382ef12C78bdeBf69C9470', 9950.13, '2023-03-22T17:53:23Z'],
+  ['OUSG', '0x609517eACD9Ec2E24DfFD4Eeca54C6fd88C866FE', 9147.24, '2026-09-03T13:56:35Z'],
+  ['OUSG', '0x64beF4478942d8FD62bE281707076442aa2D055E', 8693.54, '2026-09-09T18:27:23Z'],
+  ['OUSG', '0x02f8319261c904cB8C07E5DE7F19508354705669', 5605.26, '2024-10-17T13:40:35Z'],
+  ['OUSG', '0x9Ff88e2c4844A47a70233BA676c3928b05d255Cf', 4922.02, '2026-08-06T07:26:59Z'],
+  ['OUSG', '0xaDf5e32eB413e62DC072Aa5fd12F19a115aC3c12', 4062.49, '2026-09-18T16:39:47Z'],
+  ['USDY', '0xA5b614026dCB1ef6e0E39AA53351b4F4bd225302', 359037168.47, '2026-05-18T20:34:47Z'],
+  ['USDY', '0x661b5e00424B56Ba6e369e0c2f21E31B6FB8ee1a', 298780676.98, '2026-05-11T22:28:59Z'],
+  ['USDY', '0x9C6Fa3b81cE92B7D82980D68CCCE9D6e48fe4AC2', 106360871.12, '2026-08-20T16:40:23Z'],
+  ['USDY', '0xC392749B6ff2cd95e5a4e3Ed396c93f813395041', 83405034.64, '2026-09-22T17:26:23Z'],
+  ['USDY', '0xC882b111A75C0c657fC507C04FbFcD2cC984F071', 47579905.14, '2026-09-24T04:28:11Z'],
+  ['USDY', '0xEeB066aDa2D5C5eD9E4D9ee042bdEED430ae8512', 28843984.01, '2026-09-18T19:41:23Z'],
+  ['USDY', '0xC9E397454f5478f4418e45181849C6eA66303D5A', 17230923.92, '2025-05-02T20:20:59Z'],
+  ['USDY', '0x13134B8d770907eCb263cB88a67F9AF833007aFc', 16739969.14, '2026-09-15T11:11:23Z'],
+  ['USDY', '0x6870289efC708e41A97AD5068A9F84b0DD2bfAED', 15867912.96, '2026-08-18T16:06:35Z'],
+  ['USDY', '0xc0db94fDDE74f3902EA7995194d290F6BEE78f8C', 10280817.53, '2025-05-03T09:08:59Z'],
+  ['USDY', '0xD56a32E078be332cDE149c29949a1D4d0C1c9F0E', 7500000.00, '2024-08-09T13:37:35Z'],
+  ['USDY', '0x6d542B698541fFd216c45AcDC1C6C1CD233dFf94', 4403415.43, '2026-06-08T10:20:11Z'],
+  ['USDY', '0xd97eCe4a24C4538d96E14296c5544c871caE2eEB', 3067064.04, '2026-07-31T13:16:35Z'],
+  ['USDY', '0xEC33298A3aC7A5F5B3f21A3218a5D8E862Da8a12', 2683281.53, '2026-09-11T16:03:59Z'],
+  ['USDY', '0xaf37c1167910ebC994e266949387d2c7C326b879', 2294280.89, '2026-09-23T10:57:35Z'],
 ];
+
+const topHolders: HolderMetric[] = HOLDERS_SNAPSHOT.map(([token, address, balance, lastActivity]) => ({
+  name: resolveAddress(address),
+  address,
+  token,
+  balance,
+  tvlUsd: balance * HOLDERS_PRICE[token],
+  lastActivity,
+  dataSource: 'mocked',
+  asOf: HOLDERS_AS_OF,
+  source: HOLDERS_SOURCE,
+}));
 
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---
 
@@ -345,7 +336,7 @@ const dashboardMetrics: DashboardMetrics = {
 
 export const MOCK_DATA: DashboardData = {
   metrics: dashboardMetrics,
-  issuerMetrics,
+  topHolders,
   velocityData: generateVelocityData(),
   weeklyFlows: generateWeeklyFlows(),
   liquidityCells: generateLiquidityCells(),
@@ -359,7 +350,7 @@ export const MOCK_DATA: DashboardData = {
  */
 export function getMockPillarData(pillar: 1 | 2 | 3 | 4): unknown {
   switch (pillar) {
-    case 1: return MOCK_DATA.issuerMetrics;
+    case 1: return MOCK_DATA.topHolders;
     case 2: return MOCK_DATA.velocityData;
     case 3: return { cells: MOCK_DATA.liquidityCells, breakdown: MOCK_DATA.chainBreakdown };
     case 4: return MOCK_DATA.competitorBenchmark;

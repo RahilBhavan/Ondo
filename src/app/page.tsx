@@ -1,14 +1,18 @@
 import { MOCK_DATA } from '@/lib/mockData';
 import { formatUsdCompact, formatNumberCompact, relativeTime } from '@/lib/format';
 import { MetricCard } from '@/components/ui/MetricCard';
-import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
+import { TopHoldersChart } from '@/components/dashboard/TopHoldersChart';
 import { MintRedeemVelocity } from '@/components/dashboard/MintRedeemVelocity';
 import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
 import { CompetitiveBenchmark } from '@/components/dashboard/CompetitiveBenchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
+import { getTopHolders } from '@/lib/topHolders';
 import type { DashboardData } from '@/lib/types';
+
+// Top holders read Dune + the price oracle; both cache for 1hr.
+export const revalidate = 3600;
 
 const NAV_LINKS = [
   { label: 'Instant flows', href: '/flows' },
@@ -25,6 +29,7 @@ async function getDashboardData(): Promise<DashboardData> {
 export default async function DashboardPage() {
   const data = await getDashboardData();
   const { metrics } = data;
+  const topHolders = await getTopHolders();
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -67,10 +72,10 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* TVL + Chain — 2-column */}
+        {/* Top holders + Chain — 2-column */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3">
-            <TVLByIssuerChart data={data.issuerMetrics} />
+            <TopHoldersChart data={topHolders.rows} />
           </div>
           <div className="lg:col-span-2">
             <ChainBreakdown data={data.chainBreakdown} />

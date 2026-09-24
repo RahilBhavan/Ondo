@@ -16,18 +16,20 @@ export interface Sourced {
   source: string;
 }
 
-// --- Pillar 1: TVL by Issuer ---
+// --- Pillar 1: Top Ethereum holders ---
 
-export interface IssuerMetric extends Sourced {
-  /** Institution name from address registry, or "Unknown Wallet" */
+export interface HolderMetric extends Sourced {
+  /** Label from the address registry, or "Unknown wallet (0x…)" */
   name: string;
   /** Wallet address (checksummed) */
   address: string;
   /** Token: OUSG or USDY */
   token: 'OUSG' | 'USDY';
-  /** Total value in USD */
+  /** Balance in token units */
+  balance: number;
+  /** balance × Ondo oracle price, in USD */
   tvlUsd: number;
-  /** Most recent transaction timestamp (ISO) */
+  /** Most recent transfer of this token by the holder (ISO) */
   lastActivity: string;
 }
 
@@ -167,7 +169,7 @@ export interface DashboardMetrics {
 
 export interface DashboardData {
   metrics: DashboardMetrics;
-  issuerMetrics: IssuerMetric[];
+  topHolders: HolderMetric[];
   velocityData: VelocityDataPoint[];
   weeklyFlows: WeeklyFlow[];
   liquidityCells: LiquidityCell[];
