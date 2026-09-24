@@ -2,7 +2,7 @@
  * Aggregated metrics endpoint.
  * GET /api/metrics — the same data the home page renders, from the same getters:
  *
- * - weeklyFlows: Dune (src/lib/weeklyFlows.ts)
+ * - weeklyFlows: InstantManager event logs via Blockscout (src/lib/flowEvents.ts)
  * - chainBreakdown + totalTvlUsd: on-chain supply × OndoOracle price (src/lib/chainSupply.ts)
  * - topHolders: Blockscout, Ethereum only (src/lib/topHolders.ts)
  * - competitorBenchmark: DefiLlama, Ondo row on-chain when every chain row is live (src/lib/benchmark.ts)

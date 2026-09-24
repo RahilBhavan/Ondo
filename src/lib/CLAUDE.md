@@ -11,11 +11,12 @@
 - Realistic ranges from Ondo public disclosures, not round numbers
 - `MOCK_DATA` holds the labeled fallback each live getter returns when its source fails
 
-## Dune Client
-- `dune.ts` handles execute → poll → cache cycle
-- 1hr in-memory cache TTL — no external cache needed for v1
-- Falls back gracefully when DUNE_API_KEY is missing
-- Use `getLatestResults()` for reads, `executeDuneQuery()` only when fresh data needed
+## Flow Events
+- `flowEvents.ts` reads InstantManager logs from Blockscout's v2 address logs API (no key), decodes them with viem, and groups them by week
+- Same definition as `queries/mint_redeem_volume.sql`; keep the two in sync
+- Pages at or below `HISTORY_END_BLOCK` cache for a week, newer pages for 1hr
+- Do not switch to Blockscout's Etherscan-style `/api?module=logs`: keyless, it allows about 10 calls, then blocks the IP for up to an hour. The v2 API allows 180 calls a minute
+- Routescan's Etherscan-style API is not a substitute: its address filter drops some legacy OUSG logs (ADR-008)
 
 ## Address Registry
 - `addressRegistry.ts` maps checksummed addresses to institution names

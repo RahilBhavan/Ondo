@@ -32,7 +32,7 @@ export default async function FlowsPage() {
           {asOf && <span>as of {formatWeek(asOf)}</span>}
           {dataSource === 'live' && queryUrl && (
             <a href={queryUrl} className="text-[color:var(--link)] hover:underline">
-              Dune query
+              Event logs
             </a>
           )}
         </p>
@@ -43,7 +43,7 @@ export default async function FlowsPage() {
       <FlowsMethodology />
 
       <footer className="border-t border-[color:var(--hairline)] py-8 text-sm text-[color:var(--mute)]">
-        Data from Dune Analytics. Source on{' '}
+        Data from Ethereum event logs via Blockscout. Source on{' '}
         <a href="https://github.com/RahilBhavan/Ondo" className="text-[color:var(--link)] hover:underline">
           GitHub
         </a>

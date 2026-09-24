@@ -6,7 +6,7 @@ const SECTIONS = [
   {
     title: 'Data sources',
     content:
-      'Total TVL, the chain breakdown and the heatmap come from on-chain reads. Top holders come from Blockscout. Weekly flows and the three flow KPIs come from Dune. Competitor TVL comes from DefiLlama. Every number has a badge: Live is read from its source, Mocked is a dated snapshot shown when the source fails, and Estimated mixes the two. Each source is cached for one hour.',
+      'Total TVL, the chain breakdown and the heatmap come from on-chain reads. Top holders come from Blockscout. Weekly flows and the three flow KPIs come from InstantManager event logs, read through Blockscout. Competitor TVL comes from DefiLlama. Every number has a badge: Live is read from its source, Mocked is a dated snapshot shown when the source fails, and Estimated mixes the two. Each source is cached for one hour.',
   },
   {
     title: 'Total TVL and chains (Pillar 3)',
@@ -21,7 +21,7 @@ const SECTIONS = [
   {
     title: 'Weekly mint and redeem (Pillar 2)',
     content:
-      'Weekly volume, counts and wallets from Ethereum InstantManager events: OUSG 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a, legacy OUSG 0x2826989983e3a66F0622132D019c2Ae173eb6A43 (Apr 2024 to Apr 2025) and USDY 0xa42613C243b67BF6194Ac327795b926B4b491f15. Subscription is a mint and Redemption is a redeem. USD value is the value the contract emits, so no price oracle is involved. Weeks start Monday 00:00 UTC and the current week is partial. The 4-week KPIs use the last four complete weeks. Only instant mint and redeem count, not transfers, DEX trades or other chains (ADR-005). Query: https://dune.com/queries/8822192.',
+      'Weekly volume, counts and wallets from Ethereum InstantManager events: OUSG 0x93358db73B6cd4b98D89c8F5f230E81a95c2643a, legacy OUSG 0x2826989983e3a66F0622132D019c2Ae173eb6A43 (Apr 2024 to Apr 2025) and USDY 0xa42613C243b67BF6194Ac327795b926B4b491f15. Subscription is a mint and Redemption is a redeem. USD value is the value the contract emits, so no price oracle is involved. Weeks start Monday 00:00 UTC and the current week is partial. The 4-week KPIs use the last four complete weeks. Only instant mint and redeem count, not transfers, DEX trades or other chains (ADR-005). Source: event logs from the Blockscout logs API; the same definition in SQL is queries/mint_redeem_volume.sql.',
   },
   {
     title: 'Competitive benchmark (Pillar 4)',
@@ -31,7 +31,7 @@ const SECTIONS = [
   {
     title: 'Known gaps',
     content:
-      'Holders cover Ethereum only. Supply-based TVL counts every token in circulation, including any inventory Ondo itself holds. The Ondo TVL includes BNB Chain and the XRP Ledger, which DefiLlama does not count. The Dune result is the last saved run, not a fresh one: the flows section shows its date, which can be days old.',
+      'Holders cover Ethereum only. Supply-based TVL counts every token in circulation, including any inventory Ondo itself holds. The Ondo TVL includes BNB Chain and the XRP Ledger, which DefiLlama does not count.',
   },
 ] as const;
 

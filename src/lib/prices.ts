@@ -3,7 +3,7 @@
  *
  * OndoOracle.getAssetPrice(token) returns a 1e18-scaled USD price. Every chain
  * shares this price (Mantle and BNB oracles return the same USDY value).
- * 1hr in-memory cache, same TTL as dune.ts. Throws on RPC failure; callers fall back.
+ * 1hr in-memory cache. Throws on RPC failure; callers fall back.
  */
 
 import { createPublicClient, formatUnits, http, parseAbi } from 'viem';

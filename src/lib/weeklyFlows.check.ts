@@ -1,39 +1,24 @@
-/** Self-check for the Dune row mapper. Run: npx --yes tsx src/lib/weeklyFlows.check.ts */
+/** Self-check for the weekly flow series math. Run: npx --yes tsx src/lib/weeklyFlows.check.ts */
 import assert from 'node:assert/strict';
-import { mapDuneRow } from './weeklyFlows';
 import { MOCK_DATA } from './mockData';
 import { fourWeekStats, growth12w, isCompleteWeek, mondayOf, weeklySeries } from './flowStats';
+import type { WeeklyFlow } from './types';
 
-const meta = { asOf: '2026-04-09T00:00:00.000Z', source: 'https://dune.com/queries/1' };
-
-const row = mapDuneRow(
-  {
-    week: '2026-03-30 00:00:00.000 UTC',
-    token: 'OUSG',
-    mint_volume_usd: '12500000.5',
-    redeem_volume_usd: 20000000,
-    net_flow_usd: -7499999.5,
-    mint_count: 9,
-    redeem_count: '4',
-    unique_minters: 6,
-    unique_redeemers: 3,
-    unique_wallets: 8,
-  },
-  meta
-);
-assert.equal(row.week, '2026-03-30');
-assert.equal(row.token, 'OUSG');
-assert.equal(row.mintVolumeUsd, 12500000.5);
-assert.equal(row.netFlowUsd, -7499999.5);
-assert.equal(row.redeemCount, 4);
-assert.equal(row.uniqueWallets, 8);
-assert.equal(row.dataSource, 'live');
-assert.equal(row.source, meta.source);
-
-assert.throws(() => mapDuneRow({ week: 'nope', token: 'OUSG' }, meta));
-assert.throws(() => mapDuneRow({ week: '2026-04-01', token: 'OUSG' }, meta), /bad week/);
-assert.throws(() => mapDuneRow({ week: '2026-03-30', token: 'BUIDL' }, meta));
-assert.throws(() => mapDuneRow({ week: '2026-03-30', token: 'USDY', mint_volume_usd: 'x' }, meta));
+const row: WeeklyFlow = {
+  week: '2026-03-30',
+  token: 'OUSG',
+  mintVolumeUsd: 12500000.5,
+  redeemVolumeUsd: 20000000,
+  netFlowUsd: -7499999.5,
+  mintCount: 9,
+  redeemCount: 4,
+  uniqueMinters: 6,
+  uniqueRedeemers: 3,
+  uniqueWallets: 8,
+  dataSource: 'live',
+  asOf: '2026-04-09T00:00:00.000Z',
+  source: 'https://eth.blockscout.com/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?tab=logs',
+};
 
 // Mock series: deterministic shape, Monday weeks, both tokens, wallets never exceed minters + redeemers.
 const mock = MOCK_DATA.weeklyFlows;
@@ -74,12 +59,15 @@ const g = growth12w(flat, flat[24].asOf);
 assert.ok(g !== null && Math.abs(g - 0.5) < 1e-9, `growth ${g}`);
 assert.equal(growth12w(flat.slice(1), flat[24].asOf), null);
 
-// Stale Dune execution: asOf is the execution end, not the wall clock. Weeks after it are
+// Stale fetch: asOf is when the data was read, not the wall clock. Weeks after it are
 // neither zero-filled nor complete, so the headline week keeps its real volume.
-const staleMeta = { asOf: '2026-08-27T00:00:00Z', source: meta.source };
-const stale = ['2026-08-10', '2026-08-17', '2026-08-24'].map((week) =>
-  mapDuneRow({ week, token: 'USDY', mint_volume_usd: 5_000_000 }, staleMeta)
-);
+const stale = ['2026-08-10', '2026-08-17', '2026-08-24'].map((week) => ({
+  ...row,
+  week,
+  token: 'USDY' as const,
+  mintVolumeUsd: 5_000_000,
+  asOf: '2026-08-27T00:00:00Z',
+}));
 const staleSeries = weeklySeries(stale, 'USDY');
 assert.deepEqual(staleSeries.map((r) => r.week), ['2026-08-10', '2026-08-17', '2026-08-24']);
 const staleLast = [...staleSeries].reverse().find((r) => isCompleteWeek(r.week, r.asOf));

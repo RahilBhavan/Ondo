@@ -2,7 +2,7 @@
 
 ## Project
 Open-source analytics dashboard for Ondo Nexus institutional adoption.
-Portfolio project. Solo. Stack: Next.js 14, TypeScript, Tailwind, Recharts, Dune API.
+Portfolio project. Solo. Stack: Next.js 16, TypeScript, Tailwind, Recharts, viem; public keyless data sources.
 
 ## Start Every Session
 1. Read @STATUS.md — current phase, active blockers, next goal
@@ -20,9 +20,9 @@ Run /project:log-session — writes DEVLOG entry + updates STATUS.md automatical
 - Design system: `DESIGN.md` (tokens in `src/app/globals.css`).
 
 ## Structure
-- /queries     — Dune SQL source of truth
+- /queries     — metric definitions in Dune SQL (the app computes the same from on-chain logs)
 - /docs        — RAG context, reference with @docs/filename.md
-- /src/lib     — data layer (dune.ts, types.ts, mockData.ts, addressRegistry.ts)
+- /src/lib     — data layer (flowEvents.ts, types.ts, mockData.ts, addressRegistry.ts)
 - /src/components — UI (see subdirectory CLAUDE.md)
 
 ## Tooling
