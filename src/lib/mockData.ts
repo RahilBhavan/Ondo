@@ -1,138 +1,79 @@
 /**
- * Typed mock data for all 4 dashboard pillars.
+ * Typed mock data for all 4 dashboard pillars: the labeled fallback each live getter
+ * returns when its source fails (ADR-002).
  *
- * Every value has a source citation and asOf date.
- * Mock data is a first-class feature (ADR-002), not a fallback.
- * Ranges are realistic, derived from Ondo's public disclosures
- * and comparable protocol metrics.
+ * Every value has a source citation and asOf date. Weekly flows are illustrative;
+ * holders, chain supply and benchmark rows are dated snapshots of the live sources.
  *
  * See docs/METHODOLOGY.md for the data source taxonomy.
  */
 
 import type {
-  IssuerMetric,
-  VelocityDataPoint,
+  HolderMetric,
   WeeklyFlow,
-  LiquidityCell,
   ChainTVL,
   CompetitorMetric,
-  DashboardMetrics,
-  DashboardData,
   Chain,
 } from './types';
+import { holderName } from './addressRegistry';
 
-const MOCK_SOURCE = 'Mock data derived from Ondo public disclosures (April 2026)';
 const MOCK_AS_OF = '2026-04-09';
 
-// --- Pillar 1: TVL by Issuer ---
+// --- Pillar 1: Top Ethereum holders ---
 
-const issuerMetrics: IssuerMetric[] = [
-  {
-    name: 'Ondo Finance (Treasury)',
-    address: '0xF67416a2C49f6A46FEe1c47681C5a3832cf8856c',
-    token: 'OUSG',
-    tvlUsd: 320_000_000,
-    lastActivity: '2026-04-09T14:00:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from Ondo OUSG AUM ~$500M (steakhouse/ondo-finance)',
-  },
-  {
-    name: 'Institutional Holder A',
-    address: '0x1234567890abcdef1234567890abcdef12345678',
-    token: 'OUSG',
-    tvlUsd: 85_000_000,
-    lastActivity: '2026-04-08T10:30:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from top holder analysis on Etherscan',
-  },
-  {
-    name: 'Institutional Holder B',
-    address: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-    token: 'OUSG',
-    tvlUsd: 45_000_000,
-    lastActivity: '2026-04-07T16:45:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from top holder analysis on Etherscan',
-  },
-  {
-    name: 'Ondo Finance (USDY Treasury)',
-    address: '0xbDa73A0F13958ee444e0782E1768aB4B76EdaE28',
-    token: 'USDY',
-    tvlUsd: 280_000_000,
-    lastActivity: '2026-04-09T12:00:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from Ondo USDY AUM ~$400M (hashed_official/usdy)',
-  },
-  {
-    name: 'DeFi Protocol Integration',
-    address: '0x9876543210fedcba9876543210fedcba98765432',
-    token: 'USDY',
-    tvlUsd: 62_000_000,
-    lastActivity: '2026-04-09T08:15:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from DeFi protocol TVL on DefiLlama',
-  },
-  {
-    name: 'Institutional Holder C',
-    address: '0xfedcbafedcbafedcbafedcbafedcbafedcbafed0',
-    token: 'USDY',
-    tvlUsd: 28_000_000,
-    lastActivity: '2026-04-06T11:00:00Z',
-    dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Estimated from top holder analysis on Etherscan',
-  },
+// Fallback snapshot when Blockscout or the price oracle is unavailable. Balances are the top 15
+// holders per token from eth.blockscout.com/api/v2/tokens/<token>/holders on 2026-09-24
+// (with the one Blockscout public name tag among them), valued at the Ondo oracle price
+// read the same day (OUSG $116.662365, USDY $1.14730001).
+const HOLDERS_AS_OF = '2026-09-24';
+const HOLDERS_SOURCE =
+  'Blockscout top holders snapshot 2026-09-24, valued at OndoOracle.getAssetPrice (0x9Cad45a8BF0Ed41Ff33074449B357C7a1fAb4094)';
+const HOLDERS_PRICE = { OUSG: 116.662365, USDY: 1.14730001 } as const;
+const HOLDERS_SNAPSHOT: Array<['OUSG' | 'USDY', string, number, string?]> = [
+  ['OUSG', '0x1dD7950c266fB1be96180a8FDb0591F70200E018', 336339.56],
+  ['OUSG', '0x5D87Fa995c54ffF52cfE1C18d8EbF79f0eEb3AeB', 261208.83],
+  ['OUSG', '0x56e60979d5934a05D22606B0455d52F59F20A6A0', 187133.34],
+  ['OUSG', '0xbd9676EA1D6cAD553E87EC456869633C669ffB03', 75241.51],
+  ['OUSG', '0x5eD4EBAF21f83959f81b7e7545e25D313C84081f', 61295.76],
+  ['OUSG', '0x54752f87a3f8b6c594C9AFb110b2c491614de204', 38593.42],
+  ['OUSG', '0x4307b4C9D5A48AC7CB112eF6af7fbEFf5EFA6AF7', 33150.53],
+  ['OUSG', '0x0f365d86809A00761a8DF914c812dbFDF481C149', 23923.62],
+  ['OUSG', '0x3Ee60C57d70a6EC4877Dc24AA7d0e6FaC61cd11a', 17178.79],
+  ['OUSG', '0x233F8aBDcC60088634382ef12C78bdeBf69C9470', 9950.13],
+  ['OUSG', '0x609517eACD9Ec2E24DfFD4Eeca54C6fd88C866FE', 9147.24],
+  ['OUSG', '0x64beF4478942d8FD62bE281707076442aa2D055E', 8693.54],
+  ['OUSG', '0x02f8319261c904cB8C07E5DE7F19508354705669', 5605.26],
+  ['OUSG', '0x9Ff88e2c4844A47a70233BA676c3928b05d255Cf', 4922.02],
+  ['OUSG', '0xaDf5e32eB413e62DC072Aa5fd12F19a115aC3c12', 4062.49],
+  ['USDY', '0xA5b614026dCB1ef6e0E39AA53351b4F4bd225302', 359037168.47],
+  ['USDY', '0x661b5e00424B56Ba6e369e0c2f21E31B6FB8ee1a', 298780676.98],
+  ['USDY', '0x9C6Fa3b81cE92B7D82980D68CCCE9D6e48fe4AC2', 106360871.12],
+  ['USDY', '0xC392749B6ff2cd95e5a4e3Ed396c93f813395041', 83405034.64],
+  ['USDY', '0xC882b111A75C0c657fC507C04FbFcD2cC984F071', 47579905.14, 'Gate.io: Deposit Address'],
+  ['USDY', '0xEeB066aDa2D5C5eD9E4D9ee042bdEED430ae8512', 28843984.01],
+  ['USDY', '0xC9E397454f5478f4418e45181849C6eA66303D5A', 17230923.92],
+  ['USDY', '0x13134B8d770907eCb263cB88a67F9AF833007aFc', 16739969.14],
+  ['USDY', '0x6870289efC708e41A97AD5068A9F84b0DD2bfAED', 15867912.96],
+  ['USDY', '0xc0db94fDDE74f3902EA7995194d290F6BEE78f8C', 10280817.53],
+  ['USDY', '0xD56a32E078be332cDE149c29949a1D4d0C1c9F0E', 7500000.00],
+  ['USDY', '0x6d542B698541fFd216c45AcDC1C6C1CD233dFf94', 4403415.43],
+  ['USDY', '0xd97eCe4a24C4538d96E14296c5544c871caE2eEB', 3067064.04],
+  ['USDY', '0xEC33298A3aC7A5F5B3f21A3218a5D8E862Da8a12', 2683281.53],
+  ['USDY', '0xaf37c1167910ebC994e266949387d2c7C326b879', 2294280.89],
 ];
 
+const topHolders: HolderMetric[] = HOLDERS_SNAPSHOT.map(([token, address, balance, tag]) => ({
+  name: holderName(address, tag ?? null),
+  address,
+  token,
+  balance,
+  tvlUsd: balance * HOLDERS_PRICE[token],
+  dataSource: 'mocked',
+  asOf: HOLDERS_AS_OF,
+  source: HOLDERS_SOURCE,
+}));
+
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---
-
-function generateVelocityData(): VelocityDataPoint[] {
-  const data: VelocityDataPoint[] = [];
-  const now = new Date('2026-04-09');
-
-  for (let i = 89; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    const weekendFactor = isWeekend ? 0.3 : 1.0;
-    const trendFactor = 1 + (90 - i) * 0.005;
-
-    // OUSG: higher value, lower frequency
-    data.push({
-      date: dateStr,
-      token: 'OUSG',
-      mintVolumeUsd: Math.round(2_500_000 * weekendFactor * trendFactor * (0.7 + Math.random() * 0.6)),
-      redeemVolumeUsd: Math.round(1_800_000 * weekendFactor * trendFactor * (0.5 + Math.random() * 0.8)),
-      mintCount: Math.round(8 * weekendFactor * (0.5 + Math.random())),
-      redeemCount: Math.round(5 * weekendFactor * (0.5 + Math.random())),
-      dataSource: 'mocked',
-      asOf: MOCK_AS_OF,
-      source: 'Synthetic data modeled on Ondo InstantManager event patterns',
-    });
-
-    // USDY: lower value, higher frequency
-    data.push({
-      date: dateStr,
-      token: 'USDY',
-      mintVolumeUsd: Math.round(1_200_000 * weekendFactor * trendFactor * (0.6 + Math.random() * 0.8)),
-      redeemVolumeUsd: Math.round(900_000 * weekendFactor * trendFactor * (0.4 + Math.random() * 0.9)),
-      mintCount: Math.round(15 * weekendFactor * (0.5 + Math.random())),
-      redeemCount: Math.round(12 * weekendFactor * (0.5 + Math.random())),
-      dataSource: 'mocked',
-      asOf: MOCK_AS_OF,
-      source: 'Synthetic data modeled on Ondo InstantManager event patterns',
-    });
-  }
-
-  return data;
-}
 
 /** Tiny seeded PRNG (mulberry32) so weekly mocks are identical across renders and servers. */
 function seededRandom(seed: number): () => number {
@@ -203,165 +144,109 @@ function generateWeeklyFlows(): WeeklyFlow[] {
   return data;
 }
 
-// --- Pillar 3: Liquidity Depth Heatmap ---
+// --- Pillar 3: TVL per chain (supply snapshot) ---
 
-const HEATMAP_CHAINS: Chain[] = [
-  'ethereum', 'mantle', 'arbitrum', 'polygon',
-  'solana', 'sui', 'aptos', 'noble', 'stellar', 'plume', 'sei',
+// Fallback for src/lib/chainSupply.ts: per-chain supply read 2026-09-24 × OndoOracle prices that day.
+const SUPPLY_AS_OF = '2026-09-24';
+const SUPPLY_SOURCE = 'on-chain supply snapshot 2026-09-24';
+const SNAPSHOT_PRICES = { OUSG: 116.662365, USDY: 1.14730001 };
+
+const SUPPLY_SNAPSHOT: [ChainTVL['token'], Chain, number][] = [
+  ['USDY', 'ethereum', 1_038_672_623.98],
+  ['OUSG', 'ethereum', 1_090_030.63],
+  ['USDY', 'mantle', 319_917.71],
+  ['USDY', 'arbitrum', 2_728_685.9],
+  ['OUSG', 'polygon', 0],
+  ['USDY', 'solana', 157_215_505.1],
+  ['OUSG', 'solana', 0],
+  ['USDY', 'sui', 12_773_284.72],
+  ['USDY', 'aptos', 1_848_234.81],
+  ['USDY', 'noble', 5_612_589.04],
+  ['USDY', 'stellar', 467_502_151.7],
+  ['USDY', 'plume', 0],
+  ['USDY', 'sei', 225_844_520.32],
+  ['USDY', 'bnb', 68_682_990.33],
+  ['OUSG', 'xrp-ledger', 1_639_899.44],
 ];
 
-const EVM_CHAINS = new Set<Chain>(['ethereum', 'mantle', 'arbitrum', 'polygon']);
+const snapshotTotal = SUPPLY_SNAPSHOT.reduce((s, [token, , supply]) => s + supply * SNAPSHOT_PRICES[token], 0);
 
-function generateLiquidityCells(): LiquidityCell[] {
-  const cells: LiquidityCell[] = [];
-
-  // OUSG is primarily Ethereum + Polygon
-  const ousgDistribution: Partial<Record<Chain, number>> = {
-    ethereum: 420_000_000,
-    polygon: 30_000_000,
+const chainBreakdown: ChainTVL[] = SUPPLY_SNAPSHOT.map(([token, chain, supply]) => {
+  const tvlUsd = supply * SNAPSHOT_PRICES[token];
+  return {
+    chain,
+    token,
+    supply,
+    tvlUsd,
+    pctOfTotal: (tvlUsd / snapshotTotal) * 100,
+    dataSource: 'mocked',
+    asOf: SUPPLY_AS_OF,
+    source: SUPPLY_SOURCE,
   };
-
-  for (const [chain, tvl] of Object.entries(ousgDistribution)) {
-    cells.push({
-      issuer: 'OUSG',
-      chain: chain as Chain,
-      tvlUsd: tvl,
-      dataSource: EVM_CHAINS.has(chain as Chain) ? 'estimated' : 'mocked',
-      asOf: MOCK_AS_OF,
-      source: `OUSG ${chain} TVL from token Transfer events`,
-    });
-  }
-
-  // USDY is across many chains
-  const usdyDistribution: Partial<Record<Chain, number>> = {
-    ethereum: 180_000_000,
-    mantle: 95_000_000,
-    arbitrum: 42_000_000,
-    solana: 35_000_000,
-    sui: 18_000_000,
-    aptos: 12_000_000,
-    noble: 8_000_000,
-    stellar: 5_000_000,
-    plume: 3_000_000,
-    sei: 2_000_000,
-  };
-
-  for (const [chain, tvl] of Object.entries(usdyDistribution)) {
-    cells.push({
-      issuer: 'USDY',
-      chain: chain as Chain,
-      tvlUsd: tvl,
-      dataSource: EVM_CHAINS.has(chain as Chain) ? 'estimated' : 'mocked',
-      asOf: MOCK_AS_OF,
-      source: EVM_CHAINS.has(chain as Chain)
-        ? `USDY ${chain} TVL from Dune Transfer events`
-        : `USDY ${chain} TVL estimated from bridge volumes and public disclosures`,
-    });
-  }
-
-  return cells;
-}
-
-// --- Pillar 3 support: Chain Breakdown ---
-
-const chainBreakdown: ChainTVL[] = [
-  { chain: 'ethereum', token: 'ALL', tvlUsd: 600_000_000, holderCount: 450, txCount30d: 2800, pctOfTotal: 65.2, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'Aggregated from OUSG + USDY Ethereum Transfer events' },
-  { chain: 'mantle', token: 'USDY', tvlUsd: 95_000_000, holderCount: 180, txCount30d: 920, pctOfTotal: 10.3, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'USDY Mantle Transfer events via Dune' },
-  { chain: 'arbitrum', token: 'USDY', tvlUsd: 42_000_000, holderCount: 210, txCount30d: 650, pctOfTotal: 4.6, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'USDY Arbitrum Transfer events via Dune' },
-  { chain: 'polygon', token: 'OUSG', tvlUsd: 30_000_000, holderCount: 85, txCount30d: 180, pctOfTotal: 3.3, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'OUSG Polygon Transfer events via Dune' },
-  { chain: 'solana', token: 'USDY', tvlUsd: 35_000_000, holderCount: 320, txCount30d: 1100, pctOfTotal: 3.8, dataSource: 'mocked', asOf: MOCK_AS_OF, source: 'Estimated from Solana explorer and bridge volumes' },
-  { chain: 'sui', token: 'USDY', tvlUsd: 18_000_000, holderCount: 140, txCount30d: 480, pctOfTotal: 2.0, dataSource: 'mocked', asOf: MOCK_AS_OF, source: 'Estimated from Sui explorer data' },
-  { chain: 'aptos', token: 'USDY', tvlUsd: 12_000_000, holderCount: 95, txCount30d: 280, pctOfTotal: 1.3, dataSource: 'mocked', asOf: MOCK_AS_OF, source: 'Estimated from Aptos explorer data' },
-];
+});
 
 // --- Pillar 4: Competitive Benchmark ---
+
+// Fallback rows for src/lib/benchmark.ts. TVL is DefiLlama as fetched on 2026-09-24.
+// Chain counts and redemption text are static facts quoted from each issuer's own docs;
+// the live path reuses them. BUIDL has neither: no issuer page could be fetched to cite.
+const BENCHMARK_AS_OF = '2026-09-24';
 
 const competitorBenchmark: CompetitorMetric[] = [
   {
     protocol: 'nexus',
-    protocolName: 'Ondo Nexus (OUSG + USDY)',
-    tvlUsd: 920_000_000,
-    volume30dUsd: 145_000_000,
-    chainCount: 11,
-    issuerCount: 5,
-    redemptionSpeed: 'Instant (atomic, same-block)',
-    sourceDate: '2026-04-09',
-    dataSource: 'estimated',
-    asOf: MOCK_AS_OF,
-    source: 'Aggregated from OUSG + USDY on-chain data via Dune',
+    protocolName: 'Ondo (OUSG + USDY)',
+    tvlUsd: 2_560_085_819,
+    chainCount: 14,
+    chainSource: 'https://docs.ondo.finance/addresses',
+    redemptionSpeed: 'OUSG: instant (atomic, limits apply), else typically next business day',
+    redemptionSource: 'https://docs.ondo.finance/qualified-access-products/ousg/redeeming',
+    dataSource: 'mocked',
+    asOf: BENCHMARK_AS_OF,
+    source: 'https://defillama.com/protocol/ondo-yield-assets',
   },
   {
     protocol: 'superstate',
-    protocolName: 'Superstate (USTB)',
-    tvlUsd: 320_000_000,
-    volume30dUsd: 48_000_000,
-    chainCount: 2,
-    issuerCount: 1,
-    redemptionSpeed: 'T+0 to T+1',
-    sourceDate: '2026-04-01',
-    dataSource: 'estimated',
-    asOf: MOCK_AS_OF,
-    source: 'Dune USTB Transfer events + Superstate public disclosures',
+    protocolName: 'Superstate (Invesco USTB)',
+    tvlUsd: 549_663_644,
+    chainCount: 3, // "Ethereum, Solana, and Plume"
+    chainSource: 'https://docs.superstate.com/investors/tokenized-funds/available-funds/invesco-ustb',
+    redemptionSpeed: 'USDC immediate (subject to liquidity); USD same day if before 1pm ET',
+    redemptionSource: 'https://docs.superstate.com/investors/tokenized-funds/available-funds/invesco-ustb',
+    dataSource: 'mocked',
+    asOf: BENCHMARK_AS_OF,
+    source: 'https://defillama.com/protocol/invesco-ustb',
   },
   {
     protocol: 'openeden',
     protocolName: 'OpenEden (TBILL)',
-    tvlUsd: 180_000_000,
-    volume30dUsd: 22_000_000,
+    tvlUsd: 245_857_859,
     chainCount: 3,
-    issuerCount: 1,
-    redemptionSpeed: 'T+0 (instant)',
-    sourceDate: '2026-03-28',
-    dataSource: 'estimated',
-    asOf: MOCK_AS_OF,
-    source: 'Dune TBILL Transfer events + OpenEden documentation',
+    chainSource: 'https://docs.openeden.com/tbill/smart-contract-addresses',
+    redemptionSpeed: 'Typically next US business day (FIFO queue)',
+    redemptionSource: 'https://docs.openeden.com/tbill/redemptions',
+    dataSource: 'mocked',
+    asOf: BENCHMARK_AS_OF,
+    source: 'https://defillama.com/protocol/openeden-tbill',
   },
   {
-    protocol: 'franklin-templeton',
-    protocolName: 'Franklin Templeton (BENJI)',
-    tvlUsd: 710_000_000,
-    volume30dUsd: 35_000_000,
-    chainCount: 3,
-    issuerCount: 1,
-    redemptionSpeed: 'T+1 (next business day)',
-    sourceDate: '2026-03-15',
+    protocol: 'blackrock-buidl',
+    protocolName: 'BlackRock (BUIDL)',
+    tvlUsd: 3_514_788_159,
+    chainCount: null,
+    redemptionSpeed: 'Not disclosed',
     dataSource: 'mocked',
-    asOf: MOCK_AS_OF,
-    source: 'Franklin Templeton press releases and SEC filings (March 2026)',
+    asOf: BENCHMARK_AS_OF,
+    source: 'https://defillama.com/protocol/blackrock-buidl',
   },
 ];
 
-// --- Aggregated Dashboard Metrics ---
-
-const dashboardMetrics: DashboardMetrics = {
-  totalTvlUsd: 920_000_000,
-  activeIssuers: 5,
-  volume30dUsd: 145_000_000,
-  avgTxSizeUsd: 185_000,
-  lastUpdated: '2026-04-09T14:00:00Z',
-};
-
 // --- Export ---
 
-export const MOCK_DATA: DashboardData = {
-  metrics: dashboardMetrics,
-  issuerMetrics,
-  velocityData: generateVelocityData(),
+/** Labeled fallbacks for the live getters (weeklyFlows, chainSupply, topHolders, benchmark). */
+export const MOCK_DATA = {
+  topHolders,
   weeklyFlows: generateWeeklyFlows(),
-  liquidityCells: generateLiquidityCells(),
   chainBreakdown,
   competitorBenchmark,
 };
-
-/**
- * Returns mock data for a specific pillar.
- * Used as fallback when Dune API is unavailable or for development.
- */
-export function getMockPillarData(pillar: 1 | 2 | 3 | 4): unknown {
-  switch (pillar) {
-    case 1: return MOCK_DATA.issuerMetrics;
-    case 2: return MOCK_DATA.velocityData;
-    case 3: return { cells: MOCK_DATA.liquidityCells, breakdown: MOCK_DATA.chainBreakdown };
-    case 4: return MOCK_DATA.competitorBenchmark;
-  }
-}

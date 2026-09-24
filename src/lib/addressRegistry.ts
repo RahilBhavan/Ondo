@@ -66,6 +66,21 @@ export const ADDRESS_REGISTRY: Record<string, AddressEntry> = {
     source: 'docs.ondo.finance/addresses',
   },
 
+  '0xaf37c1167910ebC994e266949387d2c7C326b879': {
+    name: 'rUSDY (Ondo rebasing USDY wrapper)',
+    type: 'protocol',
+    verified: true,
+    source: 'Blockscout tag "Ondo Finance: rUSDY Token" (eth.blockscout.com/address/0xaf37c1167910ebC994e266949387d2c7C326b879)',
+  },
+
+  // --- DeFi integrations ---
+  '0x1dD7950c266fB1be96180a8FDb0591F70200E018': {
+    name: 'Flux Finance fOUSG market',
+    type: 'protocol',
+    verified: true,
+    source: 'Blockscout tag "Flux Finance: fOUSG Token" (eth.blockscout.com/address/0x1dD7950c266fB1be96180a8FDb0591F70200E018)',
+  },
+
   // --- Bridge ---
   '0xa6275720b3fB1Efe3E6EF2b5BF2293148852307D': {
     name: 'Ondo Bridge (Ethereum OFT)',
@@ -82,7 +97,12 @@ export const ADDRESS_REGISTRY: Record<string, AddressEntry> = {
 export function resolveAddress(address: string): string {
   const entry = ADDRESS_REGISTRY[address];
   if (entry) return entry.name;
-  return `Unknown (${address.slice(0, 6)}...${address.slice(-4)})`;
+  return `Unknown wallet (${address.slice(0, 6)}...${address.slice(-4)})`;
+}
+
+/** Registry label first, then an explorer public tag (Blockscout), then "Unknown wallet (0x…)". */
+export function holderName(address: string, tag: string | null): string {
+  return ADDRESS_REGISTRY[address] || !tag ? resolveAddress(address) : tag;
 }
 
 /**

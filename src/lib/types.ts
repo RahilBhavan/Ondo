@@ -16,37 +16,22 @@ export interface Sourced {
   source: string;
 }
 
-// --- Pillar 1: TVL by Issuer ---
+// --- Pillar 1: Top Ethereum holders ---
 
-export interface IssuerMetric extends Sourced {
-  /** Institution name from address registry, or "Unknown Wallet" */
+export interface HolderMetric extends Sourced {
+  /** Registry label, else Blockscout public name tag, else "Unknown wallet (0x…)" */
   name: string;
   /** Wallet address (checksummed) */
   address: string;
   /** Token: OUSG or USDY */
   token: 'OUSG' | 'USDY';
-  /** Total value in USD */
+  /** Balance in token units */
+  balance: number;
+  /** balance × Ondo oracle price, in USD */
   tvlUsd: number;
-  /** Most recent transaction timestamp (ISO) */
-  lastActivity: string;
 }
 
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---
-
-export interface VelocityDataPoint extends Sourced {
-  /** ISO date (YYYY-MM-DD) */
-  date: string;
-  /** Token: OUSG or USDY */
-  token: 'OUSG' | 'USDY';
-  /** Total mint volume in USD for this day */
-  mintVolumeUsd: number;
-  /** Total redeem volume in USD for this day */
-  redeemVolumeUsd: number;
-  /** Number of mint transactions */
-  mintCount: number;
-  /** Number of redeem transactions */
-  redeemCount: number;
-}
 
 export interface WeeklyFlow extends Sourced {
   /** ISO date (YYYY-MM-DD) of the week start, Monday 00:00 UTC */
@@ -71,26 +56,6 @@ export interface WeeklyFlow extends Sourced {
   uniqueWallets: number;
 }
 
-export interface MintRedeemEvent {
-  type: 'mint' | 'redeem';
-  /** Wallet address of subscriber/redeemer */
-  address: string;
-  /** Token: OUSG or USDY */
-  token: 'OUSG' | 'USDY';
-  /** RWA token amount */
-  rwaAmount: number;
-  /** Deposit/receiving token address (e.g., USDC) */
-  paymentToken: string;
-  /** USD value of the transaction */
-  usdValue: number;
-  /** Fee in native token units */
-  fee: number;
-  /** Block timestamp (ISO) */
-  timestamp: string;
-  /** Transaction hash */
-  txHash: string;
-}
-
 // --- Pillar 3: Liquidity Depth Heatmap ---
 
 export type Chain =
@@ -105,6 +70,7 @@ export type Chain =
   | 'stellar'
   | 'plume'
   | 'sei'
+  | 'bnb'
   | 'xrp-ledger';
 
 export interface LiquidityCell extends Sourced {
@@ -117,62 +83,34 @@ export interface LiquidityCell extends Sourced {
 
 export interface ChainTVL extends Sourced {
   chain: Chain;
-  /** Token: OUSG or USDY (or both aggregated) */
-  token: 'OUSG' | 'USDY' | 'ALL';
+  /** Token: OUSG or USDY */
+  token: 'OUSG' | 'USDY';
+  /** Total supply on this chain, in token units */
+  supply: number;
   tvlUsd: number;
-  /** Number of unique holders */
-  holderCount: number;
-  /** Transaction count in last 30 days */
-  txCount30d: number;
-  /** Percentage of total TVL */
+  /** Percentage of total TVL (0-100) */
   pctOfTotal: number;
 }
 
 // --- Pillar 4: Competitive Benchmark ---
 
-export type Protocol = 'nexus' | 'superstate' | 'openeden' | 'franklin-templeton';
+export type Protocol = 'nexus' | 'superstate' | 'openeden' | 'blackrock-buidl';
 
+/** One benchmark row. `dataSource`, `asOf` and `source` describe the TVL. */
 export interface CompetitorMetric extends Sourced {
   protocol: Protocol;
   /** Display name */
   protocolName: string;
   /** Total value locked in USD */
   tvlUsd: number;
-  /** 30-day trading volume in USD */
-  volume30dUsd: number;
-  /** Number of chains the product is available on */
-  chainCount: number;
-  /** Number of active issuers (Nexus-specific) */
-  issuerCount: number;
-  /** Redemption speed description */
+  /** Number of chains the product is deployed on; null when no citable count */
+  chainCount: number | null;
+  /** Citation URL for chainCount */
+  chainSource?: string;
+  /** Redemption speed, quoted from the issuer's own docs, or "Not disclosed" */
   redemptionSpeed: string;
-  /** Source date for this competitor's data (ISO) */
-  sourceDate: string;
-}
-
-// --- Aggregated Dashboard Data ---
-
-export interface DashboardMetrics {
-  /** Total TVL across OUSG + USDY */
-  totalTvlUsd: number;
-  /** Number of identified institutional addresses */
-  activeIssuers: number;
-  /** 30-day total volume (mint + redeem) */
-  volume30dUsd: number;
-  /** Average transaction size in USD */
-  avgTxSizeUsd: number;
-  /** Data freshness */
-  lastUpdated: string;
-}
-
-export interface DashboardData {
-  metrics: DashboardMetrics;
-  issuerMetrics: IssuerMetric[];
-  velocityData: VelocityDataPoint[];
-  weeklyFlows: WeeklyFlow[];
-  liquidityCells: LiquidityCell[];
-  chainBreakdown: ChainTVL[];
-  competitorBenchmark: CompetitorMetric[];
+  /** Citation URL for redemptionSpeed */
+  redemptionSource?: string;
 }
 
 // --- Dune API Types ---

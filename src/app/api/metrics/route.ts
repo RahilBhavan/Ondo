@@ -1,43 +1,42 @@
 /**
  * Aggregated metrics endpoint.
- * GET /api/metrics — returns all 4 pillars of dashboard data.
+ * GET /api/metrics — the same data the home page renders, from the same getters:
  *
- * Strategy:
- * - weeklyFlows: live from Dune via getWeeklyFlows() when DUNE_API_KEY and
- *   DUNE_MINT_REDEEM_QUERY_ID are set, else labeled mock (see src/lib/weeklyFlows.ts)
- * - Every other field: mock data until its pillar is wired to Dune
+ * - weeklyFlows: Dune (src/lib/weeklyFlows.ts)
+ * - chainBreakdown + totalTvlUsd: on-chain supply × OndoOracle price (src/lib/chainSupply.ts)
+ * - topHolders: Blockscout, Ethereum only (src/lib/topHolders.ts)
+ * - competitorBenchmark: DefiLlama, Ondo row on-chain when every chain row is live (src/lib/benchmark.ts)
  *
- * This ensures the dashboard is always functional regardless of Dune availability.
+ * Every row carries its own dataSource / asOf / source; a failed source falls back to its
+ * labeled mock rows.
  */
 
 import { NextResponse } from 'next/server';
-import { isDuneConfigured } from '@/lib/dune';
-import { MOCK_DATA } from '@/lib/mockData';
+import { getBenchmark, withOnchainOndo } from '@/lib/benchmark';
+import { getChainTVL } from '@/lib/chainSupply';
+import { combinedSource } from '@/lib/dataSource';
+import { getTopHolders } from '@/lib/topHolders';
 import { getWeeklyFlows } from '@/lib/weeklyFlows';
-import type { DashboardData } from '@/lib/types';
 
 const CACHE_MAX_AGE = 3600; // 1 hour
 export const revalidate = 3600;
 
 export async function GET() {
-  let data: DashboardData;
+  const [weeklyFlows, chainBreakdown, topHolders, benchmark] = await Promise.all([
+    getWeeklyFlows(),
+    getChainTVL(),
+    getTopHolders(),
+    getBenchmark(),
+  ]);
 
-  if (isDuneConfigured()) {
-    // Future: fetch live data from Dune queries and merge with mock fallbacks.
-    // For now, return mock data with a flag indicating Dune is configured.
-    // This will be wired up once query IDs are created on Dune.
-    data = {
-      ...MOCK_DATA,
-      metrics: {
-        ...MOCK_DATA.metrics,
-        lastUpdated: new Date().toISOString(),
-      },
-    };
-  } else {
-    data = MOCK_DATA;
-  }
-
-  data = { ...data, weeklyFlows: (await getWeeklyFlows()).rows };
+  const data = {
+    totalTvlUsd: chainBreakdown.reduce((sum, r) => sum + r.tvlUsd, 0),
+    totalTvlDataSource: combinedSource(chainBreakdown),
+    chainBreakdown,
+    topHolders: topHolders.rows,
+    weeklyFlows: weeklyFlows.rows,
+    competitorBenchmark: withOnchainOndo(benchmark.rows, chainBreakdown),
+  };
 
   return NextResponse.json(data, {
     headers: {

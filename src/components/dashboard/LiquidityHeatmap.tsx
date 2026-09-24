@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { LiquidityCell, Chain } from '@/lib/types';
+import type { LiquidityCell, Chain, DataSource } from '@/lib/types';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { formatUsdCompact } from '@/lib/format';
 
@@ -11,7 +11,7 @@ interface LiquidityHeatmapProps {
 
 const CHAIN_ORDER: Chain[] = [
   'ethereum', 'mantle', 'arbitrum', 'polygon', 'solana',
-  'sui', 'aptos', 'noble', 'stellar', 'plume', 'sei', 'xrp-ledger',
+  'sui', 'aptos', 'noble', 'stellar', 'plume', 'sei', 'bnb', 'xrp-ledger',
 ];
 
 const CHAIN_LABELS: Record<Chain, string> = {
@@ -26,6 +26,7 @@ const CHAIN_LABELS: Record<Chain, string> = {
   stellar: 'XLM',
   plume: 'PLUME',
   sei: 'SEI',
+  bnb: 'BNB',
   'xrp-ledger': 'XRP',
 };
 
@@ -40,25 +41,24 @@ function getHeatColor(value: number, max: number): string {
 }
 
 export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
-  const { issuers, chains, cellMap, maxVal } = useMemo(() => {
+  const { issuers, cellMap, maxVal, sources } = useMemo(() => {
     const issuerSet = new Set<string>();
-    const chainSet = new Set<Chain>();
+    const sourceSet = new Set<DataSource>();
     const map = new Map<string, LiquidityCell>();
     let max = 0;
 
     for (const cell of data) {
       issuerSet.add(cell.issuer);
-      chainSet.add(cell.chain);
+      sourceSet.add(cell.dataSource);
       map.set(`${cell.issuer}:${cell.chain}`, cell);
       if (cell.tvlUsd > max) max = cell.tvlUsd;
     }
 
-    const orderedChains = CHAIN_ORDER.filter((c) => chainSet.has(c));
     return {
-      issuers: Array.from(issuerSet),
-      chains: orderedChains,
+      issuers: Array.from(issuerSet).sort(),
       cellMap: map,
       maxVal: max,
+      sources: Array.from(sourceSet),
     };
   }, [data]);
 
@@ -69,20 +69,21 @@ export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
           <h3 className="text-base font-semibold tracking-[-0.32px] text-[color:var(--ink)]">
             Liquidity depth heatmap
           </h3>
-          <p className="text-sm text-[color:var(--mute)] mt-1">Issuer x chain TVL distribution</p>
+          <p className="text-sm text-[color:var(--mute)] mt-1">Token x chain TVL from on-chain supply</p>
         </div>
         <div className="flex items-center gap-2">
-          <DataSourceBadge source="live" />
-          <DataSourceBadge source="mocked" />
+          {sources.map((s) => (
+            <DataSourceBadge key={s} source={s} />
+          ))}
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[600px]">
+        <div className="min-w-[900px]">
           {/* Header row */}
           <div className="flex">
             <div className="w-24 shrink-0" />
-            {chains.map((chain) => (
+            {CHAIN_ORDER.map((chain) => (
               <div
                 key={chain}
                 className="flex-1 text-center text-xs font-mono uppercase text-[color:var(--mute)] pb-2"
@@ -98,7 +99,7 @@ export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
               <div className="w-24 shrink-0 text-sm text-[color:var(--body)] flex items-center pr-2 truncate">
                 {issuer}
               </div>
-              {chains.map((chain) => {
+              {CHAIN_ORDER.map((chain) => {
                 const cell = cellMap.get(`${issuer}:${chain}`);
                 const value = cell?.tvlUsd ?? 0;
                 const isMocked = cell?.dataSource === 'mocked';
@@ -110,7 +111,7 @@ export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
                     style={{ backgroundColor: getHeatColor(value, maxVal) }}
                   >
                     <span className="text-xs font-mono tabular-nums text-[color:var(--ink)]">
-                      {value === 0 ? '-' : `${isMocked ? '~' : ''}${formatUsdCompact(value)}`}
+                      {value === 0 ? '–' : `${isMocked ? '~' : ''}${formatUsdCompact(value)}`}
                     </span>
 
                     {/* Tooltip on hover */}

@@ -15,6 +15,10 @@
   --series-redeem: #ab570a;
   --series-net: var(--ink);
   --series-wallets: var(--mute);
+  --chain-stellar: #c2410c;
+  --chain-sei: #b91c1c;
+  --chain-xrp: #be185d;
+  --chain-bnb: #d4a106;
   --elevation: 0 1px 1px #00000005, 0 2px 2px #0000000a;
   --badge-live-fg: #107d32;
   --badge-live-bg: #e8f6ec;
@@ -36,6 +40,10 @@
     --link: #3291ff;
     --series-mint: #3291ff;
     --series-redeem: #c97a12;
+    --chain-stellar: #fb923c;
+    --chain-sei: #f87171;
+    --chain-xrp: #f472b6;
+    --chain-bnb: #f3ba2f;
     --badge-live-fg: #4ac26b;
     --badge-live-bg: #0f2a18;
     --badge-estimated-fg: #e3a43a;

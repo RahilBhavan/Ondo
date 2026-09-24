@@ -1,30 +1,46 @@
-import { MOCK_DATA } from '@/lib/mockData';
-import { formatUsdCompact, formatNumberCompact, relativeTime } from '@/lib/format';
+import Link from 'next/link';
+import { formatUsdCompact, formatNumberCompact, formatPercent } from '@/lib/format';
+import { getWeeklyFlows } from '@/lib/weeklyFlows';
+import { formatWeek, fourWeekStats, weeklySeries } from '@/lib/flowStats';
+import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
+import { combinedSource } from '@/lib/dataSource';
 import { MetricCard } from '@/components/ui/MetricCard';
-import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
-import { MintRedeemVelocity } from '@/components/dashboard/MintRedeemVelocity';
+import { TopHoldersChart } from '@/components/dashboard/TopHoldersChart';
+import { FlowCharts } from '@/components/flows/FlowCharts';
+import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
 import { CompetitiveBenchmark } from '@/components/dashboard/CompetitiveBenchmark';
+import { getBenchmark, withOnchainOndo } from '@/lib/benchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
-import type { DashboardData } from '@/lib/types';
+import { getTopHolders } from '@/lib/topHolders';
+
+// Chain TVL, top holders and the benchmark read live sources; re-render hourly like /flows.
+export const revalidate = 3600;
 
 const NAV_LINKS = [
   { label: 'Instant flows', href: '/flows' },
   { label: 'Methodology', href: '#methodology' },
 ];
 
-async function getDashboardData(): Promise<DashboardData> {
-  // Server component — fetch from internal API route.
-  // In production, this would call the API route with proper base URL.
-  // For now, use mock data directly to avoid fetch-to-self in SSR.
-  return MOCK_DATA;
-}
-
 export default async function DashboardPage() {
-  const data = await getDashboardData();
-  const { metrics } = data;
+  // Direct calls, no fetch-to-self (same as src/app/flows/page.tsx); /api/metrics mirrors this.
+  const [flows, chainRows, topHolders, benchmark] = await Promise.all([
+    getWeeklyFlows(),
+    getChainTVL(),
+    getTopHolders(),
+    getBenchmark(),
+  ]);
+  const flowsAsOf = flows.rows.reduce((max, r) => (r.asOf > max ? r.asOf : max), '');
+  const stats = fourWeekStats(flows.rows);
+  // formatPercent keeps one decimal of a percent: anything that rounds to 0.0% is flat.
+  const trend = stats.volumeTrend === null ? null : Math.round(stats.volumeTrend * 1000) / 1000;
+  const prefix = flows.dataSource === 'mocked' ? '~' : '';
+  const totalTvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
+  const tvlSource = combinedSource(chainRows);
+  // MetricCard adds '~' itself only when fully mocked; a mixed total needs it too.
+  const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'mocked') ? '~' : '';
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -35,7 +51,9 @@ export default async function DashboardPage() {
         <p className="max-w-[640px] text-lg text-[color:var(--body)]">
           OUSG and USDY analytics from Ondo Finance: TVL, chains, liquidity, flows, and competitors.
         </p>
-        <p className="text-sm text-[color:var(--mute)]">Updated {relativeTime(metrics.lastUpdated)}</p>
+        <p className="text-sm text-[color:var(--mute)]">
+          Live data from Dune, Blockscout, DefiLlama and on-chain reads. Each section shows its own date.
+        </p>
       </section>
 
       <div className="space-y-6">
@@ -43,48 +61,86 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             label="Total TVL"
-            value={formatUsdCompact(metrics.totalTvlUsd)}
-            dataSource="mocked"
-            trend={{ direction: 'up', label: '+12.3% 30d' }}
+            value={`${tvlPrefix}${formatUsdCompact(totalTvlUsd)}`}
+            dataSource={tvlSource}
+            subValue="13 chains, OUSG + USDY"
           />
           <MetricCard
-            label="Active issuers"
-            value={String(metrics.activeIssuers)}
-            dataSource="estimated"
-            subValue="Across OUSG + USDY"
+            label="4-week volume"
+            value={formatUsdCompact(stats.volumeUsd)}
+            dataSource={flows.dataSource}
+            trend={
+              trend === null
+                ? undefined
+                : {
+                    direction: trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat',
+                    label: `${trend > 0 ? '+' : ''}${formatPercent(trend === 0 ? 0 : trend)} vs prior 4w`,
+                  }
+            }
           />
           <MetricCard
-            label="30d volume"
-            value={formatUsdCompact(metrics.volume30dUsd)}
-            dataSource="mocked"
-            trend={{ direction: 'up', label: '+8.7% vs prior' }}
+            label="4-week net flow"
+            value={`${stats.netFlowUsd > 0 ? '+' : ''}${formatUsdCompact(stats.netFlowUsd)}`}
+            dataSource={flows.dataSource}
+            subValue={flowsAsOf ? `Dune, as of ${formatWeek(flowsAsOf)}` : undefined}
           />
           <MetricCard
             label="Avg tx size"
-            value={formatUsdCompact(metrics.avgTxSizeUsd)}
-            dataSource="mocked"
-            subValue={`${formatNumberCompact(Math.round(metrics.volume30dUsd / metrics.avgTxSizeUsd))} txns`}
+            value={stats.avgTxSizeUsd === null ? 'n/a' : formatUsdCompact(stats.avgTxSizeUsd)}
+            dataSource={flows.dataSource}
+            subValue={`${formatNumberCompact(stats.txCount)} txns`}
           />
         </div>
 
-        {/* TVL + Chain — 2-column */}
+        {/* Top holders + Chain — 2-column */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3">
-            <TVLByIssuerChart data={data.issuerMetrics} />
+            <TopHoldersChart data={topHolders.rows} />
           </div>
           <div className="lg:col-span-2">
-            <ChainBreakdown data={data.chainBreakdown} />
+            <ChainBreakdown data={chainRows} />
           </div>
         </div>
 
         {/* Heatmap — full width hero */}
-        <LiquidityHeatmap data={data.liquidityCells} />
+        <LiquidityHeatmap data={toLiquidityCells(chainRows)} />
 
-        {/* Velocity — full width */}
-        <MintRedeemVelocity data={data.velocityData} />
+        {/* Weekly flows, last 12 weeks per token — full width */}
+        <section className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-semibold tracking-[-0.32px] text-[color:var(--ink)]">
+                Weekly instant mint and redeem
+              </h3>
+              <p className="mt-1 text-sm text-[color:var(--mute)]">
+                Last 12 weeks{flowsAsOf ? `, as of ${formatWeek(flowsAsOf)}` : ''}.{' '}
+                <Link href="/flows" className="text-[color:var(--link)] hover:underline">
+                  Full history
+                </Link>
+              </p>
+            </div>
+            <DataSourceBadge source={flows.dataSource} />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {(['OUSG', 'USDY'] as const).map((token) => {
+              const series = weeklySeries(flows.rows, token).slice(-12);
+              return (
+                <div key={token}>
+                  <p className="mb-2 text-sm font-medium text-[color:var(--ink)]">{token}</p>
+                  <FlowCharts
+                    token={token}
+                    data={series}
+                    asOf={series[series.length - 1]?.asOf ?? ''}
+                    prefix={prefix}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Benchmark — full width */}
-        <CompetitiveBenchmark data={data.competitorBenchmark} />
+        <CompetitiveBenchmark data={withOnchainOndo(benchmark.rows, chainRows)} />
 
         <MethodologyDrawer />
       </div>

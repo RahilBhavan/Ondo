@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus Adoption Intelligence — Ondo Finance",
+  title: "Nexus adoption intelligence",
   description:
     "Real-time institutional adoption analytics for Ondo Nexus tokenized Treasury products (OUSG, USDY).",
 };

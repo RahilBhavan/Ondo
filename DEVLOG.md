@@ -94,3 +94,30 @@ Each entry follows this structure:
 - Phase 1: Scaffold Next.js 14 at repo root
 - Define TypeScript types, build mockData.ts, write Dune SQL queries
 - Build Dune API client with 1hr cache + mock fallback
+
+### [2026-09-24] — Home Page on Real Data (Phases 0-5, #30)
+**Phase:** Phase 3
+**Duration:** ~1 day
+**Goal:** Replace every mocked number on the home page with a live source and put `/` back as the landing page
+
+**Shipped**
+- Weekly flow KPIs from Dune (query 8822192), with the Dune run date shown on the page
+- Total TVL, chain breakdown and heatmap from total supply on 13 chains × OndoOracle price
+- Top Ethereum holders from Blockscout, valued at the oracle price
+- Benchmark TVL from DefiLlama; the Ondo row uses the on-chain total so it matches Total TVL
+- `/api/metrics` serves the same data from the same getters
+- Removed the `/` to `/flows` redirect and unused mock types and helpers
+- Methodology drawer, METHODOLOGY.md, CONTRACT_RESEARCH.md and ADR-007 rewritten to match
+
+**Attempted / Blocked**
+- The Dune account hit its datapoint limit and cannot re-execute; flows show the last saved run
+
+**Learned**
+- Blockscout name tags include contract class names (CErc20DelegatorKYC, GnosisSafeProxy); ordinal-0 tags and tags equal to the contract name are not owner labels
+- DefiLlama's Ondo total leaves out BNB and XRPL, so on-chain supply runs about 1% higher
+
+**Decisions Made**
+- Home page sources: on-chain supply, Blockscout, DefiLlama instead of Dune (ADR-007)
+
+**Next Session**
+- Merge the phase5-finish PR, deploy to Vercel (personal scope), rotate the Dune key

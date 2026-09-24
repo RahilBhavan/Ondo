@@ -93,3 +93,44 @@ export function growth12w(series: WeeklyFlow[], asOf: string): number | null {
   const prior = total(complete.slice(-24, -12));
   return prior > 0 ? recent / prior - 1 : null;
 }
+
+export interface FourWeekStats {
+  volumeUsd: number;
+  netFlowUsd: number;
+  txCount: number;
+  /** volumeUsd / txCount, null when there were no transactions */
+  avgTxSizeUsd: number | null;
+  /** Total volume of the 4 complete weeks before the window */
+  priorVolumeUsd: number;
+  /** volumeUsd vs priorVolumeUsd as a fraction, null when the prior window is zero */
+  volumeTrend: number | null;
+}
+
+/**
+ * Last 4 complete weeks summed across OUSG and USDY (gap weeks filled per token),
+ * plus the volume of the 4 complete weeks before that.
+ */
+export function fourWeekStats(rows: WeeklyFlow[]): FourWeekStats {
+  const recent: WeeklyFlow[] = [];
+  const prior: WeeklyFlow[] = [];
+  for (const token of ['OUSG', 'USDY'] as const) {
+    const series = weeklySeries(rows, token);
+    // Both tokens' windows line up: every row from one Dune result shares one asOf.
+    const asOf = series[series.length - 1]?.asOf ?? '';
+    const complete = series.filter((r) => isCompleteWeek(r.week, asOf));
+    recent.push(...complete.slice(-4));
+    prior.push(...complete.slice(-8, -4));
+  }
+  const volume = (xs: WeeklyFlow[]) => xs.reduce((s, r) => s + r.mintVolumeUsd + r.redeemVolumeUsd, 0);
+  const volumeUsd = volume(recent);
+  const priorVolumeUsd = volume(prior);
+  const txCount = recent.reduce((s, r) => s + r.mintCount + r.redeemCount, 0);
+  return {
+    volumeUsd,
+    netFlowUsd: recent.reduce((s, r) => s + r.netFlowUsd, 0),
+    txCount,
+    avgTxSizeUsd: txCount > 0 ? volumeUsd / txCount : null,
+    priorVolumeUsd,
+    volumeTrend: priorVolumeUsd > 0 ? volumeUsd / priorVolumeUsd - 1 : null,
+  };
+}
