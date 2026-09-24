@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { mapDuneRow } from './weeklyFlows';
 import { MOCK_DATA } from './mockData';
-import { growth12w, isCompleteWeek, mondayOf, weeklySeries } from './flowStats';
+import { fourWeekStats, growth12w, isCompleteWeek, mondayOf, weeklySeries } from './flowStats';
 
 const meta = { asOf: '2026-04-09T00:00:00.000Z', source: 'https://dune.com/queries/1' };
 
@@ -85,5 +85,27 @@ assert.deepEqual(staleSeries.map((r) => r.week), ['2026-08-10', '2026-08-17', '2
 const staleLast = [...staleSeries].reverse().find((r) => isCompleteWeek(r.week, r.asOf));
 assert.equal(staleLast?.week, '2026-08-17');
 assert.ok(staleLast && staleLast.mintVolumeUsd > 0);
+
+// 4-week stats: 9 complete OUSG weeks + 1 partial, USDY with a gap week. Window = last 4 complete.
+const fwAsOf = '2026-03-11T00:00:00Z'; // week of 2026-03-09 is partial
+const fw = [
+  ...Array.from({ length: 10 }, (_, i) => {
+    const week = new Date(Date.UTC(2026, 0, 5 + i * 7)).toISOString().slice(0, 10);
+    const v = i === 9 ? 99e6 : i >= 5 ? 200 : 100; // weeks 1-4 prior (100), 5-8 recent (200)
+    return { ...row, week, mintVolumeUsd: v, redeemVolumeUsd: 0, netFlowUsd: v, mintCount: 1, redeemCount: 1, asOf: fwAsOf };
+  }),
+  { ...row, token: 'USDY' as const, week: '2026-02-09', mintVolumeUsd: 0, redeemVolumeUsd: 50, netFlowUsd: -50, mintCount: 0, redeemCount: 2, asOf: fwAsOf },
+  { ...row, token: 'USDY' as const, week: '2026-02-23', mintVolumeUsd: 30, redeemVolumeUsd: 0, netFlowUsd: 30, mintCount: 1, redeemCount: 0, asOf: fwAsOf },
+];
+const s4 = fourWeekStats(fw);
+assert.equal(s4.volumeUsd, 4 * 200 + 50 + 30);
+assert.equal(s4.netFlowUsd, 4 * 200 - 50 + 30);
+assert.equal(s4.txCount, 4 * 2 + 2 + 1);
+assert.equal(s4.avgTxSizeUsd, 880 / 11);
+assert.equal(s4.priorVolumeUsd, 4 * 100);
+assert.ok(s4.volumeTrend !== null && Math.abs(s4.volumeTrend - (880 / 400 - 1)) < 1e-9);
+const empty = fourWeekStats([]);
+assert.equal(empty.avgTxSizeUsd, null);
+assert.equal(empty.volumeTrend, null);
 
 console.log(`weeklyFlows check ok (${mock.length} mock rows)`);

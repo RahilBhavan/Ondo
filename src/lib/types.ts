@@ -33,21 +33,6 @@ export interface IssuerMetric extends Sourced {
 
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---
 
-export interface VelocityDataPoint extends Sourced {
-  /** ISO date (YYYY-MM-DD) */
-  date: string;
-  /** Token: OUSG or USDY */
-  token: 'OUSG' | 'USDY';
-  /** Total mint volume in USD for this day */
-  mintVolumeUsd: number;
-  /** Total redeem volume in USD for this day */
-  redeemVolumeUsd: number;
-  /** Number of mint transactions */
-  mintCount: number;
-  /** Number of redeem transactions */
-  redeemCount: number;
-}
-
 export interface WeeklyFlow extends Sourced {
   /** ISO date (YYYY-MM-DD) of the week start, Monday 00:00 UTC */
   week: string;
@@ -155,12 +140,6 @@ export interface CompetitorMetric extends Sourced {
 export interface DashboardMetrics {
   /** Total TVL across OUSG + USDY */
   totalTvlUsd: number;
-  /** Number of identified institutional addresses */
-  activeIssuers: number;
-  /** 30-day total volume (mint + redeem) */
-  volume30dUsd: number;
-  /** Average transaction size in USD */
-  avgTxSizeUsd: number;
   /** Data freshness */
   lastUpdated: string;
 }
@@ -168,7 +147,6 @@ export interface DashboardMetrics {
 export interface DashboardData {
   metrics: DashboardMetrics;
   issuerMetrics: IssuerMetric[];
-  velocityData: VelocityDataPoint[];
   weeklyFlows: WeeklyFlow[];
   liquidityCells: LiquidityCell[];
   chainBreakdown: ChainTVL[];
