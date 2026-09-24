@@ -115,24 +115,23 @@ export interface ChainTVL extends Sourced {
 
 // --- Pillar 4: Competitive Benchmark ---
 
-export type Protocol = 'nexus' | 'superstate' | 'openeden' | 'franklin-templeton';
+export type Protocol = 'nexus' | 'superstate' | 'openeden' | 'blackrock-buidl';
 
+/** One benchmark row. `dataSource`, `asOf` and `source` describe the TVL. */
 export interface CompetitorMetric extends Sourced {
   protocol: Protocol;
   /** Display name */
   protocolName: string;
   /** Total value locked in USD */
   tvlUsd: number;
-  /** 30-day trading volume in USD */
-  volume30dUsd: number;
-  /** Number of chains the product is available on */
-  chainCount: number;
-  /** Number of active issuers (Nexus-specific) */
-  issuerCount: number;
-  /** Redemption speed description */
+  /** Number of chains the product is deployed on; null when no citable count */
+  chainCount: number | null;
+  /** Citation URL for chainCount */
+  chainSource?: string;
+  /** Redemption speed, quoted from the issuer's own docs, or "Not disclosed" */
   redemptionSpeed: string;
-  /** Source date for this competitor's data (ISO) */
-  sourceDate: string;
+  /** Citation URL for redemptionSpeed */
+  redemptionSource?: string;
 }
 
 // --- Aggregated Dashboard Data ---

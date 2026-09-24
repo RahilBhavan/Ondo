@@ -26,7 +26,7 @@ const SECTIONS = [
   {
     title: 'Competitive benchmark (Pillar 4)',
     content:
-      'Nexus data is live from Dune. Superstate and OpenEden TVL from Dune token transfers. Franklin Templeton data from public disclosures (may lag). Redemption speed claims are from official documentation. Competitor accounting conventions may differ.',
+      'TVL for Ondo (OUSG + USDY), Invesco USTB on Superstate, OpenEden TBILL and BlackRock BUIDL is live from DefiLlama, refreshed hourly. A product whose DefiLlama fetch fails shows its last snapshot, labeled Mocked. Chain counts and redemption terms are quoted from each issuer\'s own docs, or shown as Not disclosed when no issuer source could be cited. Accounting conventions may differ between products.',
   },
   {
     title: 'Caching',

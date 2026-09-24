@@ -11,6 +11,7 @@ interface CompetitiveBenchmarkProps {
 export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
   const sorted = [...data].sort((a, b) => b.tvlUsd - a.tvlUsd);
   const maxTvl = sorted[0]?.tvlUsd ?? 1;
+  const asOf = data.reduce((latest, r) => (r.asOf > latest ? r.asOf : latest), '') || new Date().toISOString();
 
   return (
     <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">
@@ -31,7 +32,6 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
             <tr className="border-b border-[color:var(--hairline)]">
               <th className="text-left text-[color:var(--mute)] font-medium pb-2 pr-4">Protocol</th>
               <th className="text-right text-[color:var(--mute)] font-medium pb-2 pr-4">TVL</th>
-              <th className="text-right text-[color:var(--mute)] font-medium pb-2 pr-4">30d vol</th>
               <th className="text-center text-[color:var(--mute)] font-medium pb-2 pr-4">Chains</th>
               <th className="text-left text-[color:var(--mute)] font-medium pb-2 pr-4">Redemption</th>
               <th className="text-center text-[color:var(--mute)] font-medium pb-2">Source</th>
@@ -66,17 +66,16 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 pr-4 text-right font-mono text-[13px] tabular-nums text-[color:var(--body)]">
-                    {isMocked ? '~' : ''}{formatUsdCompact(row.volume30dUsd)}
-                  </td>
                   <td className="py-3 pr-4 text-center tabular-nums text-[color:var(--body)]">
-                    {row.chainCount}
+                    <Cited href={row.chainSource}>{row.chainCount ?? 'Not disclosed'}</Cited>
                   </td>
                   <td className="py-3 pr-4 text-[color:var(--body)]">
-                    {row.redemptionSpeed}
+                    <Cited href={row.redemptionSource}>{row.redemptionSpeed}</Cited>
                   </td>
                   <td className="py-3 text-center">
-                    <DataSourceBadge source={row.dataSource} />
+                    <a href={row.source} title={`TVL: ${row.source}`}>
+                      <DataSourceBadge source={row.dataSource} />
+                    </a>
                   </td>
                 </tr>
               );
@@ -86,8 +85,18 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
       </div>
 
       <p className="text-xs text-[color:var(--mute)] mt-3">
-        Data as of {formatDate(sorted[0]?.sourceDate ?? new Date().toISOString())}. Competitor data may lag.
+        TVL from DefiLlama as of {formatDate(asOf)}. Chain counts and redemption terms link to the
+        issuer&apos;s docs.
       </p>
     </div>
+  );
+}
+
+function Cited({ href, children }: { href?: string; children: React.ReactNode }) {
+  if (!href) return <>{children}</>;
+  return (
+    <a href={href} className="hover:underline decoration-[color:var(--hairline)] underline-offset-2">
+      {children}
+    </a>
   );
 }

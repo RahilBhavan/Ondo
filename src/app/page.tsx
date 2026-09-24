@@ -9,6 +9,7 @@ import { FlowCharts } from '@/components/flows/FlowCharts';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
 import { CompetitiveBenchmark } from '@/components/dashboard/CompetitiveBenchmark';
+import { getBenchmark } from '@/lib/benchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
@@ -133,7 +134,7 @@ export default async function DashboardPage() {
         </section>
 
         {/* Benchmark — full width */}
-        <CompetitiveBenchmark data={data.competitorBenchmark} />
+        <CompetitiveBenchmark data={(await getBenchmark()).rows} />
 
         <MethodologyDrawer />
       </div>
