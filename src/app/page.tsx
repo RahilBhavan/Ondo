@@ -5,6 +5,7 @@ import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
 import { MintRedeemVelocity } from '@/components/dashboard/MintRedeemVelocity';
 import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
 import { CompetitiveBenchmark } from '@/components/dashboard/CompetitiveBenchmark';
+import { getBenchmark } from '@/lib/benchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
@@ -84,7 +85,7 @@ export default async function DashboardPage() {
         <MintRedeemVelocity data={data.velocityData} />
 
         {/* Benchmark — full width */}
-        <CompetitiveBenchmark data={data.competitorBenchmark} />
+        <CompetitiveBenchmark data={(await getBenchmark()).rows} />
 
         <MethodologyDrawer />
       </div>
