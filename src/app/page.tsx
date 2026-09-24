@@ -1,4 +1,5 @@
 import { MOCK_DATA } from '@/lib/mockData';
+import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
 import { formatUsdCompact, formatNumberCompact, relativeTime } from '@/lib/format';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
@@ -9,6 +10,9 @@ import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
 import type { DashboardData } from '@/lib/types';
+
+// Chain TVL reads on-chain supply; re-render hourly like /flows.
+export const revalidate = 3600;
 
 const NAV_LINKS = [
   { label: 'Instant flows', href: '/flows' },
@@ -25,6 +29,9 @@ async function getDashboardData(): Promise<DashboardData> {
 export default async function DashboardPage() {
   const data = await getDashboardData();
   const { metrics } = data;
+  const chainRows = await getChainTVL();
+  const totalTvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
+  const tvlAllLive = chainRows.every((r) => r.dataSource === 'live');
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -43,9 +50,9 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             label="Total TVL"
-            value={formatUsdCompact(metrics.totalTvlUsd)}
-            dataSource="mocked"
-            trend={{ direction: 'up', label: '+12.3% 30d' }}
+            value={formatUsdCompact(totalTvlUsd)}
+            dataSource={tvlAllLive ? 'live' : 'estimated'}
+            subValue="13 chains, OUSG + USDY"
           />
           <MetricCard
             label="Active issuers"
@@ -73,12 +80,12 @@ export default async function DashboardPage() {
             <TVLByIssuerChart data={data.issuerMetrics} />
           </div>
           <div className="lg:col-span-2">
-            <ChainBreakdown data={data.chainBreakdown} />
+            <ChainBreakdown data={chainRows} />
           </div>
         </div>
 
         {/* Heatmap — full width hero */}
-        <LiquidityHeatmap data={data.liquidityCells} />
+        <LiquidityHeatmap data={toLiquidityCells(chainRows)} />
 
         {/* Velocity — full width */}
         <MintRedeemVelocity data={data.velocityData} />

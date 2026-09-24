@@ -203,76 +203,55 @@ function generateWeeklyFlows(): WeeklyFlow[] {
   return data;
 }
 
-// --- Pillar 3: Liquidity Depth Heatmap ---
+// --- Pillar 3: TVL per chain (supply snapshot) ---
 
-const HEATMAP_CHAINS: Chain[] = [
-  'ethereum', 'mantle', 'arbitrum', 'polygon',
-  'solana', 'sui', 'aptos', 'noble', 'stellar', 'plume', 'sei',
+// Fallback for src/lib/chainSupply.ts: per-chain supply read 2026-09-24 × OndoOracle prices that day.
+const SUPPLY_AS_OF = '2026-09-24';
+const SUPPLY_SOURCE = 'on-chain supply snapshot 2026-09-24';
+const SNAPSHOT_PRICES = { OUSG: 116.662365, USDY: 1.14730001 };
+
+const SUPPLY_SNAPSHOT: [ChainTVL['token'], Chain, number][] = [
+  ['USDY', 'ethereum', 1_038_672_623.98],
+  ['OUSG', 'ethereum', 1_090_030.63],
+  ['USDY', 'mantle', 319_917.71],
+  ['USDY', 'arbitrum', 2_728_685.9],
+  ['OUSG', 'polygon', 0],
+  ['USDY', 'solana', 157_215_505.1],
+  ['OUSG', 'solana', 0],
+  ['USDY', 'sui', 12_773_284.72],
+  ['USDY', 'aptos', 1_848_234.81],
+  ['USDY', 'noble', 5_612_589.04],
+  ['USDY', 'stellar', 467_502_151.7],
+  ['USDY', 'plume', 0],
+  ['USDY', 'sei', 225_844_520.32],
+  ['USDY', 'bnb', 68_682_990.33],
+  ['OUSG', 'xrp-ledger', 1_639_899.44],
 ];
 
-const EVM_CHAINS = new Set<Chain>(['ethereum', 'mantle', 'arbitrum', 'polygon']);
+const snapshotTotal = SUPPLY_SNAPSHOT.reduce((s, [token, , supply]) => s + supply * SNAPSHOT_PRICES[token], 0);
 
-function generateLiquidityCells(): LiquidityCell[] {
-  const cells: LiquidityCell[] = [];
-
-  // OUSG is primarily Ethereum + Polygon
-  const ousgDistribution: Partial<Record<Chain, number>> = {
-    ethereum: 420_000_000,
-    polygon: 30_000_000,
+const chainBreakdown: ChainTVL[] = SUPPLY_SNAPSHOT.map(([token, chain, supply]) => {
+  const tvlUsd = supply * SNAPSHOT_PRICES[token];
+  return {
+    chain,
+    token,
+    supply,
+    tvlUsd,
+    pctOfTotal: (tvlUsd / snapshotTotal) * 100,
+    dataSource: 'mocked',
+    asOf: SUPPLY_AS_OF,
+    source: SUPPLY_SOURCE,
   };
+});
 
-  for (const [chain, tvl] of Object.entries(ousgDistribution)) {
-    cells.push({
-      issuer: 'OUSG',
-      chain: chain as Chain,
-      tvlUsd: tvl,
-      dataSource: EVM_CHAINS.has(chain as Chain) ? 'estimated' : 'mocked',
-      asOf: MOCK_AS_OF,
-      source: `OUSG ${chain} TVL from token Transfer events`,
-    });
-  }
-
-  // USDY is across many chains
-  const usdyDistribution: Partial<Record<Chain, number>> = {
-    ethereum: 180_000_000,
-    mantle: 95_000_000,
-    arbitrum: 42_000_000,
-    solana: 35_000_000,
-    sui: 18_000_000,
-    aptos: 12_000_000,
-    noble: 8_000_000,
-    stellar: 5_000_000,
-    plume: 3_000_000,
-    sei: 2_000_000,
-  };
-
-  for (const [chain, tvl] of Object.entries(usdyDistribution)) {
-    cells.push({
-      issuer: 'USDY',
-      chain: chain as Chain,
-      tvlUsd: tvl,
-      dataSource: EVM_CHAINS.has(chain as Chain) ? 'estimated' : 'mocked',
-      asOf: MOCK_AS_OF,
-      source: EVM_CHAINS.has(chain as Chain)
-        ? `USDY ${chain} TVL from Dune Transfer events`
-        : `USDY ${chain} TVL estimated from bridge volumes and public disclosures`,
-    });
-  }
-
-  return cells;
-}
-
-// --- Pillar 3 support: Chain Breakdown ---
-
-const chainBreakdown: ChainTVL[] = [
-  { chain: 'ethereum', token: 'ALL', tvlUsd: 600_000_000, holderCount: 450, txCount30d: 2800, pctOfTotal: 65.2, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'Aggregated from OUSG + USDY Ethereum Transfer events' },
-  { chain: 'mantle', token: 'USDY', tvlUsd: 95_000_000, holderCount: 180, txCount30d: 920, pctOfTotal: 10.3, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'USDY Mantle Transfer events via Dune' },
-  { chain: 'arbitrum', token: 'USDY', tvlUsd: 42_000_000, holderCount: 210, txCount30d: 650, pctOfTotal: 4.6, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'USDY Arbitrum Transfer events via Dune' },
-  { chain: 'polygon', token: 'OUSG', tvlUsd: 30_000_000, holderCount: 85, txCount30d: 180, pctOfTotal: 3.3, dataSource: 'estimated', asOf: MOCK_AS_OF, source: 'OUSG Polygon Transfer events via Dune' },
-  { chain: 'solana', token: 'USDY', tvlUsd: 35_000_000, holderCount: 320, txCount30d: 1100, pctOfTotal: 3.8, dataSource: 'mocked', asOf: MOCK_AS_OF, source: 'Estimated from Solana explorer and bridge volumes' },
-  { chain: 'sui', token: 'USDY', tvlUsd: 18_000_000, holderCount: 140, txCount30d: 480, pctOfTotal: 2.0, dataSource: 'mocked', asOf: MOCK_AS_OF, source: 'Estimated from Sui explorer data' },
-  { chain: 'aptos', token: 'USDY', tvlUsd: 12_000_000, holderCount: 95, txCount30d: 280, pctOfTotal: 1.3, dataSource: 'mocked', asOf: MOCK_AS_OF, source: 'Estimated from Aptos explorer data' },
-];
+const liquidityCells: LiquidityCell[] = chainBreakdown.map((r) => ({
+  issuer: r.token,
+  chain: r.chain,
+  tvlUsd: r.tvlUsd,
+  dataSource: r.dataSource,
+  asOf: r.asOf,
+  source: r.source,
+}));
 
 // --- Pillar 4: Competitive Benchmark ---
 
@@ -334,7 +313,7 @@ const competitorBenchmark: CompetitorMetric[] = [
 // --- Aggregated Dashboard Metrics ---
 
 const dashboardMetrics: DashboardMetrics = {
-  totalTvlUsd: 920_000_000,
+  totalTvlUsd: snapshotTotal,
   activeIssuers: 5,
   volume30dUsd: 145_000_000,
   avgTxSizeUsd: 185_000,
@@ -348,7 +327,7 @@ export const MOCK_DATA: DashboardData = {
   issuerMetrics,
   velocityData: generateVelocityData(),
   weeklyFlows: generateWeeklyFlows(),
-  liquidityCells: generateLiquidityCells(),
+  liquidityCells,
   chainBreakdown,
   competitorBenchmark,
 };
