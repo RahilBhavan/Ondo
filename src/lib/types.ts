@@ -16,19 +16,19 @@ export interface Sourced {
   source: string;
 }
 
-// --- Pillar 1: TVL by Issuer ---
+// --- Pillar 1: Top Ethereum holders ---
 
-export interface IssuerMetric extends Sourced {
-  /** Institution name from address registry, or "Unknown Wallet" */
+export interface HolderMetric extends Sourced {
+  /** Registry label, else Blockscout public name tag, else "Unknown wallet (0x…)" */
   name: string;
   /** Wallet address (checksummed) */
   address: string;
   /** Token: OUSG or USDY */
   token: 'OUSG' | 'USDY';
-  /** Total value in USD */
+  /** Balance in token units */
+  balance: number;
+  /** balance × Ondo oracle price, in USD */
   tvlUsd: number;
-  /** Most recent transaction timestamp (ISO) */
-  lastActivity: string;
 }
 
 // --- Pillar 2: Mint/Redemption Volume & Frequency ---
@@ -144,7 +144,7 @@ export interface DashboardMetrics {
 
 export interface DashboardData {
   metrics: DashboardMetrics;
-  issuerMetrics: IssuerMetric[];
+  topHolders: HolderMetric[];
   weeklyFlows: WeeklyFlow[];
   liquidityCells: LiquidityCell[];
   chainBreakdown: ChainTVL[];

@@ -6,7 +6,7 @@ import { fourWeekStats, weeklySeries } from '@/lib/flowStats';
 import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
 import { combinedSource } from '@/lib/dataSource';
 import { MetricCard } from '@/components/ui/MetricCard';
-import { TVLByIssuerChart } from '@/components/dashboard/TVLByIssuerChart';
+import { TopHoldersChart } from '@/components/dashboard/TopHoldersChart';
 import { FlowCharts } from '@/components/flows/FlowCharts';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
@@ -15,9 +15,10 @@ import { getBenchmark } from '@/lib/benchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
+import { getTopHolders } from '@/lib/topHolders';
 import type { DashboardData } from '@/lib/types';
 
-// Chain TVL reads on-chain supply; re-render hourly like /flows.
+// Chain TVL, top holders and the benchmark read live sources; re-render hourly like /flows.
 export const revalidate = 3600;
 
 const NAV_LINKS = [
@@ -46,6 +47,7 @@ export default async function DashboardPage() {
   const tvlSource = combinedSource(chainRows);
   // MetricCard adds '~' itself only when fully mocked; a mixed total needs it too.
   const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'mocked') ? '~' : '';
+  const topHolders = await getTopHolders();
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -94,10 +96,10 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* TVL + Chain — 2-column */}
+        {/* Top holders + Chain — 2-column */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3">
-            <TVLByIssuerChart data={data.issuerMetrics} />
+            <TopHoldersChart data={topHolders.rows} />
           </div>
           <div className="lg:col-span-2">
             <ChainBreakdown data={chainRows} />
