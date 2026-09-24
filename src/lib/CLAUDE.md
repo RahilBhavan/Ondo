@@ -9,7 +9,7 @@
 - All mocks in `mockData.ts` — never scatter mock values across components
 - Every mocked value has `source` (citation string) and `asOf` (ISO date)
 - Realistic ranges from Ondo public disclosures, not round numbers
-- `getMockPillarData(n)` returns typed data for pillar 1-4
+- `MOCK_DATA` holds the labeled fallback each live getter returns when its source fails
 
 ## Dune Client
 - `dune.ts` handles execute → poll → cache cycle

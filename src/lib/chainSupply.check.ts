@@ -38,7 +38,6 @@ assert.equal(mock.length, SUPPLY_SOURCES.length);
 assert.equal(new Set(SUPPLY_SOURCES.map((s) => s.chain)).size, 13);
 const mockTotal = mock.reduce((s, r) => s + r.tvlUsd, 0);
 assert.ok(mockTotal > 2.5e9 && mockTotal < 2.7e9, `mock total ${mockTotal}`);
-close(MOCK_DATA.metrics.totalTvlUsd, mockTotal, 1);
 
 const prices = { OUSG: 116.662365, USDY: 1.14730001, asOf: '2026-09-24T00:00:00Z', source: 'oracle' };
 const asOf = '2026-09-24T12:00:00Z';

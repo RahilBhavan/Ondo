@@ -12,6 +12,8 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
   const sorted = [...data].sort((a, b) => b.tvlUsd - a.tvlUsd);
   const maxTvl = sorted[0]?.tvlUsd ?? 1;
   const asOf = data.reduce((latest, r) => (r.asOf > latest ? r.asOf : latest), '') || new Date().toISOString();
+  // withOnchainOndo (src/lib/benchmark.ts) replaces the DefiLlama source on the Ondo row.
+  const ondoOnchain = data.some((r) => r.protocol === 'nexus' && !r.source.includes('defillama.com'));
 
   return (
     <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">
@@ -85,8 +87,10 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
       </div>
 
       <p className="text-xs text-[color:var(--mute)] mt-3">
-        TVL from DefiLlama as of {formatDate(asOf)}. Chain counts and redemption terms link to the
-        issuer&apos;s docs.
+        {ondoOnchain
+          ? 'Ondo TVL is on-chain supply × oracle price, same as Total TVL; others from DefiLlama'
+          : 'TVL from DefiLlama'}{' '}
+        as of {formatDate(asOf)}. Chain counts and redemption terms link to the issuer&apos;s docs.
       </p>
     </div>
   );

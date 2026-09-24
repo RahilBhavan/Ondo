@@ -1,6 +1,6 @@
 /** Self-check for the benchmark row mapper. Run: npx --yes tsx src/lib/benchmark.check.ts */
 import assert from 'node:assert/strict';
-import { DEFILLAMA_SLUGS, mapBenchmarkRow } from './benchmark';
+import { DEFILLAMA_SLUGS, mapBenchmarkRow, withOnchainOndo } from './benchmark';
 import { MOCK_DATA } from './mockData';
 
 const asOf = '2026-09-24T12:00:00.000Z';
@@ -42,5 +42,17 @@ assert.equal(mapBenchmarkRow(buidl, 1, asOf).chainCount, null);
 for (const bad of [0, -5, NaN, '123', null, { tvl: 1 }]) {
   assert.throws(() => mapBenchmarkRow(ondo, bad, asOf), /bad tvl/);
 }
+
+// Ondo row takes the on-chain total only when every chain row is live; competitors untouched.
+const chain = MOCK_DATA.chainBreakdown.map((r) => ({ ...r, dataSource: 'live' as const, asOf }));
+const chainTotal = chain.reduce((s, r) => s + r.tvlUsd, 0);
+const swapped = withOnchainOndo([rwa, live], chain);
+assert.equal(swapped[0].tvlUsd, chainTotal);
+assert.equal(swapped[0].dataSource, 'live');
+assert.equal(swapped[0].chainCount, 14);
+assert.equal(swapped[1], live);
+const partial = [{ ...chain[0], dataSource: 'mocked' as const }, ...chain.slice(1)];
+assert.equal(withOnchainOndo([rwa, live], partial)[0], rwa);
+assert.equal(withOnchainOndo([rwa], [])[0], rwa);
 
 console.log('benchmark check ok');

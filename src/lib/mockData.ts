@@ -1,10 +1,9 @@
 /**
- * Typed mock data for all 4 dashboard pillars.
+ * Typed mock data for all 4 dashboard pillars: the labeled fallback each live getter
+ * returns when its source fails (ADR-002).
  *
- * Every value has a source citation and asOf date.
- * Mock data is a first-class feature (ADR-002), not a fallback.
- * Ranges are realistic, derived from Ondo's public disclosures
- * and comparable protocol metrics.
+ * Every value has a source citation and asOf date. Weekly flows are illustrative;
+ * holders, chain supply and benchmark rows are dated snapshots of the live sources.
  *
  * See docs/METHODOLOGY.md for the data source taxonomy.
  */
@@ -12,21 +11,17 @@
 import type {
   HolderMetric,
   WeeklyFlow,
-  LiquidityCell,
   ChainTVL,
   CompetitorMetric,
-  DashboardMetrics,
-  DashboardData,
   Chain,
 } from './types';
 import { holderName } from './addressRegistry';
 
-const MOCK_SOURCE = 'Mock data derived from Ondo public disclosures (April 2026)';
 const MOCK_AS_OF = '2026-04-09';
 
 // --- Pillar 1: Top Ethereum holders ---
 
-// Fallback snapshot when Dune or the price oracle is unavailable. Balances are the top 15
+// Fallback snapshot when Blockscout or the price oracle is unavailable. Balances are the top 15
 // holders per token from eth.blockscout.com/api/v2/tokens/<token>/holders on 2026-09-24
 // (with the one Blockscout public name tag among them), valued at the Ondo oracle price
 // read the same day (OUSG $116.662365, USDY $1.14730001).
@@ -190,15 +185,6 @@ const chainBreakdown: ChainTVL[] = SUPPLY_SNAPSHOT.map(([token, chain, supply]) 
   };
 });
 
-const liquidityCells: LiquidityCell[] = chainBreakdown.map((r) => ({
-  issuer: r.token,
-  chain: r.chain,
-  tvlUsd: r.tvlUsd,
-  dataSource: r.dataSource,
-  asOf: r.asOf,
-  source: r.source,
-}));
-
 // --- Pillar 4: Competitive Benchmark ---
 
 // Fallback rows for src/lib/benchmark.ts. TVL is DefiLlama as fetched on 2026-09-24.
@@ -255,33 +241,12 @@ const competitorBenchmark: CompetitorMetric[] = [
   },
 ];
 
-// --- Aggregated Dashboard Metrics ---
-
-const dashboardMetrics: DashboardMetrics = {
-  totalTvlUsd: snapshotTotal,
-  lastUpdated: '2026-04-09T14:00:00Z',
-};
-
 // --- Export ---
 
-export const MOCK_DATA: DashboardData = {
-  metrics: dashboardMetrics,
+/** Labeled fallbacks for the live getters (weeklyFlows, chainSupply, topHolders, benchmark). */
+export const MOCK_DATA = {
   topHolders,
   weeklyFlows: generateWeeklyFlows(),
-  liquidityCells,
   chainBreakdown,
   competitorBenchmark,
 };
-
-/**
- * Returns mock data for a specific pillar.
- * Used as fallback when Dune API is unavailable or for development.
- */
-export function getMockPillarData(pillar: 1 | 2 | 3 | 4): unknown {
-  switch (pillar) {
-    case 1: return MOCK_DATA.topHolders;
-    case 2: return MOCK_DATA.weeklyFlows;
-    case 3: return { cells: MOCK_DATA.liquidityCells, breakdown: MOCK_DATA.chainBreakdown };
-    case 4: return MOCK_DATA.competitorBenchmark;
-  }
-}

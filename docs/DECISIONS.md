@@ -89,3 +89,24 @@
   - If Ondo changes the USDY event layout, the raw decode breaks silently; recheck against
     decoded OUSG if totals shift
   - Legacy USD values assume the USDC peg
+
+## ADR-007: Home Page Sources: On-Chain Supply, Blockscout, DefiLlama Instead of Dune
+**Date:** 2026-09-24
+**Status:** Accepted
+**Context:** ADR-001 and ADR-005 planned Dune Transfer events for holders, per-chain TVL
+  and the benchmark. Three problems: the Dune account hit its datapoint limit and cannot
+  re-execute queries; non-EVM chains (Solana, Sui, Aptos, Noble, Stellar, XRPL) are not on
+  Dune, so half the heatmap would stay mocked; and every Dune read needs an API key.
+**Decision:** Keep Dune only for weekly mint/redeem flows (query 8822192). Use:
+  1. Total TVL, chain breakdown, heatmap: total supply read on each chain (RPC or chain API)
+     × the Ethereum OndoOracle price (src/lib/chainSupply.ts, src/lib/prices.ts)
+  2. Top holders: Blockscout token holders API, Ethereum only (src/lib/topHolders.ts)
+  3. Benchmark: DefiLlama TVL per product; the Ondo row uses the on-chain total when every
+     chain read is live, so it matches Total TVL (src/lib/benchmark.ts)
+**Consequences:**
+  - All 13 chains are live; no key needed for anything but Dune
+  - Supply-based TVL counts any Ondo-held inventory, and includes BNB and XRPL, which
+    DefiLlama leaves out, so Ondo TVL runs above DefiLlama's
+  - Holders are Ethereum only
+  - Flow data is only as fresh as the last Dune run; the page shows its date
+  - Each getter falls back to a dated, labeled snapshot in mockData.ts (ADR-002 still holds)

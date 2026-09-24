@@ -49,8 +49,8 @@ export function TopHoldersChart({ data }: TopHoldersChartProps) {
                       <td className="py-2 pr-4">
                         <a
                           href={`https://etherscan.io/address/${row.address}`}
-                          className="text-[color:var(--body)] hover:underline"
-                          title={row.address}
+                          className="block max-w-[240px] truncate text-[color:var(--body)] hover:underline"
+                          title={`${row.name} (${row.address})`}
                         >
                           {row.name}
                         </a>

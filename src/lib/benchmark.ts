@@ -6,10 +6,12 @@
  * static mock row, cited to the issuer's own docs. (DefiLlama's `chains` for these RWA
  * slugs is a bare ['Ethereum'] placeholder, so it is not used.)
  * A failed fetch for one product falls back to that product's labeled mock row only.
+ * The page swaps the Ondo row's TVL for the on-chain total (withOnchainOndo) so it matches
+ * the Total TVL KPI.
  */
 
 import { MOCK_DATA } from './mockData';
-import type { CompetitorMetric, DataSource, Protocol } from './types';
+import type { ChainTVL, CompetitorMetric, DataSource, Protocol } from './types';
 
 export interface BenchmarkResult {
   rows: CompetitorMetric[];
@@ -70,4 +72,19 @@ async function getRow(fallback: CompetitorMetric): Promise<CompetitorMetric> {
 export async function getBenchmark(): Promise<BenchmarkResult> {
   const rows = await Promise.all(MOCK_DATA.competitorBenchmark.map(getRow));
   return { rows, dataSource: rows.every((r) => r.dataSource === 'live') ? 'live' : 'mocked' };
+}
+
+/**
+ * Ondo row TVL = the on-chain total from getChainTVL, when every chain row is live, so the
+ * benchmark matches the Total TVL KPI. Otherwise the DefiLlama (or mock) row stays.
+ */
+export function withOnchainOndo(rows: CompetitorMetric[], chainRows: ChainTVL[]): CompetitorMetric[] {
+  if (chainRows.length === 0 || !chainRows.every((r) => r.dataSource === 'live')) return rows;
+  const tvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
+  const asOf = chainRows.reduce((max, r) => (r.asOf > max ? r.asOf : max), '');
+  return rows.map((r) =>
+    r.protocol === 'nexus'
+      ? { ...r, tvlUsd, dataSource: 'live', asOf, source: 'https://docs.ondo.finance/addresses' }
+      : r
+  );
 }

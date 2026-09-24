@@ -1,7 +1,7 @@
 # Ondo Nexus Dashboard — Data Methodology
 
-**Version:** 1.0
-**Last Updated:** 2026-04-09
+**Version:** 2.0
+**Last Updated:** 2026-09-24
 
 This document explains how every number on the dashboard is sourced, computed, and labeled. If a metric cannot be verified from on-chain data alone, this document explains why and what assumptions fill the gap.
 
@@ -13,31 +13,31 @@ Every data point on the dashboard carries one of three labels:
 
 | Label | Meaning | Criteria |
 |-------|---------|----------|
-| **Live** | Sourced directly from on-chain events via Dune Analytics | Updated within 1hr, no manual assumptions, independently verifiable |
-| **Estimated** | Derived from on-chain data with documented assumptions | Computation uses on-chain inputs but requires manual mapping or inference |
-| **Mocked** | Realistic value based on public disclosures | No on-chain source; value derived from Ondo disclosures or comparable protocols |
+| **Live** | Read from its source on this render: on-chain RPC, Blockscout, DefiLlama, or the latest Dune result | No manual assumptions, independently verifiable. Cached up to 1hr; the Dune result is as old as its last run |
+| **Estimated** | A total that mixes live and mocked rows | Shown when some but not all rows behind a number are live |
+| **Mocked** | Dated snapshot or illustrative value, shown when the source fails | Carries its own source and asOf; prefixed with "~" |
 
 The `DataSourceBadge` component renders this label inline with every metric. The methodology drawer explains each gap.
 
 ---
 
-## Pillar 1: TVL by Issuer
+## Pillar 1: Top Ethereum Holders
 
-**What we track:** Total value of OUSG and USDY tokens held per address, mapped to known institutions via a manual address registry.
+**What we track:** The top 15 holders of OUSG and USDY on Ethereum, with balance and USD value. Code: `src/lib/topHolders.ts`.
 
-**Data source:** `Transfer` events from OUSG (`0x1B19C193...`) and USDY (`0x96F6eF95...`) token contracts on Ethereum. Net balance = sum of incoming transfers - sum of outgoing transfers per address.
+**Data source:** Blockscout token holders API, no key needed:
+`https://eth.blockscout.com/api/v2/tokens/<token>/holders` for OUSG (`0x1B19C19393e2d034D8Ff31ff34c81252FcBbee92`) and USDY (`0x96F6eF951840721AdBF46Ac996b59E0235CB985C`). Balances are 18-decimal integers.
 
-**Institution mapping:** The `addressRegistry.ts` file maps known wallet addresses to institution names. Sources:
-- Ondo docs (Coinbase Prime custodian addresses)
-- Public wallet labels from Etherscan
-- Manual research of large holders
+**USD value:** balance × `OndoOracle.getAssetPrice(token)` on Ethereum (`0x9Cad45a8BF0Ed41Ff33074449B357C7a1fAb4094`, 1e18-scaled).
 
-**Data source label:** **Estimated** — TVL values are live on-chain, but issuer attribution relies on manual address mapping that may be incomplete.
+**Names:** First the manual registry in `addressRegistry.ts`, then the highest-ordinal Blockscout public tag of type `name`. Generic tags, ordinal-0 tags, tags equal to the contract name (such as `CErc20DelegatorKYC`) and `GnosisSafeProxy*` tags are ignored, since they name a contract class, not an owner. Anything else shows as "Unknown wallet (0x...)".
+
+**Data source label:** **Live** when both holder calls and the oracle read succeed. Otherwise **Mocked**: a Blockscout snapshot from 2026-09-24 in `mockData.ts`.
 
 **Known gaps:**
-- Addresses not in the registry show as "Unknown Wallet (0x...)"
-- Institutional wallets using smart contract intermediaries may be misattributed
-- OUSG's backing composition (which third-party assets) is NOT on-chain
+- Ethereum only. Holders on other chains are not listed.
+- Contract holders (lending markets, Safes, bridges) hold on behalf of others; the dashboard does not look through them.
+- OUSG's backing composition (which third-party assets) is not on-chain.
 
 ---
 
@@ -64,7 +64,9 @@ The `DataSourceBadge` component renders this label inline with every metric. The
 
 **Query:** `queries/mint_redeem_volume.sql`, saved on Dune as [query 8822192](https://dune.com/queries/8822192). Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
 
-**Data source label:** **Live** when `DUNE_API_KEY` and `DUNE_MINT_REDEEM_QUERY_ID` are set and the query returns rows. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason.
+**Data source label:** **Live** when `DUNE_API_KEY` and `DUNE_MINT_REDEEM_QUERY_ID` are set and the query returns rows. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason. `asOf` is when Dune last ran the query, not the page render time; the home page shows it as "as of <date>" on the flows section and the net flow KPI, since a Live result can be days old.
+
+**Home page KPIs:** 4-week volume, net flow and average transaction size sum the last 4 complete weeks of both tokens. The trend compares volume to the 4 complete weeks before; a change that rounds to 0.0% is shown as flat.
 
 **Design note (PRD deviation):** The PRD originally specified settlement time delta (time between redemption request and settlement). Research found that InstantManager redemptions are **atomic**: they execute in a single transaction with zero settlement delay. There is no `RedemptionRequested`/`RedemptionSettled` event pair to measure.
 
@@ -80,81 +82,83 @@ See ADR-004 in DECISIONS.md.
 
 ---
 
-## Pillar 3: Liquidity Depth Heatmap
+## Pillar 3: Total TVL, Chain Breakdown and Heatmap
 
-**What we track:** TVL distribution across an issuer/asset x chain matrix.
+**What we track:** OUSG and USDY TVL per (token, chain) across 13 chains. The Total TVL KPI, the chain breakdown and the heatmap all use these same rows. Code: `src/lib/chainSupply.ts`.
 
-**Data source:** `Transfer` events from USDY token contracts on each chain where Dune has coverage. OUSG is primarily Ethereum — included as single row.
+**Method:** TVL = total supply on the chain × the Ethereum `OndoOracle.getAssetPrice(token)` (`0x9Cad45a8BF0Ed41Ff33074449B357C7a1fAb4094`). Every chain shares this one price (the Mantle and BNB oracles return the same USDY value). Bridges are LayerZero OFT burn/mint, so each chain's supply is its own float and there is no lockbox to subtract. rUSDY, rOUSG and mUSD wrap tokens already counted and are left out. All reads run in parallel with an 8s timeout and a 1hr in-memory cache.
 
-**Chains with Dune coverage (Live):** Ethereum, Mantle, Arbitrum, Polygon
-**Chains without Dune coverage (Mocked):** Solana, Sui, Aptos, Noble, Stellar, Plume, Sei
+**Per-chain sources:**
 
-**Data source label:** Mixed — **Live** for EVM chains with Dune coverage, **Mocked** for non-EVM chains.
+| Token | Chain | Address / asset id | Read method |
+|-------|-------|--------------------|-------------|
+| USDY | Ethereum | `0x96F6eF951840721AdBF46Ac996b59E0235CB985C` | ERC-20 `totalSupply()` (18 decimals) |
+| OUSG | Ethereum | `0x1B19C19393e2d034D8Ff31ff34c81252FcBbee92` | ERC-20 `totalSupply()` |
+| USDY | Mantle | `0x5bE26527e817998A7206475496fDE1E68957c5A6` | ERC-20 `totalSupply()` |
+| USDY | Arbitrum | `0x35e050d3C0eC2d29D269a8EcEa763a183bDF9A9D` | ERC-20 `totalSupply()` |
+| OUSG | Polygon | `0xbA11C5effA33c4D6F8f593CFA394241CfE925811` | ERC-20 `totalSupply()` |
+| USDY | Solana | `A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6` | RPC `getTokenSupply` |
+| OUSG | Solana | `i7u4r16TcsJTgq1kAG8opmVZyVnAKBwLKu6ZPMwzxNc` | RPC `getTokenSupply` |
+| USDY | Sui | `0x960b531667636f39e85867775f52f6b1f220a058c4de786905bdf761e06a56bb::usdy::USDY` | GraphQL `coinMetadata.supply` |
+| USDY | Aptos | `0xcfea864b32833f157f042618bd845145256b1bf4c0da34a7013b76e42daa53cc::usdy::USDY` | View `0x1::coin::supply` (6 decimals) |
+| USDY | Noble | `ausdy` | Cosmos bank `supply/by_denom` (18 decimals) |
+| USDY | Stellar | `USDY-GAJMPX5NBOG6TQFPQGRABJEEB2YE7RFRLUKJDZAZGAD5GFX4J7TADAZ6` | Horizon `/assets`: sum of all `balances.*`, contracts, liquidity pools and claimable balances |
+| USDY | Plume | `0xD2B65e851Be3d80D3c2ce795eB2E78f16cB088b2` | ERC-20 `totalSupply()` |
+| USDY | Sei | `0x54cD901491AeF397084453F4372B93c33260e2A6` | ERC-20 `totalSupply()` |
+| USDY | BNB Chain | `0x608593d17A2decBbc4399e4185bE4922F97eD32E` | ERC-20 `totalSupply()` |
+| OUSG | XRP Ledger | `4F55534700000000000000000000000000000000.rHuiXXjHLpMP8ZE9sSQU5aADQVWDwv6h5p` | `gateway_balances` obligations on the issuer |
+
+**Data source label:** Per row. **Live** when both the supply read and the oracle read succeed. A failed supply read shows that row's 2026-09-24 snapshot as **Mocked**; a failed oracle read makes every row Mocked. The Total TVL KPI is **Estimated** when rows are mixed.
 
 **Known gaps:**
-- Non-EVM chains (Solana, Sui, Aptos, etc.) require dedicated indexers not available through Dune
-- Mocked values for these chains are derived from bridge transfer volumes and public disclosures
-- Each mocked cell is labeled with "~" prefix and source citation
+- Supply counts every token in circulation, including any inventory Ondo itself holds (treasury, bridge or market-making wallets).
+- BNB Chain and the XRP Ledger are included; DefiLlama's `ondo-yield-assets` does not count them, so our total runs higher.
+- One Ethereum price for all chains. If a chain's token ever traded off the oracle price, this would not show it.
 
 ---
 
 ## Pillar 4: Competitive Benchmark
 
-**What we track:** Side-by-side comparison of Nexus (OUSG/USDY) vs. Superstate (USTB), OpenEden (TBILL), and Franklin Templeton (BENJI) on:
-- TVL
-- 30-day volume
-- Chain availability
-- Redemption characteristics
+**What we track:** TVL, chain count and redemption terms for Ondo (OUSG + USDY), Invesco USTB on Superstate, OpenEden TBILL and BlackRock BUIDL. Code: `src/lib/benchmark.ts`.
 
-**Data sources by competitor:**
+**TVL:** DefiLlama `GET https://api.llama.fi/tvl/<slug>` per product (slugs `invesco-ustb`, `openeden-tbill`, `blackrock-buidl`, `ondo-yield-assets`), cached 1hr. The Ondo row is replaced by the Pillar 3 on-chain total when every chain row is live, so it equals the Total TVL KPI; otherwise it keeps DefiLlama. A table footnote says which source the Ondo row uses.
 
-| Competitor | TVL Source | Volume Source | Redemption Source |
-|------------|-----------|--------------|-------------------|
-| Nexus (OUSG/USDY) | Dune (Live) | Dune InstantManager events (Live) | Documented as instant/atomic |
-| Superstate USTB | Dune USTB transfers (Live) | Dune transfers (Live) | Public docs (Estimated) |
-| OpenEden TBILL | Dune TBILL transfers (Live) | Dune transfers (Live) | Public docs (Estimated) |
-| Franklin Templeton BENJI | Public disclosures (Mocked) | Public reports (Mocked) | Public docs (Estimated) |
+**Chain count and redemption:** Static text quoted from each issuer's own docs, with a link. DefiLlama's `chains` for these slugs is a placeholder, so it is not used. BUIDL shows "Not disclosed" for both: no issuer page could be cited.
 
-**Staleness policy:** If a competitor data point is >30 days old, it renders in muted color with a warning tooltip showing the data date.
-
-**Data source label:** Mixed — per-cell labeling based on source freshness and type.
+**Data source label:** Per row. **Live** when the fetch (or on-chain total) succeeds, else the 2026-09-24 DefiLlama snapshot as **Mocked**.
 
 **Known gaps:**
-- Competitor accounting conventions may differ (e.g., TVL includes/excludes accrued yield)
-- Franklin Templeton data is least reliable — primarily from press releases
-- "Redemption speed" comparison is approximate — different products have fundamentally different architectures
+- Accounting may differ between products (accrued yield, which chains count).
+- Ondo's on-chain total and competitors' DefiLlama totals use different methods; the footnote says so.
+- Redemption terms are not comparable one to one; products have different designs.
 
 ---
 
 ## Cross-Chain Data Strategy
 
-InstantManager contracts (mint/redeem events) exist **only on Ethereum**. All other chains have bridged token contracts via LayerZero OFT adapters.
+InstantManager contracts (mint/redeem events) exist **only on Ethereum**. All other chains have bridged tokens via LayerZero OFT adapters.
 
 | Data Type | Source | Chains |
 |-----------|--------|--------|
-| Mint/Redeem events | InstantManager decoded events | Ethereum only |
-| Token holdings/TVL | ERC-20 Transfer events | All EVM chains on Dune |
-| Bridge activity | OFT adapter Transfer events | Ethereum, Mantle, Arbitrum |
-| Non-EVM holdings | Public disclosures | Solana, Sui, Aptos, etc. (Mocked) |
+| Mint/Redeem events | Dune, InstantManager events | Ethereum only |
+| Supply / TVL | Direct RPC and API reads (table above) | All 13 chains |
+| Top holders | Blockscout | Ethereum only |
+| Competitor TVL | DefiLlama | As DefiLlama counts them |
 
 ---
 
 ## Caching Strategy
 
-All Dune queries are cached at the API route layer with 1-hour TTL. This:
-- Avoids Dune free tier rate limits (10 req/min)
-- Provides consistent data during cache window
-- Falls back to mock data if Dune is unreachable
-
-Cache key: query ID + parameters. Cache invalidation: TTL expiry only (no manual purge needed for v1).
+Each source is cached for 1 hour: chain supply and the oracle price in memory, Blockscout and DefiLlama in the Next fetch cache, Dune in `dune.ts`. The home page and `/flows` re-render hourly (ISR). Chain supply caches only a fully live read, so a partial failure retries on the next render. The Dune path reads the latest saved result and does not re-execute the query, so that data is as old as the last run.
 
 ---
 
 ## Sources
 
-All data sources are cited inline in the dashboard via the `MethodologyDrawer` component. Primary sources:
-- Dune Analytics `ondofinance` namespace (decoded contract tables)
-- Ondo Finance official documentation (docs.ondo.finance)
-- Ondo Finance blog (ondo.finance/blog)
-- Etherscan verified contracts
-- Competitor public disclosures and documentation
+All data sources are cited inline in the dashboard via the `MethodologyDrawer` component and each row's badge link. Primary sources:
+- On-chain reads: public RPCs and chain APIs listed in Pillar 3
+- OndoOracle on Ethereum for prices
+- Blockscout (eth.blockscout.com) for Ethereum holders
+- DefiLlama (api.llama.fi) for competitor TVL
+- Dune query 8822192 for mint and redeem flows
+- Ondo Finance official documentation (docs.ondo.finance) and competitor docs

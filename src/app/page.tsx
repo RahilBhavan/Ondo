@@ -1,8 +1,7 @@
-import { MOCK_DATA } from '@/lib/mockData';
 import Link from 'next/link';
-import { formatUsdCompact, formatNumberCompact, formatPercent, relativeTime } from '@/lib/format';
+import { formatUsdCompact, formatNumberCompact, formatPercent } from '@/lib/format';
 import { getWeeklyFlows } from '@/lib/weeklyFlows';
-import { fourWeekStats, weeklySeries } from '@/lib/flowStats';
+import { formatWeek, fourWeekStats, weeklySeries } from '@/lib/flowStats';
 import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
 import { combinedSource } from '@/lib/dataSource';
 import { MetricCard } from '@/components/ui/MetricCard';
@@ -11,12 +10,11 @@ import { FlowCharts } from '@/components/flows/FlowCharts';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { LiquidityHeatmap } from '@/components/dashboard/LiquidityHeatmap';
 import { CompetitiveBenchmark } from '@/components/dashboard/CompetitiveBenchmark';
-import { getBenchmark } from '@/lib/benchmark';
+import { getBenchmark, withOnchainOndo } from '@/lib/benchmark';
 import { ChainBreakdown } from '@/components/dashboard/ChainBreakdown';
 import { MethodologyDrawer } from '@/components/dashboard/MethodologyDrawer';
 import { PageShell } from '@/components/ui/PageShell';
 import { getTopHolders } from '@/lib/topHolders';
-import type { DashboardData } from '@/lib/types';
 
 // Chain TVL, top holders and the benchmark read live sources; re-render hourly like /flows.
 export const revalidate = 3600;
@@ -26,28 +24,23 @@ const NAV_LINKS = [
   { label: 'Methodology', href: '#methodology' },
 ];
 
-async function getDashboardData(): Promise<DashboardData> {
-  // Server component — fetch from internal API route.
-  // In production, this would call the API route with proper base URL.
-  // For now, use mock data directly to avoid fetch-to-self in SSR.
-  return MOCK_DATA;
-}
-
 export default async function DashboardPage() {
-  const data = await getDashboardData();
-  const { metrics } = data;
-  // Direct call, no fetch-to-self (same as src/app/flows/page.tsx).
-  const flows = await getWeeklyFlows();
+  // Direct calls, no fetch-to-self (same as src/app/flows/page.tsx); /api/metrics mirrors this.
+  const [flows, chainRows, topHolders, benchmark] = await Promise.all([
+    getWeeklyFlows(),
+    getChainTVL(),
+    getTopHolders(),
+    getBenchmark(),
+  ]);
   const flowsAsOf = flows.rows.reduce((max, r) => (r.asOf > max ? r.asOf : max), '');
   const stats = fourWeekStats(flows.rows);
-  const trend = stats.volumeTrend;
+  // formatPercent keeps one decimal of a percent: anything that rounds to 0.0% is flat.
+  const trend = stats.volumeTrend === null ? null : Math.round(stats.volumeTrend * 1000) / 1000;
   const prefix = flows.dataSource === 'mocked' ? '~' : '';
-  const chainRows = await getChainTVL();
   const totalTvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
   const tvlSource = combinedSource(chainRows);
   // MetricCard adds '~' itself only when fully mocked; a mixed total needs it too.
   const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'mocked') ? '~' : '';
-  const topHolders = await getTopHolders();
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -58,7 +51,9 @@ export default async function DashboardPage() {
         <p className="max-w-[640px] text-lg text-[color:var(--body)]">
           OUSG and USDY analytics from Ondo Finance: TVL, chains, liquidity, flows, and competitors.
         </p>
-        <p className="text-sm text-[color:var(--mute)]">Updated {relativeTime(flowsAsOf)}</p>
+        <p className="text-sm text-[color:var(--mute)]">
+          Live data from Dune, Blockscout, DefiLlama and on-chain reads. Each section shows its own date.
+        </p>
       </section>
 
       <div className="space-y-6">
@@ -79,7 +74,7 @@ export default async function DashboardPage() {
                 ? undefined
                 : {
                     direction: trend > 0 ? 'up' : trend < 0 ? 'down' : 'flat',
-                    label: `${trend > 0 ? '+' : ''}${formatPercent(trend)} vs prior 4w`,
+                    label: `${trend > 0 ? '+' : ''}${formatPercent(trend === 0 ? 0 : trend)} vs prior 4w`,
                   }
             }
           />
@@ -87,6 +82,7 @@ export default async function DashboardPage() {
             label="4-week net flow"
             value={`${stats.netFlowUsd > 0 ? '+' : ''}${formatUsdCompact(stats.netFlowUsd)}`}
             dataSource={flows.dataSource}
+            subValue={flowsAsOf ? `Dune, as of ${formatWeek(flowsAsOf)}` : undefined}
           />
           <MetricCard
             label="Avg tx size"
@@ -117,7 +113,7 @@ export default async function DashboardPage() {
                 Weekly instant mint and redeem
               </h3>
               <p className="mt-1 text-sm text-[color:var(--mute)]">
-                Last 12 weeks.{' '}
+                Last 12 weeks{flowsAsOf ? `, as of ${formatWeek(flowsAsOf)}` : ''}.{' '}
                 <Link href="/flows" className="text-[color:var(--link)] hover:underline">
                   Full history
                 </Link>
@@ -144,7 +140,7 @@ export default async function DashboardPage() {
         </section>
 
         {/* Benchmark — full width */}
-        <CompetitiveBenchmark data={(await getBenchmark()).rows} />
+        <CompetitiveBenchmark data={withOnchainOndo(benchmark.rows, chainRows)} />
 
         <MethodologyDrawer />
       </div>

@@ -27,7 +27,8 @@ export const holdersPageUrl = (token: Token) =>
 /**
  * Blockscout's public name tag. Only tagType "name" counts ("generic" tags like
  * "Smart Account by Safe" say nothing about the owner); highest ordinal wins.
- * GnosisSafeProxy* name tags are contract class names, not owners.
+ * Ordinal-0 tags, tags equal to the contract name (`address.name`, e.g. CErc20DelegatorKYC)
+ * and GnosisSafeProxy* tags are contract class names, not owners.
  */
 export function publicTag(address: Record<string, unknown>): string | null {
   const tags = (address.metadata as { tags?: unknown } | null | undefined)?.tags;
@@ -35,7 +36,11 @@ export function publicTag(address: Record<string, unknown>): string | null {
   const names = tags
     .filter(
       (t): t is { name: string; tagType: string; ordinal?: number } =>
-        typeof t?.name === 'string' && t.tagType === 'name' && !/^GnosisSafeProxy/i.test(t.name)
+        typeof t?.name === 'string' &&
+        t.tagType === 'name' &&
+        (t.ordinal ?? 0) > 0 &&
+        t.name !== address.name &&
+        !/^GnosisSafeProxy/i.test(t.name)
     )
     .sort((a, b) => (b.ordinal ?? 0) - (a.ordinal ?? 0));
   return names[0]?.name ?? null;

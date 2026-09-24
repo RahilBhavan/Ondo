@@ -54,6 +54,12 @@ assert.ok(Math.abs(safe.tvlUsd - 1150) < 1e-9);
 assert.equal(mapHolderItem(item('0xa5b614026dcb1ef6e0e39aa53351b4f4bd225302', '5000000000000000'), 'OUSG', 1, asOf).balance, 0.005);
 
 assert.equal(publicTag({ metadata: null }), null);
+// Ordinal-0 tags and tags repeating the contract name are class names, not owners.
+assert.equal(publicTag({ metadata: { tags: [{ name: 'Gate.io 5', tagType: 'name', ordinal: 0 }] } }), null);
+assert.equal(
+  publicTag({ name: 'CErc20DelegatorKYC', metadata: { tags: [{ name: 'CErc20DelegatorKYC', tagType: 'name', ordinal: 10 }] } }),
+  null
+);
 assert.equal(publicTag({ metadata: { tags: gateTags } }), 'Gate.io: Deposit Address');
 
 // Malformed items throw (caller falls back to mock), and zero is never live.

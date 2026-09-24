@@ -56,26 +56,6 @@ export interface WeeklyFlow extends Sourced {
   uniqueWallets: number;
 }
 
-export interface MintRedeemEvent {
-  type: 'mint' | 'redeem';
-  /** Wallet address of subscriber/redeemer */
-  address: string;
-  /** Token: OUSG or USDY */
-  token: 'OUSG' | 'USDY';
-  /** RWA token amount */
-  rwaAmount: number;
-  /** Deposit/receiving token address (e.g., USDC) */
-  paymentToken: string;
-  /** USD value of the transaction */
-  usdValue: number;
-  /** Fee in native token units */
-  fee: number;
-  /** Block timestamp (ISO) */
-  timestamp: string;
-  /** Transaction hash */
-  txHash: string;
-}
-
 // --- Pillar 3: Liquidity Depth Heatmap ---
 
 export type Chain =
@@ -131,24 +111,6 @@ export interface CompetitorMetric extends Sourced {
   redemptionSpeed: string;
   /** Citation URL for redemptionSpeed */
   redemptionSource?: string;
-}
-
-// --- Aggregated Dashboard Data ---
-
-export interface DashboardMetrics {
-  /** Total TVL across OUSG + USDY */
-  totalTvlUsd: number;
-  /** Data freshness */
-  lastUpdated: string;
-}
-
-export interface DashboardData {
-  metrics: DashboardMetrics;
-  topHolders: HolderMetric[];
-  weeklyFlows: WeeklyFlow[];
-  liquidityCells: LiquidityCell[];
-  chainBreakdown: ChainTVL[];
-  competitorBenchmark: CompetitorMetric[];
 }
 
 // --- Dune API Types ---
