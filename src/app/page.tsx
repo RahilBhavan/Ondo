@@ -21,6 +21,7 @@ export const revalidate = 3600;
 
 const NAV_LINKS = [
   { label: 'Instant flows', href: '/flows' },
+  { label: 'Stablecoin flows', href: '/issuance' },
   { label: 'Methodology', href: '#methodology' },
 ];
 

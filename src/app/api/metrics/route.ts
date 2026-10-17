@@ -6,6 +6,7 @@
  * - chainBreakdown + totalTvlUsd: on-chain supply × OndoOracle price (src/lib/chainSupply.ts)
  * - topHolders: Blockscout, Ethereum only (src/lib/topHolders.ts)
  * - competitorBenchmark: DefiLlama, Ondo row on-chain when every chain row is live (src/lib/benchmark.ts)
+ * - issuance: USDC, USDT, PYUSD, BUIDL, OUSG, USDY totals and easing-episode results (src/lib/issuance.ts)
  *
  * Every row carries its own dataSource / asOf / source; a failed source falls back to its
  * labeled mock rows.
@@ -15,6 +16,7 @@ import { NextResponse } from 'next/server';
 import { getBenchmark, withOnchainOndo } from '@/lib/benchmark';
 import { getChainTVL } from '@/lib/chainSupply';
 import { combinedSource } from '@/lib/dataSource';
+import { issuanceSummary } from '@/lib/issuance';
 import { getTopHolders } from '@/lib/topHolders';
 import { getWeeklyFlows } from '@/lib/weeklyFlows';
 
@@ -36,6 +38,8 @@ export async function GET() {
     topHolders: topHolders.rows,
     weeklyFlows: weeklyFlows.rows,
     competitorBenchmark: withOnchainOndo(benchmark.rows, chainBreakdown),
+    // Dated snapshot (scripts/backfill-*.mjs, ADR-009): asOf says when the logs were read.
+    issuance: issuanceSummary(),
   };
 
   return NextResponse.json(data, {
