@@ -174,3 +174,20 @@ Each entry follows this structure:
 
 **Next Session**
 - Merge the PR; settle the wording of the headline number; rerun the backfill before sending
+
+### [2026-10-17] — Study textbook for the outreach
+**Phase:** Phase 3
+**Duration:** ~2hr
+**Goal:** A study guide for what Rahil needs to know to explain and defend the flows tracker to finance professors
+
+**Shipped**
+- `docs/textbook/`: nine chapters plus glossary, reading list and a 7-day plan, one self-contained HTML file (`index.html`), printable
+- 13 figures: 6 from the dashboard's own snapshots, 7 mechanism diagrams with labeled toy numbers
+- `build.ts` regenerates every number and figure from `src/lib/issuance.ts`, so a data refresh updates the book
+- Styled with the rahil-design tokens (charcoal, yellow, Anton and IBM Plex), figures per tufte-graphics and present-data
+
+**Learned**
+- Event-log decoding, gross versus net and anticipation of rate cuts are the three points a professor is most likely to press
+
+**Next Session**
+- Verify the reading-list citations (listed from memory); read each professor's recent work before emailing

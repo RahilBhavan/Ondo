@@ -1,0 +1,49 @@
+<!--ch|6|Interest rates and why they might move flows|The Fed's target, opportunity cost and two competing channels-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>The Fed sets a target range for its policy rate. The study uses the upper bound and the dates the changes took effect.</li>
+<li>Lower rates make a zero-yield stablecoin cheaper to hold, and a Treasury fund less attractive. They also move risk appetite.</li>
+<li>These channels push in different directions. The data can show direction, not cause.</li>
+</ul></div>
+
+<div class="body">
+<h3>The vocabulary</h3>
+<p>The <strong>federal funds rate</strong> is the interest rate at which banks lend reserves to each other overnight. The Federal Open Market Committee (FOMC) sets a <strong>target range</strong> for it, such as 4.25% to 4.50%. A <strong>basis point</strong> (bp) is one hundredth of a percentage point, so a "25 bp cut" lowers the range by 0.25 points. <strong>Treasury bills</strong> are short-term US government debt; their yield tracks the expected path of the policy rate closely.</p>
+<p>The study uses the FRED series <code>DFEDTARU</code>, the upper bound of the range. FRED dates a change by the day it took <em>effect</em>, which is the day after the FOMC announcement.</p>
+
+<h3>The two easing episodes</h3>
+<p>The study joins cuts that came less than 120 days apart into one <strong>easing episode</strong>. That gives two:</p>
+<ul>
+<li><strong>Episode 1: {{ep:0:label}}.</strong> {{ep:0:cuts}} cuts, {{ep:0:bps}} bp in total, first effective {{ep:0:first}}.</li>
+<li><strong>Episode 2: {{ep:1:label}}.</strong> {{ep:1:cuts}} cuts, {{ep:1:bps}} bp in total, first effective {{ep:1:first}}.</li>
+</ul>
+<p>The series also shows a 25 bp <em>increase</em> effective 17 September 2026. It is not analyzed. If someone asks, say it is recorded and outside the study.</p>
+</div>
+{{fig:rates}}
+<div class="body">
+<h3>Why a cut could change flows</h3>
+</div>
+{{fig:transmission}}
+<div class="body">
+<h4>Channel 1: the opportunity cost of holding a stablecoin</h4>
+<p>A stablecoin pays holders 0%. Cash elsewhere pays the Treasury bill rate. Holding the stablecoin therefore costs the rate each year. When rates fall, that cost falls. Standard money-demand logic says people hold more of a good when its holding cost drops, so <strong>net issuance of payment stablecoins may rise</strong>.</p>
+<h4>Channel 2: the yield advantage of the fund</h4>
+<p>A Treasury fund pays about the bill rate. Against a zero-yield stablecoin its advantage is the rate itself. When the rate falls, the advantage narrows, and <strong>fund demand may fall</strong> relative to stablecoins.</p>
+<h4>Channel 3: risk appetite</h4>
+<p>Cuts can lift stock and crypto prices. If traders then want more crypto exposure, they mint stablecoins to fund purchases. This works the same way as channel 1 on stablecoins but it is a different story and cannot be told apart in these data.</p>
+<h4>Channel 4: the issuer</h4>
+<p>Lower rates cut issuer income (chapter 2). That could change how aggressively issuers court new customers, but the logs cannot see it.</p>
+
+<h3>Anticipation</h3>
+<p>Markets move before the Fed does. Yields fall as soon as traders expect cuts, so the 12 weeks before the first cut may already contain the effect. The baseline is therefore not "before the policy". Whenever you describe the study, say it compares flows in windows around the dates, not the effect of the decision.</p>
+
+<div class="callout"><h4>What would a better test look like?</h4><p>Use the <em>level</em> of the T-bill yield, or the gap between the T-bill yield and zero, as a continuous variable across all weeks, and regress weekly net issuance on its change with controls. That uses hundreds of weeks instead of two episodes. It is a natural thing to propose to a professor as the next step.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>scripts/backfill-context.mjs</code> writes <code>src/data/rates.json</code> from FRED; <code>episodes()</code> in <code>src/lib/issuance.ts</code> groups the cuts.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>What is a basis point, and how large was episode 1 in them?</summary><p>One hundredth of a percentage point. Episode 1 was {{ep:0:bps}} bp, or {{ep:0:bps}} hundredths of a point.</p></details>
+<details><summary>State channel 1 in one sentence.</summary><p>When the interest rate on cash falls, it costs less to hold a zero-yield stablecoin, so people may want more of them.</p></details>
+<details><summary>Why does anticipation weaken the pre/during comparison?</summary><p>The market has already priced in the cuts, so behavior may change before the first cut. The pre-window is not clean "before".</p></details>
+<details><summary>What does the study do about the September 2026 rate increase?</summary><p>Nothing. It is recorded in the data and left out of the analysis. State that, and offer to extend.</p></details>
+</div>

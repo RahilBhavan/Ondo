@@ -1,0 +1,43 @@
+<!--ch|1|How a stablecoin is made and destroyed|Mint, redeem, par and why quantity is the signal-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>A mint creates tokens against dollars. A redemption destroys tokens and returns dollars.</li>
+<li>Only approved parties deal with the issuer. Everyone else trades on markets.</li>
+<li>Because the price stays near $1, the information is in the quantity, so we count mints and redemptions.</li>
+</ul></div>
+
+<div class="body">
+<h3>The promise</h3>
+<p>A stablecoin is a token that a company promises to swap for one US dollar. The company is the <strong>issuer</strong>. It holds <strong>reserves</strong> (cash and short-term government debt) worth at least as much as the tokens it has put into circulation.</p>
+<p>Three words carry most of the field. <strong>Mint</strong> means the issuer creates new tokens. <strong>Redeem</strong> means a holder hands tokens back and gets dollars. <strong>Burn</strong> is the on-chain name for destroying the tokens that were handed back. A redemption on the books is a burn on the chain.</p>
+
+<h3>Two markets</h3>
+<p>The <strong>primary market</strong> is the issuer's own window. Only approved customers use it (they pass identity checks and often meet a minimum size). They pay $1.00 and receive one token, or return one token and receive $1.00. The <strong>secondary market</strong> is any exchange where holders sell tokens to each other. You and I almost always buy there.</p>
+</div>
+{{fig:mintloop}}
+<div class="body">
+<h3>Why the price stays near $1</h3>
+<p>Suppose the token trades at $0.998 on an exchange. An approved buyer can buy it there for $0.998 and redeem it with the issuer for $1.00. That earns $0.002 per token, so buyers keep doing it until the price rises. The same logic works in reverse above $1.00. This is <strong>arbitrage</strong>, and it is the force that pins the price.</p>
+<p>The pin is only as strong as the window. If the issuer pauses redemptions, if banks are closed, or if the buyer doubts the reserves, the arbitrage stops and the price can fall below $1. That is a <strong>depeg</strong>. Chapter 7 covers one.</p>
+
+<h3>Why we count quantities</h3>
+<p>For a stock, the price changes when beliefs change. For a stablecoin the price barely moves, so price carries little information. What moves is the <strong>amount in circulation</strong>. People who want more dollar-like tokens cause mints. People who want out cause redemptions. So the useful data are the weekly mints and redemptions. This is the whole idea of the tracker.</p>
+<p>Two measures follow, and you must never mix them up:</p>
+<ul>
+<li><strong>Gross flow</strong> = mints + redemptions. It tells you how busy the window is.</li>
+<li><strong>Net issuance</strong> = mints − redemptions. It tells you whether the amount in circulation grew.</li>
+</ul>
+
+<h3>Why anyone mints or redeems</h3>
+<p>People mint to trade other crypto assets, to move dollars across borders, to pay, or to post collateral. They redeem to cash out or to reduce risk. This book makes <em>no</em> claim about which reason dominates in the data. That is something the logs cannot tell you.</p>
+
+<div class="callout"><h4>Limit</h4><p>The tracker sees tokens created and destroyed. It does not see who the buyer is or why. A mint by a market maker and a mint by a corporate treasurer look the same on the chain.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> the six assets and their issuers are listed in <code>ASSETS</code> in <code>src/lib/issuance.ts</code>. ADR-009 in <code>docs/DECISIONS.md</code> records why mint and redeem are counted this way.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Why is a redemption a "burn" on the chain?</summary><p>The tokens a holder returns are destroyed so that the number in circulation matches the dollars in reserve. The issuer logs a Burn event instead of keeping the tokens.</p></details>
+<details><summary>A token trades at $0.995. Who profits, and what does that do to the price?</summary><p>An approved buyer who can redeem at $1.00. Buying at $0.995 and redeeming at $1.00 earns $0.005 per token. The buying pushes the price up toward $1.</p></details>
+<details><summary>Why count quantities and not prices for a stablecoin?</summary><p>The price is held near $1 by arbitrage, so it hides what people want. Mints and redemptions show demand directly.</p></details>
+<details><summary>A market maker mints $100M and burns $100M the same week. What are gross flow and net issuance?</summary><p>Gross is $200M. Net is $0. Nothing new was added to circulation.</p></details>
+</div>

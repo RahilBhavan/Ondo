@@ -1,0 +1,53 @@
+<!--ch|8|What the tracker found|The results, in the order you should state them, with what each does and does not show-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>{{v:gross}} gross on Ethereum, {{v:usdcShare}} of it USDC. Net issuance differs a lot by asset.</li>
+<li>2024: stablecoin issuance rose around the cuts and Treasury funds' fell. 2025: the pattern blurred.</li>
+<li>Ethereum is the home of most USDC and PYUSD but not USDT.</li>
+</ul></div>
+
+<div class="body">
+<h3>Result 1: size</h3>
+<p>From {{v:start}} to the week of {{v:lastWeek}}, the six assets saw {{v:gross}} of gross mints and redemptions on Ethereum. The table splits it by asset. Net on Ethereum is not the same as net globally (chapter 5), so read the net column with care.</p>
+</div>
+{{fig:gross}}
+<div class="body">
+<h3>Result 2: the rate episodes</h3>
+<p>The figure shows each asset's average weekly net issuance before and during each easing episode, in standard deviations of that asset's own normal week.</p>
+</div>
+{{fig:dumbbell}}
+<div class="body">
+<p>In the first episode ({{ep:0:label}}), USDC moved to {{z:USDC:0}} σ and USDT to {{z:USDT:0}} σ. PYUSD moved to {{z:PYUSD:0}} σ, BUIDL to {{z:BUIDL:0}} σ and OUSG to {{z:OUSG:0}} σ. In the second ({{ep:1:label}}), USDC was {{z:USDC:1}}, USDT {{z:USDT:1}}, PYUSD {{z:PYUSD:1}}, BUIDL {{z:BUIDL:1}} and OUSG {{z:OUSG:1}}.</p>
+<p>The first episode fits the "stablecoins up, funds down" story from chapter 6 for the larger assets. The second does not: PYUSD is the strongest and USDC is flat. BUIDL had its lowest window of its history in 2025. So the honest summary is <strong>mixed</strong>.</p>
+
+<h3>Result 3: where the supply sits</h3>
+</div>
+{{fig:chains}}
+<div class="body">
+<p>Ethereum has most of USDC and PYUSD but a minority of USDT. That is why the log-based gross flows describe USDC and PYUSD better than USDT, and why net issuance for those three uses all-chain supply.</p>
+
+<h3>Result 4: the shock</h3>
+<p>Around SVB (chapter 7) USDC supply fell for weeks while USDT supply rose.</p>
+
+<h3>What you can claim, and what you cannot</h3>
+<div class="callout"><h4>Safe to say</h4><ul>
+<li>{{v:gross}} was minted and redeemed on Ethereum across five issuers, mostly USDC churn.</li>
+<li>In the 2024 easing episode, the larger payment stablecoins issued more than usual and the Treasury-fund tokens less.</li>
+<li>That pattern is not repeated cleanly in 2025.</li>
+<li>Data are dated snapshots. Method and checks are documented.</li>
+</ul></div>
+<div class="callout"><h4>Do not say</h4><ul>
+<li>"Rate cuts cause stablecoin growth." Two episodes. No causal design.</li>
+<li>"Total stablecoin issuance across all chains." The logs are Ethereum only.</li>
+<li>"Nexus volumes." It is OUSG and USDY as a proxy.</li>
+<li>Anything about the September 2026 rate increase. It was not analyzed.</li>
+</ul></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> the same numbers drive <code>/issuance</code>, the one-page <code>/summary</code> and <code>/api/metrics</code>. The textbook rebuilds from the snapshot, so a data refresh updates every figure here too.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Say the 2024 result in one sentence, with the caveat.</summary><p>Around the 2024 cuts, USDC and USDT issuance was above their normal weeks while the Treasury-fund tokens were below, but there are only two episodes and 2025 did not repeat it.</p></details>
+<details><summary>Why is "mixed" a good word here?</summary><p>It is accurate. The two episodes disagree, and it avoids implying a pattern the data cannot support.</p></details>
+<details><summary>Which of the three stablecoins is least well covered by Ethereum logs?</summary><p>USDT. Tron holds about half its supply.</p></details>
+<details><summary>Where do you check whether the numbers changed since this was written?</summary><p>Rerun the backfill scripts, then <code>npx tsx src/lib/issuance.check.ts</code>, then rebuild the textbook.</p></details>
+</div>

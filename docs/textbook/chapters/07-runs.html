@@ -1,0 +1,46 @@
+<!--ch|7|Runs, depegs and news events|SVB and USDC, the GENIUS Act, and how to read an event window-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>A stablecoin run is a bank-run story: redeeming first is better than redeeming last.</li>
+<li>The March 2023 episode is the clearest run-like event in the sample.</li>
+<li>An event window shows what happened around a date. It does not show why.</li>
+</ul></div>
+
+<div class="body">
+<h3>The bank-run logic</h3>
+<p>In 1983 Douglas Diamond and Philip Dybvig modeled why banks are fragile. Depositors can withdraw any time, but the bank's assets cannot be sold at full value instantly. If you think others will withdraw, withdrawing first is the safe choice. When enough people think so, the run happens, even at a healthy bank.</p>
+<p>A stablecoin copies the structure. Holders can redeem at $1 on demand, but the reserves are only worth $1 if sold at full value. If a holder worries that part of the reserves is stuck or lost, redeeming early is rational. Gary Gorton and Jeffery Zhang have argued that stablecoins resemble the "wildcat" banks of the 19th century for this reason (see the reading list).</p>
+
+<h3>Case: March 2023</h3>
+<p>Silicon Valley Bank was closed by regulators on Friday 10 March 2023. On Saturday 11 March, Circle disclosed that $3.3 billion of USDC's reserves were held at the bank. USDC fell to about $0.88 at its lowest. Banks were shut for the weekend, so the dollar side of arbitrage could not run: nobody could wire dollars to Circle to redeem. Once the US authorities backed the bank's depositors, USDC returned to $1 within a few days.</p>
+</div>
+{{fig:shock}}
+<div class="body">
+<p>In the weeks around the event, USDC's circulating supply changed by about <strong>{{v:svbUSDCBefore}} per week before</strong> and <strong>{{v:svbUSDCAfter}} per week from the event week</strong>. USDT moved from <strong>{{v:svbUSDTBefore}}</strong> to <strong>{{v:svbUSDTAfter}}</strong> per week. Redemptions of one coin and mints of another happened together: money moved between stablecoins.</p>
+<p>What you can say: the flows fit a flight from the stablecoin with the problem to the one without it. What you cannot say: how much of the move was panic and how much was ordinary rebalancing, or why Tether's supply grew.</p>
+
+<h3>Case: the GENIUS Act</h3>
+<p>The GENIUS Act was signed on 18 July 2025. The study measures USDC, USDT and PYUSD net issuance for four weeks before and four weeks from the event week. The law passed Congress in the days and weeks before, so any response may sit before the signing date. Treat the window as a descriptive check, not a measurement of the law's effect.</p>
+
+<h3>Case: an operational error</h3>
+<p>The PYUSD 300 trillion mint on 15 October 2025 is a data point about <em>operational risk</em> at an issuer, not demand. It is useful to mention, because it shows why the tracker excludes it by transaction hash instead of by a statistical filter.</p>
+
+<h3>Event windows: a short recipe</h3>
+<ol>
+<li>Fix the date from a source before you look at the data.</li>
+<li>Pick the window length (four weeks each side here) before you look.</li>
+<li>Compute the average weekly net issuance before and from the event.</li>
+<li>Compare to how large a typical week is. Use the standard deviation, or percentile.</li>
+<li>List the other things that happened in the window.</li>
+</ol>
+
+<div class="callout"><h4>Limit</h4><p>Both event dates were checked against news reports on 2026-10-17. They are not fetched during the build. The chosen events are famous ones; a skeptic would ask how they were selected.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>NEWS_EVENTS</code>, <code>eventWindow()</code> in <code>src/lib/issuance.ts</code>; the news table on <code>/issuance</code>.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Why is the run logic rational for each holder but harmful for the group?</summary><p>If the others redeem, the reserves may not cover the late ones, so each wants to be early. Everyone acting that way creates the run.</p></details>
+<details><summary>Why did the SVB weekend make the depeg worse?</summary><p>Banks were closed, so arbitrageurs could not send dollars to redeem tokens. The mechanism that pins the price was switched off.</p></details>
+<details><summary>What can an event window not tell you?</summary><p>The cause. Other events share the window, news is often anticipated, and the event choice may be biased.</p></details>
+<details><summary>Why is the 300T PYUSD mint excluded by hash and not by a size filter?</summary><p>A size filter could remove real large mints. Two known transactions were an issuer error, so removing exactly them is transparent and testable.</p></details>
+</div>

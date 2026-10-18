@@ -1,0 +1,73 @@
+<!--ch|4|Reading the blockchain|Blocks, logs, events, decimals and the traps that bit this project-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Every mint and burn is a log on a public ledger. You can decode it by hand.</li>
+<li>The pipeline asks a node for logs in small windows, turns blocks into weeks and sums dollars.</li>
+<li>Silent failures are the real risk. The project caught one that dropped 99.98% of USDC mints.</li>
+</ul></div>
+
+<div class="body">
+<h3>The pieces</h3>
+<p>A <strong>blockchain</strong> is a shared ledger. Ethereum adds a <strong>block</strong> about every 12 seconds. Each block holds <strong>transactions</strong>. A transaction that calls a token contract produces a <strong>receipt</strong>, and the receipt holds <strong>logs</strong>. A contract emits a log to announce that something happened. We call that announcement an <strong>event</strong>.</p>
+<p>A node answers questions about the ledger through an <strong>RPC</strong> (remote procedure call). The call <code>eth_getLogs</code> says: give me every log from this contract between block A and block B.</p>
+</div>
+{{fig:eventlog}}
+<div class="body">
+<h3>Anatomy of a log</h3>
+<ul>
+<li><strong>address</strong>: the contract that emitted it (for example the USDC contract).</li>
+<li><strong>topics[0]</strong>: a fingerprint of the event's name and argument types. It tells you <em>which</em> event this is.</li>
+<li><strong>other topics</strong>: arguments marked <em>indexed</em>, such as the wallet addresses.</li>
+<li><strong>data</strong>: the remaining arguments packed together, such as the amount.</li>
+</ul>
+<p>Amounts are whole numbers in the smallest unit. USDC, USDT, PYUSD and BUIDL use <strong>6 decimals</strong>, so divide by 1,000,000. Ondo's USD value fields use <strong>18 decimals</strong>.</p>
+
+<h3>What counts as a mint or a redeem</h3>
+<p>Every issuer names the events differently. Part of the project's work was a translation table.</p>
+</div>
+<figure class="figure" id="tbl-events"><p class="fig-title">One idea, six vocabularies.</p>
+<div class="table-wrap"><table class="data">
+<thead><tr><th>Asset</th><th>Mint event</th><th>Redeem event</th><th>Amount field</th></tr></thead>
+<tbody>
+<tr><th scope="row">USDC</th><td><code>Mint</code></td><td><code>Burn</code></td><td>amount, 6 decimals</td></tr>
+<tr><th scope="row">USDT</th><td><code>Issue</code></td><td><code>Redeem</code></td><td>amount, 6 decimals</td></tr>
+<tr><th scope="row">PYUSD</th><td><code>Transfer</code> from the zero address</td><td><code>Transfer</code> to the zero address</td><td>value, 6 decimals</td></tr>
+<tr><th scope="row">BUIDL</th><td><code>Issue</code></td><td><code>Burn</code></td><td>amount, 6 decimals, $1 each</td></tr>
+<tr><th scope="row">OUSG, USDY</th><td><code>Subscription</code></td><td><code>Redemption</code></td><td>USD value, 18 decimals</td></tr>
+</tbody></table></div>
+<figcaption>PYUSD has no mint event of its own. By convention, a token that appears "from" the zero address was created, and one sent "to" it was destroyed. Source: <code>docs/METHODOLOGY.md</code>, Pillar 5.</figcaption></figure>
+
+<div class="body">
+<h3>From blocks to weeks</h3>
+<p>A log knows its block number, not its date. The script fetches the real timestamp of a block every 25,000 blocks and <strong>interpolates</strong> (draws a straight line) between those anchors. The error is under an hour. Weeks start Monday 00:00 UTC. The newest, partial week is dropped.</p>
+</div>
+{{fig:pipeline}}
+<div class="body">
+<h3>The traps</h3>
+<h4>1. The silent truncation</h4>
+<p>A single wide <code>eth_getLogs</code> call over the whole history returned 22 USDC mints out of about 100,000. It did not raise an error. The server just stopped. The fix was to ask in windows of 100,000 blocks and to halve the window whenever a call fails or returns the server's 20,000-result cap. <em>Lesson:</em> a total that looks plausible can still be wrong. Always reconcile against a second source.</p>
+<h4>2. The wrong decimal place</h4>
+<p>The first decode of Ondo's dollar value read the wrong data word. Totals were off by a lot, which made the error findable. It was fixed by matching the totals to the dashboard's existing live pipeline (2,416 events on both).</p>
+<h4>3. Outliers that are errors</h4>
+<p>The 300 trillion PYUSD mistake would have made PYUSD look larger than the world economy. Two transactions are excluded by hash, and the check script asserts that PYUSD stays plausible.</p>
+<h4>4. Free RPC limits</h4>
+<p>One free endpoint blocked the project's IP after about ten calls. Another timed out on USDC's huge history. The script uses a public gateway that tolerates windowed calls. Public infrastructure has rate limits, so design for retries.</p>
+
+<h3>How we know it is right</h3>
+<ul>
+<li><strong>Spot checks.</strong> Three transactions (a USDC mint of $50,000, a USDT issue of $1 billion, a BUIDL burn of $350,000) were decoded by hand and matched Blockscout's own decoding.</li>
+<li><strong>Reconciliation.</strong> Ethereum mints minus burns land within 16% of DefiLlama's Ethereum supply change for USDC and 5% for PYUSD. The gap is explained by timing and by supply moves that are not mints.</li>
+<li><strong>Assertions.</strong> <code>src/lib/issuance.check.ts</code> fails if the totals or the claims in the summary drift.</li>
+</ul>
+
+<div class="callout"><h4>Limit</h4><p>Logs on Ethereum only. A mint on Tron or Solana never appears. Chain coverage comes from supply (DefiLlama), which is a different kind of evidence than logs.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>scripts/backfill-issuance.mjs</code> (constants <code>CHUNK</code>, <code>LOG_CAP</code>, <code>EXCLUDED_TX</code>), <code>scripts/backfill-context.mjs</code>, <code>src/lib/issuance.check.ts</code>.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>What does topics[0] tell you?</summary><p>Which event this log is. It is the hash of the event's name and argument types.</p></details>
+<details><summary>A USDC mint's data field is 50,000,000,000. How many dollars?</summary><p>$50,000. USDC has 6 decimals, so divide by 1,000,000.</p></details>
+<details><summary>Why query 100,000 blocks at a time?</summary><p>A wide query silently returned a tiny part of the data. Small windows stay under the server's result cap, and the script halves a window that fails.</p></details>
+<details><summary>How do you turn a block number into a week?</summary><p>Look up the timestamps of anchor blocks every 25,000 blocks, interpolate linearly between them, then bucket by Monday 00:00 UTC.</p></details>
+<details><summary>Name two independent ways the numbers were validated.</summary><p>Hand-decoded spot checks against an explorer, and reconciliation of mints minus burns against DefiLlama supply changes (also the 2,416-event match with the live Ondo pipeline).</p></details>
+</div>

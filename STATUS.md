@@ -7,6 +7,7 @@ Last updated: 2026-10-17
 [x] Phase 2 — Frontend Build (home, /flows)
 [x] Home page on real data, Phases 0-5 of #30 (PR from phase5-finish, awaiting merge)
 [x] Stablecoin flows tracker: USDC, USDT, PYUSD, BUIDL + OUSG, USDY (ADR-009), `/issuance` and `/summary`
+[x] Study textbook for the outreach (`docs/textbook/index.html`, rebuilt from the data snapshots)
 [ ] Deploy the merged home page to Vercel (personal scope)
 
 ## Live Pages
@@ -24,6 +25,7 @@ Last updated: 2026-10-17
 - Every getter falls back to a dated, labeled snapshot in `src/lib/mockData.ts`
 
 ## Open Items
+- After refreshing the snapshots, rebuild the textbook: `npx tsx docs/textbook/build.ts`.
 - Flows tracker data are dated snapshots: rerun `node scripts/backfill-issuance.mjs` (about 25 min) and `node scripts/backfill-context.mjs`, then `npx tsx src/lib/issuance.check.ts`.
 - Flows tracker is Ethereum logs only; Tron USDT and non-Ethereum USDC issuance are covered through supply, not logs.
 - BUIDL chain count and redemption terms: no issuer page to cite, shown as "Not disclosed".

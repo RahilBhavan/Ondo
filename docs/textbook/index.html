@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stablecoin flows, explained: a textbook</title>
+<meta name="description" content="A study guide to the Ondo Nexus stablecoin flows tracker: mints and redemptions, issuers, tokenized Treasury funds, on-chain data, rate cuts and what to say to a finance professor.">
+<style>/* Textbook styles. Tokens from rahil-design 3.x: charcoal page, light figure surface, yellow = the one compared value. */
+@font-face{font-family:'Rahil Anton';src:url(fonts/Anton-Regular.ttf) format('truetype');font-display:swap}
+@font-face{font-family:'Rahil Plex';src:url(fonts/IBMPlexSans-Regular.ttf) format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Rahil Plex';src:url(fonts/IBMPlexSans-SemiBold.ttf) format('truetype');font-weight:600;font-display:swap}
+:root{
+  --canvas:#111214;--surface:#202124;--ink:#F5F5EF;--secondary:#B7B8B1;--accent:#FFE500;--border:#424348;
+  --fig-surface:#F5F5EF;--fig-ink:#111214;--fig-secondary:#52545A;--fig-border:#C6C7BF;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;color-scheme:dark;scroll-padding-top:72px}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:'Rahil Plex',system-ui,sans-serif;font-size:18px;line-height:1.65}
+::selection{background:var(--accent);color:var(--canvas)}
+a{color:var(--accent);text-underline-offset:4px;text-decoration-thickness:1.5px;overflow-wrap:anywhere}
+a:hover{color:var(--ink)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+h1,h2,h3,h4,p,figure,ul,ol,dl{margin:0}
+code{font-family:ui-monospace,'SFMono-Regular',monospace;font-size:.86em;background:var(--surface);padding:1px 6px;border-radius:4px;overflow-wrap:anywhere}
+.figure code{background:#E9E9E2;color:var(--fig-ink)}
+p{max-width:68ch;overflow-wrap:anywhere}
+p+p,p+ul,p+ol,ul+p,ol+p{margin-top:16px}
+ul,ol{padding-left:24px;max-width:68ch}
+li{margin:6px 0}
+strong{font-weight:600}
+small,.meta{font-size:14px;color:var(--secondary)}
+
+/* top bar */
+.nav{position:sticky;top:0;z-index:5;background:var(--canvas);border-bottom:1px solid var(--border)}
+.nav-in{max-width:1180px;margin:auto;padding:0 32px;display:flex;gap:4px;align-items:center;overflow-x:auto;scrollbar-width:none}
+.nav a{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--ink);text-decoration:none;white-space:nowrap;font-size:15px}
+.nav a:hover{color:var(--accent)}
+.nav a b{font-family:'Rahil Anton',sans-serif;font-weight:400;color:var(--accent);margin-right:6px}
+.nav .home{font-weight:600;margin-right:12px;padding-left:0}
+
+.page{max-width:1180px;margin:auto;padding:0 32px}
+
+/* cover */
+.cover{padding:88px 0 56px;border-bottom:1px solid var(--border)}
+.kicker{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--secondary)}
+.cover h1{font-family:'Rahil Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(56px,11vw,150px);line-height:.95;letter-spacing:.005em;margin:20px 0 28px;max-width:12ch}
+.cover h1 em{font-style:normal;color:var(--accent)}
+.cover .lede{font-size:22px;max-width:46ch;color:var(--ink)}
+.cover .who{margin-top:28px;max-width:60ch;color:var(--secondary);font-size:16px}
+
+/* use this book */
+.howto{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;padding:48px 0;border-bottom:1px solid var(--border)}
+.howto h3{font-size:18px;margin-bottom:8px;color:var(--accent)}
+.howto p{font-size:16px;color:var(--secondary)}
+
+/* toc */
+.toc{padding:48px 0;border-bottom:1px solid var(--border)}
+.toc h2{font-family:'Rahil Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:36px;margin-bottom:24px}
+.toc ol{list-style:none;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:4px 48px;max-width:none}
+.toc li{margin:0}
+.toc a{display:grid;grid-template-columns:44px 1fr;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--ink)}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:'Rahil Anton',sans-serif;color:var(--accent);font-size:22px}
+.toc .t{font-weight:600}
+.toc .d{display:block;font-size:14px;color:var(--secondary);font-weight:400}
+
+/* chapters */
+.chapter{padding:72px 0 24px;border-bottom:1px solid var(--border)}
+.ch-head{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:end;margin-bottom:32px}
+.ch-num{font-family:'Rahil Anton',sans-serif;font-size:clamp(88px,14vw,180px);line-height:.85;color:var(--accent)}
+.chapter h2{font-family:'Rahil Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(36px,6vw,72px);line-height:1;max-width:16ch;text-wrap:balance}
+.chapter h3{font-size:24px;line-height:1.2;letter-spacing:-.02em;margin:44px 0 12px;text-wrap:balance}
+.chapter h4{font-size:18px;margin:28px 0 6px}
+.keep{background:var(--surface);border-left:4px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:20px 24px;margin:0 0 32px;max-width:68ch}
+.keep h4{margin:0 0 8px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--secondary)}
+.keep ul{padding-left:20px}
+.body{max-width:68ch}
+.callout{border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin:28px 0;max-width:68ch}
+.callout h4{margin:0 0 6px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.callout p{font-size:16px}
+.repo{margin-top:28px;max-width:68ch;font-size:15px;color:var(--secondary)}
+.repo b{color:var(--ink)}
+
+/* check yourself */
+.check{margin:36px 0 8px;max-width:68ch}
+.check h3{margin-top:0}
+details{border-top:1px solid var(--border);padding:12px 0}
+details:last-child{border-bottom:1px solid var(--border)}
+summary{cursor:pointer;font-weight:600;list-style:none;padding-right:24px;position:relative;min-height:28px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';position:absolute;right:0;color:var(--accent);font-size:22px;line-height:1}
+details[open] summary::after{content:'−'}
+details p{margin-top:10px;font-size:16px;color:var(--secondary)}
+
+/* figures: light surface, charcoal ink, yellow only on the compared value */
+.figure{background:var(--fig-surface);color:var(--fig-ink);border-radius:var(--radius);padding:28px 28px 22px;margin:36px 0}
+.fig-title{font-weight:600;font-size:20px;line-height:1.25;letter-spacing:-.01em;max-width:60ch;margin-bottom:16px;color:var(--fig-ink)}
+.tag{display:inline-block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;border:1px solid var(--fig-ink);border-radius:4px;padding:1px 6px;vertical-align:2px;margin-left:6px}
+figcaption{font-size:15px;line-height:1.5;color:var(--fig-secondary);margin-top:16px;max-width:76ch}
+.scroll{width:100%}
+.diagram{width:100%;height:auto;display:block;color:var(--fig-ink);font-variant-numeric:tabular-nums;overflow:visible}
+.diagram text{font-family:'Rahil Plex',sans-serif;font-size:15px;fill:var(--fig-ink)}
+.diagram text.muted{fill:var(--fig-secondary)}
+.diagram text.small{font-size:14px;fill:var(--fig-secondary)}
+.diagram text.strong{font-weight:600}
+.diagram .box{fill:#fff;stroke:var(--fig-ink);stroke-width:1.4}
+.diagram .box.hi{fill:var(--accent)}
+.diagram .arrow{fill:none;stroke:var(--fig-ink);stroke-width:1.6}
+.diagram .axis,.diagram .zero{stroke:var(--fig-ink);stroke-width:1.2}
+.diagram .series{fill:none;stroke:var(--fig-ink);stroke-width:2.4}
+.diagram .band{fill:var(--accent);fill-opacity:.4;stroke:var(--fig-ink);stroke-width:1}
+.diagram .event{stroke:var(--fig-secondary);stroke-width:1.2}
+.diagram .link{stroke:var(--fig-secondary);stroke-width:2}
+.diagram .dot-pre{fill:var(--fig-surface);stroke:var(--fig-ink);stroke-width:2}
+.diagram .dot-during{fill:var(--accent);stroke:var(--fig-ink);stroke-width:2}
+.diagram .seg{stroke:var(--fig-ink);stroke-width:1}
+.diagram .seg-hi{fill:var(--accent);stroke:var(--fig-ink);stroke-width:1.4}
+.table-wrap{overflow-x:auto}
+table.data{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums;color:var(--fig-ink)}
+table.data th,table.data td{padding:9px 10px;border-bottom:1px solid var(--fig-border);text-align:left;vertical-align:middle}
+table.data thead th{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--fig-secondary);border-bottom:1.5px solid var(--fig-ink)}
+table.data th small{display:block;font-weight:400;font-size:13px;color:var(--fig-secondary)}
+table.data .num{text-align:right;white-space:nowrap}
+.bar-cell{min-width:180px;position:relative}
+.bar{display:inline-block;height:14px;background:#A9AAA2;border:1px solid var(--fig-ink);vertical-align:middle}
+.bar.hi{background:var(--accent)}
+.bar-label{margin-left:8px;font-weight:600}
+
+/* term / glossary / qa */
+.terms{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:0 32px;max-width:none}
+.terms dt{font-weight:600;padding:12px 0;border-top:1px solid var(--border);color:var(--accent)}
+.terms dd{padding:12px 0;border-top:1px solid var(--border);font-size:16px;color:var(--ink);max-width:68ch}
+.qa details p{color:var(--ink)}
+.plan{border-collapse:collapse;width:100%;font-size:16px}
+.plan th,.plan td{text-align:left;padding:12px 14px 12px 0;border-top:1px solid var(--border);vertical-align:top}
+.plan th{color:var(--accent);white-space:nowrap}
+.plan-wrap{overflow-x:auto}
+.read li{margin:10px 0}
+.footer{padding:56px 0 80px;color:var(--secondary);font-size:15px}
+
+@media (max-width:820px){
+  .page,.nav-in{padding:0 20px}
+  .howto,.toc ol{grid-template-columns:1fr}
+  .ch-head{grid-template-columns:1fr;gap:8px}
+  .terms{grid-template-columns:1fr}
+  .terms dt{border-bottom:0;padding-bottom:0}
+  .terms dd{border-top:0;padding-top:4px}
+  .figure{padding:18px 14px}
+  .figure .scroll{overflow-x:auto}
+  .figure .scroll .diagram{min-width:640px}
+  .diagram{min-width:640px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* print: light page, no nav, figures keep their own surface */
+@media print{
+  html{color-scheme:light}
+  body{background:#fff;color:#111214;font-size:11pt}
+  .nav{display:none}
+  a{color:#111214}
+  .cover h1 em,.ch-num,.toc .n,.terms dt,.plan th,.howto h3,.callout h4,summary::after{color:#111214}
+  .keep{background:#F5F5EF}.callout,details{border-color:#C6C7BF}
+  .toc a,.terms dt,.terms dd,.plan th,.plan td{border-color:#C6C7BF;color:#111214}
+  .howto p,.cover .who,.kicker,small,.meta,.repo,details p,.footer{color:#52545A}
+  .terms dd,.qa details p{color:#111214}
+  code{background:#F5F5EF}
+  .chapter{break-before:page;padding-top:0}
+  .figure{break-inside:avoid}
+  details>*{display:block}
+  details p{display:block}
+  .diagram{min-width:0}
+}
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Chapters"><div class="nav-in"><a class="home" href="#top">Textbook</a><a href="#c1"><b>1</b>How a stablecoin is made and destroyed</a><a href="#c2"><b>2</b>The five issuers and six assets</a><a href="#c3"><b>3</b>Tokenized Treasury funds and Ondo Nexus</a><a href="#c4"><b>4</b>Reading the blockchain</a><a href="#c5"><b>5</b>Measuring flows without fooling yourself</a><a href="#c6"><b>6</b>Interest rates and why they might move flows</a><a href="#c7"><b>7</b>Runs, depegs and news events</a><a href="#c8"><b>8</b>What the tracker found</a><a href="#c9"><b>9</b>Talking to the professors</a><a href="#glossary"><b>A</b>Glossary</a><a href="#reading-list"><b>B</b>Reading list</a><a href="#seven-day-study-plan"><b>C</b>Seven-day study plan</a></div></nav>
+<main class="page" id="top">
+<header class="cover">
+<p class="kicker">A student trynna learn · Ondo Nexus flows tracker</p>
+<h1>Stablecoin flows, <em>explained</em></h1>
+<p class="lede">What you need to know to defend the tracker: how stablecoins are made and destroyed, who issues them, how to read the chain, how to measure flows without fooling yourself, and what a finance professor will ask.</p>
+<p class="who">Written for Rahil before emailing professors Rajan, Adriaens and Wu. Numbers come from the dashboard's own snapshots (data read Oct 17, 2026); they are rebuilt from the repository by <code>docs/textbook/build.ts</code>. Study notes, not investment advice.</p>
+</header>
+<section class="howto" aria-label="How to use this book">
+<div><h3>Read in order, once</h3><p>Chapters 1 to 3 are the money. 4 and 5 are the measurement. 6 and 7 are the economics. 8 is your result. 9 is the conversation.</p></div>
+<div><h3>Answer before you open</h3><p>Every chapter ends with check-yourself questions. Say the answer aloud, then open it. If you can't, reread that section.</p></div>
+<div><h3>Trust the limits</h3><p>Each chapter says what the tracker cannot show. A professor will respect a stated limit more than a bold claim.</p></div>
+</section>
+<section class="toc" aria-label="Contents"><h2>Contents</h2><ol><li><a href="#c1"><span class="n">1</span><span><span class="t">How a stablecoin is made and destroyed</span><span class="d">Mint, redeem, par and why quantity is the signal</span></span></a></li><li><a href="#c2"><span class="n">2</span><span><span class="t">The five issuers and six assets</span><span class="d">Who they are, what backs them, and how they earn money</span></span></a></li><li><a href="#c3"><span class="n">3</span><span><span class="t">Tokenized Treasury funds and Ondo Nexus</span><span class="d">NAV, yield, instant mint and what Nexus actually is</span></span></a></li><li><a href="#c4"><span class="n">4</span><span><span class="t">Reading the blockchain</span><span class="d">Blocks, logs, events, decimals and the traps that bit this project</span></span></a></li><li><a href="#c5"><span class="n">5</span><span><span class="t">Measuring flows without fooling yourself</span><span class="d">Gross vs net, double counting, standard deviations and windows</span></span></a></li><li><a href="#c6"><span class="n">6</span><span><span class="t">Interest rates and why they might move flows</span><span class="d">The Fed's target, opportunity cost and two competing channels</span></span></a></li><li><a href="#c7"><span class="n">7</span><span><span class="t">Runs, depegs and news events</span><span class="d">SVB and USDC, the GENIUS Act, and how to read an event window</span></span></a></li><li><a href="#c8"><span class="n">8</span><span><span class="t">What the tracker found</span><span class="d">The results, in the order you should state them, with what each does and does not show</span></span></a></li><li><a href="#c9"><span class="n">9</span><span><span class="t">Talking to the professors</span><span class="d">The email line, the questions to expect and the answers that hold up</span></span></a></li><li><a href="#glossary"><span class="n">A</span><span><span class="t">Glossary</span><span class="d">Every term used in this book, in plain words</span></span></a></li><li><a href="#reading-list"><span class="n">B</span><span><span class="t">Reading list</span><span class="d">Primary sources and papers, in the order to read them</span></span></a></li><li><a href="#seven-day-study-plan"><span class="n">C</span><span><span class="t">Seven-day study plan</span><span class="d">One session a day, each ending in something you can say or show</span></span></a></li></ol></section>
+<section class="chapter" id="c1"><div class="ch-head"><div class="ch-num" aria-hidden="true">1</div><h2>How a stablecoin is made and destroyed</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>A mint creates tokens against dollars. A redemption destroys tokens and returns dollars.</li>
+<li>Only approved parties deal with the issuer. Everyone else trades on markets.</li>
+<li>Because the price stays near $1, the information is in the quantity, so we count mints and redemptions.</li>
+</ul></div>
+
+<div class="body">
+<h3>The promise</h3>
+<p>A stablecoin is a token that a company promises to swap for one US dollar. The company is the <strong>issuer</strong>. It holds <strong>reserves</strong> (cash and short-term government debt) worth at least as much as the tokens it has put into circulation.</p>
+<p>Three words carry most of the field. <strong>Mint</strong> means the issuer creates new tokens. <strong>Redeem</strong> means a holder hands tokens back and gets dollars. <strong>Burn</strong> is the on-chain name for destroying the tokens that were handed back. A redemption on the books is a burn on the chain.</p>
+
+<h3>Two markets</h3>
+<p>The <strong>primary market</strong> is the issuer's own window. Only approved customers use it (they pass identity checks and often meet a minimum size). They pay $1.00 and receive one token, or return one token and receive $1.00. The <strong>secondary market</strong> is any exchange where holders sell tokens to each other. You and I almost always buy there.</p>
+</div>
+<figure class="figure" id="fig-mintloop">
+<p class="fig-title">The issuer creates tokens only against dollars and destroys them only against dollars. Everyone else just trades. <span class="tag">Illustration</span></p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 346" role="img" aria-label="Diagram of the primary market, where an approved buyer mints and redeems with the issuer at $1.00, and the secondary market, where tokens trade on an exchange."><defs><marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<rect x="20" y="70" width="190" height="170" rx="6" class="box"/><text x="115" y="100" text-anchor="middle" class="strong"><tspan x="115" dy="0">Authorized buyer</tspan><tspan x="115" dy="19">(market maker,</tspan><tspan x="115" dy="19">exchange, institution)</tspan></text>
+<rect x="345" y="70" width="190" height="170" rx="6" class="box"/><text x="440" y="100" text-anchor="middle" class="strong"><tspan x="440" dy="0">Issuer</tspan><tspan x="440" dy="19">Circle, Tether, Paxos,</tspan><tspan x="440" dy="19">BlackRock, Ondo</tspan></text>
+<rect x="700" y="70" width="160" height="170" rx="6" class="box"/><text x="780" y="100" text-anchor="middle" class="strong"><tspan x="780" dy="0">Exchange</tspan><tspan x="780" dy="19">order book</tspan></text>
+<text x="277" y="108" text-anchor="middle" class="muted">MINT</text>
+<path d="M214 122 H340" class="arrow" marker-end="url(#ar1)"/><text x="277" y="140" text-anchor="middle" class="small">$1.00 per token</text>
+<path d="M340 152 H214" class="arrow" marker-end="url(#ar1)"/><text x="277" y="170" text-anchor="middle" class="small">1 new token</text>
+<text x="277" y="196" text-anchor="middle" class="muted">REDEEM</text>
+<path d="M214 206 H340" class="arrow" marker-end="url(#ar1)"/><text x="277" y="224" text-anchor="middle" class="small">1 token</text>
+<path d="M340 236 H214" class="arrow" marker-end="url(#ar1)"/><text x="277" y="256" text-anchor="middle" class="small">$1.00 back</text>
+<path d="M115 244 V300 H780 V246" class="arrow" marker-end="url(#ar1)"/>
+<text x="447" y="322" text-anchor="middle" class="small"><tspan x="447" dy="0">Holders trade tokens with anyone here. The price can drift to $0.998 or $1.002.</tspan></text>
+<text x="440" y="50" text-anchor="middle" class="strong">Primary market: only approved parties, at $1.00</text>
+<text x="780" y="50" text-anchor="middle" class="strong">Secondary market</text></svg></div>
+<figcaption>A mint event is a left-to-right dollar arrow on the top row. A redemption is the bottom row. If the exchange price falls to $0.998, an approved buyer can buy there and redeem at $1.00; that trade pulls the price back up. This chapter-1 loop is what the tracker counts.</figcaption>
+</figure>
+<div class="body">
+<h3>Why the price stays near $1</h3>
+<p>Suppose the token trades at $0.998 on an exchange. An approved buyer can buy it there for $0.998 and redeem it with the issuer for $1.00. That earns $0.002 per token, so buyers keep doing it until the price rises. The same logic works in reverse above $1.00. This is <strong>arbitrage</strong>, and it is the force that pins the price.</p>
+<p>The pin is only as strong as the window. If the issuer pauses redemptions, if banks are closed, or if the buyer doubts the reserves, the arbitrage stops and the price can fall below $1. That is a <strong>depeg</strong>. Chapter 7 covers one.</p>
+
+<h3>Why we count quantities</h3>
+<p>For a stock, the price changes when beliefs change. For a stablecoin the price barely moves, so price carries little information. What moves is the <strong>amount in circulation</strong>. People who want more dollar-like tokens cause mints. People who want out cause redemptions. So the useful data are the weekly mints and redemptions. This is the whole idea of the tracker.</p>
+<p>Two measures follow, and you must never mix them up:</p>
+<ul>
+<li><strong>Gross flow</strong> = mints + redemptions. It tells you how busy the window is.</li>
+<li><strong>Net issuance</strong> = mints − redemptions. It tells you whether the amount in circulation grew.</li>
+</ul>
+
+<h3>Why anyone mints or redeems</h3>
+<p>People mint to trade other crypto assets, to move dollars across borders, to pay, or to post collateral. They redeem to cash out or to reduce risk. This book makes <em>no</em> claim about which reason dominates in the data. That is something the logs cannot tell you.</p>
+
+<div class="callout"><h4>Limit</h4><p>The tracker sees tokens created and destroyed. It does not see who the buyer is or why. A mint by a market maker and a mint by a corporate treasurer look the same on the chain.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> the six assets and their issuers are listed in <code>ASSETS</code> in <code>src/lib/issuance.ts</code>. ADR-009 in <code>docs/DECISIONS.md</code> records why mint and redeem are counted this way.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Why is a redemption a "burn" on the chain?</summary><p>The tokens a holder returns are destroyed so that the number in circulation matches the dollars in reserve. The issuer logs a Burn event instead of keeping the tokens.</p></details>
+<details><summary>A token trades at $0.995. Who profits, and what does that do to the price?</summary><p>An approved buyer who can redeem at $1.00. Buying at $0.995 and redeeming at $1.00 earns $0.005 per token. The buying pushes the price up toward $1.</p></details>
+<details><summary>Why count quantities and not prices for a stablecoin?</summary><p>The price is held near $1 by arbitrage, so it hides what people want. Mints and redemptions show demand directly.</p></details>
+<details><summary>A market maker mints $100M and burns $100M the same week. What are gross flow and net issuance?</summary><p>Gross is $200M. Net is $0. Nothing new was added to circulation.</p></details>
+</div>
+</section>
+<section class="chapter" id="c2"><div class="ch-head"><div class="ch-num" aria-hidden="true">2</div><h2>The five issuers and six assets</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Issuers earn the interest on reserves. Holders of a payment stablecoin earn nothing.</li>
+<li>The study covers five issuers (Circle, Tether, Paxos for PayPal, BlackRock, Ondo) and six assets.</li>
+<li>Payment stablecoins and Treasury funds are different products. A rate cut should not affect them the same way.</li>
+</ul></div>
+
+<div class="body">
+<h3>How an issuer makes money</h3>
+<p>The issuer takes in $100 and puts it into reserves, mostly short-term US Treasury bills and cash-like holdings. Those reserves earn interest. The issuer pays the token holder none of it. The difference is the issuer's income. At a 4% yield, $100 of reserves earns $4.00 a year.</p>
+</div>
+<figure class="figure" id="fig-reserve">
+<p class="fig-title">A 1-point rate cut takes a quarter of an issuer’s income away, with the same $100 of tokens outstanding. <span class="tag">Illustration</span></p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 270" role="img" aria-label="Balance sheet of $100 of reserves against $100 of tokens, and a bar chart showing yearly interest income falling from $4.00 to $3.00 after a one point cut."><defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<text x="0" y="22" text-anchor="start" class="strong">Issuer balance sheet</text>
+<rect x="0" y="36" width="150" height="190" rx="6" class="box"/><text x="75" y="70" text-anchor="middle" class="strong"><tspan x="75" dy="0">ASSETS</tspan><tspan x="75" dy="24">T-bills and cash</tspan><tspan x="75" dy="24">$100</tspan></text>
+<rect x="170" y="36" width="150" height="190" rx="6" class="box"/><text x="245" y="70" text-anchor="middle" class="strong"><tspan x="245" dy="0">LIABILITIES</tspan><tspan x="245" dy="24">Tokens in</tspan><tspan x="245" dy="24">circulation</tspan><tspan x="245" dy="24">$100</tspan></text>
+<text x="0" y="252" text-anchor="start" class="muted">Always $100 against $100 (par)</text>
+<path d="M326 130 H390" class="arrow" marker-end="url(#ar2)"/><text x="358" y="122" text-anchor="middle" class="small">earns</text>
+<text x="400" y="22" text-anchor="start" class="strong">Yearly interest income on the $100</text>
+<line x1="400" x2="640" y1="230" y2="230" class="zero"/>
+<rect x="420" y="118" width="70" height="112" class="seg" style="fill:#A9AAA2"/><text x="455" y="110" text-anchor="middle" class="strong">$4.00</text><text x="455" y="252" text-anchor="middle" class="muted">Rates at 4%</text>
+<rect x="540" y="146" width="70" height="84" class="seg-hi" style=""/><text x="575" y="138" text-anchor="middle" class="strong">$3.00</text><text x="575" y="252" text-anchor="middle" class="muted">After a 1-point cut</text>
+<text x="680" y="120" text-anchor="start" class="small"><tspan x="680" dy="0">Holders of USDC,</tspan><tspan x="680" dy="22">USDT or PYUSD</tspan><tspan x="680" dy="22">receive $0 of it.</tspan><tspan x="680" dy="22">The issuer keeps it.</tspan></text></svg></div>
+<figcaption>Toy numbers. Bars start at zero. This is why issuers care about the rate path, and why a cut is not neutral for them even if user demand is unchanged. Real reserves are mostly T-bills and repo; real yields differ by issuer.</figcaption>
+</figure>
+<div class="body">
+<p>Two consequences matter for this project. First, issuer income <strong>moves with interest rates</strong>, so a rate cut hurts the issuer even if nobody changes behavior. Second, a holder who wants to <em>earn</em> the yield has to hold something else, such as a Treasury fund. That is why we place payment stablecoins and Treasury-backed products side by side.</p>
+
+<h3>The six assets</h3>
+<p>Terms change often. Check each issuer's own page before quoting any of this to someone else.</p>
+</div>
+<figure class="figure" id="tbl-assets"><p class="fig-title">Four things that differ between the six assets.</p>
+<div class="table-wrap"><table class="data">
+<thead><tr><th>Asset</th><th>Issuer</th><th>Type</th><th>Holder earns yield?</th><th>Who can buy from the issuer</th></tr></thead>
+<tbody>
+<tr><th scope="row">USDC</th><td>Circle</td><td>Payment stablecoin</td><td>No</td><td>Approved institutions; everyone else on exchanges</td></tr>
+<tr><th scope="row">USDT</th><td>Tether</td><td>Payment stablecoin</td><td>No</td><td>Approved institutions; everyone else on exchanges</td></tr>
+<tr><th scope="row">PYUSD</th><td>Paxos, for PayPal</td><td>Payment stablecoin</td><td>No</td><td>Approved parties; PayPal users through PayPal</td></tr>
+<tr><th scope="row">BUIDL</th><td>BlackRock fund, tokenized with Securitize</td><td>Treasury fund token</td><td>Yes, paid as extra tokens</td><td>Qualified institutions</td></tr>
+<tr><th scope="row">OUSG</th><td>Ondo</td><td>Treasury fund token</td><td>Yes, the token price rises</td><td>Qualified purchasers</td></tr>
+<tr><th scope="row">USDY</th><td>Ondo</td><td>Tokenized Treasury note</td><td>Yes, the token price rises</td><td>Non-US persons, per Ondo's terms</td></tr>
+</tbody></table></div>
+<figcaption>The first three rows are what the finance literature calls payment (or fiat-backed) stablecoins. The last three are the Treasury-backed products. Eligibility columns are summaries; confirm against the issuer's current documents.</figcaption></figure>
+
+<div class="body">
+<h3>One paragraph on each issuer</h3>
+<p><strong>Circle (USDC).</strong> Circle is a US company, listed on the stock market since 2025. USDC reserves are held mainly in cash and short Treasuries, largely through a government money-market fund. USDC exists natively on many blockchains, and Circle's cross-chain transfer protocol (CCTP) moves it between them by burning on one and minting on another (chapter 5). Circle shares some revenue with its distribution partner Coinbase.</p>
+<p><strong>Tether (USDT).</strong> The largest stablecoin. Most of its reserves are Treasury bills, but Tether also reports other assets, and it publishes attestations (a limited check) rather than full audits. Most USDT sits on Tron, not Ethereum, so Ethereum logs see only a part of its activity. This is the biggest coverage limit in the study.</p>
+<p><strong>PayPal USD (PYUSD).</strong> PayPal's stablecoin, issued by Paxos Trust Company under New York financial regulation. It is much smaller than the other two. On 2025-10-15 Paxos minted 300 trillion PYUSD by mistake and burned it minutes later. The tracker removes those two transactions because they were an error, not demand.</p>
+<p><strong>BlackRock BUIDL.</strong> A fund, run by the world's largest asset manager, that holds cash, Treasury bills and repo. Its shares are recorded as tokens on blockchains. The token stays at $1 and yield arrives as newly issued tokens. In the data this shows up as small "mints" (about 1% of mint volume).</p>
+<p><strong>Ondo (OUSG and USDY).</strong> Ondo wraps Treasury exposure in two tokens. OUSG is for qualified purchasers and USDY for non-US persons. Both rise in price as interest accrues. Ondo runs "instant" mint and redeem contracts (chapter 3). The original dashboard tracked only these.</p>
+
+<h3>The law arrives: the GENIUS Act</h3>
+<p>The GENIUS Act was signed on 18 July 2025. As summarized in news coverage, it requires issuers of payment stablecoins to hold liquid reserves one for one, to disclose reserves regularly, to redeem at par, and <strong>not to pay interest to holders</strong>. The last rule matters here: it keeps payment stablecoins as zero-yield products and leaves yield to funds. Read the statute and the current rule-making yourself before describing the details.</p>
+
+<div class="callout"><h4>Limit</h4><p>"Backed by Treasuries" means different things at different issuers: how short the bills are, who holds them, who checks. The tracker does not assess reserve quality.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> asset list in <code>src/lib/issuance.ts</code>; contract addresses in the table in <code>docs/METHODOLOGY.md</code> (Pillar 5).</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Who earns the interest on USDC reserves?</summary><p>Circle, the issuer, and in part its distribution partner under their agreement. USDC holders earn nothing from the reserves.</p></details>
+<details><summary>Why is a rate cut bad for an issuer even if demand does not change?</summary><p>The reserves earn the yield. A lower yield on the same reserves means less income.</p></details>
+<details><summary>Why might Ethereum logs understate USDT activity?</summary><p>Most USDT supply is on Tron. Mints and burns there are not in Ethereum logs.</p></details>
+<details><summary>Name the one rule in the GENIUS Act that separates stablecoins from Treasury funds.</summary><p>Issuers may not pay interest to holders. Funds pass yield through.</p></details>
+</div>
+</section>
+<section class="chapter" id="c3"><div class="ch-head"><div class="ch-num" aria-hidden="true">3</div><h2>Tokenized Treasury funds and Ondo Nexus</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>A tokenized fund is ordinary fund shares recorded as tokens, with a price set by the fund's net asset value.</li>
+<li>Funds pass yield to the holder. Payment stablecoins do not. That is the contrast in this study.</li>
+<li>Ondo Nexus has no contracts of its own. The tracker uses OUSG and USDY as the on-chain proxy.</li>
+</ul></div>
+
+<div class="body">
+<h3>What a tokenized fund is</h3>
+<p>A traditional money-market or Treasury fund holds short-term government debt and sells shares. The <strong>net asset value (NAV)</strong> is the value of the holdings per share. A <strong>tokenized fund</strong> keeps the same structure but records ownership as a token on a blockchain. A <strong>transfer agent</strong> (here, firms such as Securitize for BUIDL) keeps the official record and enforces who may hold the token.</p>
+<p>Because buyers must pass identity checks and the token can only move between approved wallets, these are <em>not</em> open like USDC. That is one reason the numbers are small.</p>
+
+<h3>Three ways yield reaches the holder</h3>
+<ul>
+<li><strong>Price goes up.</strong> One token is worth more dollars each day. OUSG and USDY work like this.</li>
+<li><strong>Balance goes up.</strong> The number of tokens in your wallet grows ("rebasing"). Ondo also offers rebasing versions, rOUSG and rUSDY.</li>
+<li><strong>Extra tokens are issued.</strong> The price stays at $1 and new tokens are minted to you. BUIDL does this, which is why its mints include a small dividend amount.</li>
+</ul>
+<p>This matters for measurement. A price-up token has a dollar value that grows without any mint. The tracker therefore reads the dollar value that the contract emits for each mint and redemption, and does not infer flows from supply changes.</p>
+
+<h3>Ondo's instant mint and redeem</h3>
+<p>Ondo's InstantManager contracts let a qualified customer swap USDC for OUSG or USDY and back in one transaction at the current NAV. The contract logs a <code>Subscription</code> event (mint) or <code>Redemption</code> event (redeem) with the dollar value. "Instant" means the swap settles in one transaction, so there is no waiting period to measure. The project's earlier plan to measure settlement delay was dropped for that reason (ADR-004).</p>
+
+<h3>What Ondo Nexus is</h3>
+<p>Nexus is a business initiative announced by Ondo in 2025. It diversifies what backs OUSG, so that OUSG can hold other managers' tokenized Treasury funds such as BlackRock's BUIDL. There is <strong>no Nexus contract</strong> to read. All the on-chain activity is in the existing OUSG and USDY contracts, so the dashboard tracks those as the proxy (ADR-003).</p>
+<p>This is the most important sentence to get right with a professor: the tracker measures OUSG and USDY InstantManager flows. It does not measure "Nexus" directly. Say "proxy".</p>
+
+<h3>Why put funds beside stablecoins</h3>
+<p>Both are ways to hold dollars on a blockchain. One pays 0%. The other pays about the Treasury bill rate. The gap between them is the cost of holding the zero-yield coin, and it shrinks when rates fall. If investors respond to that gap, a cut should shift flows. Whether it does is exactly the question the study can describe but not settle.</p>
+
+<div class="callout"><h4>Limit</h4><p>Fund tokens trade little in secondary markets, so the price can be off NAV with no easy arbitrage. Treat their flows as institutional decisions made at the issuer's window.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> contracts and events in <code>docs/CONTRACT_RESEARCH.md</code>; decisions ADR-003, ADR-004, ADR-006 in <code>docs/DECISIONS.md</code>; live weekly flows at <code>/flows</code>.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Name the three ways yield reaches a Treasury-fund token holder, with one example each.</summary><p>Price rises (OUSG, USDY). Balance rises (rebasing versions rOUSG, rUSDY). Extra tokens are issued while the price stays $1 (BUIDL).</p></details>
+<details><summary>Why can't the tracker infer OUSG flows from supply changes?</summary><p>Supply can change without a mint or redemption (rebasing, bridge moves) and mints can leave the dollar value in different forms. The contract's own dollar field is cleaner.</p></details>
+<details><summary>A professor asks "how much did Nexus grow?" What do you say?</summary><p>That Nexus has no contract of its own, so you track OUSG and USDY instant mint and redeem flows as a proxy, and you can show those.</p></details>
+<details><summary>Why is the stablecoin-versus-fund contrast interesting when rates fall?</summary><p>The yield advantage of the fund over a zero-yield stablecoin shrinks. If flows respond to that gap, funds should lose relative appeal.</p></details>
+</div>
+</section>
+<section class="chapter" id="c4"><div class="ch-head"><div class="ch-num" aria-hidden="true">4</div><h2>Reading the blockchain</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Every mint and burn is a log on a public ledger. You can decode it by hand.</li>
+<li>The pipeline asks a node for logs in small windows, turns blocks into weeks and sums dollars.</li>
+<li>Silent failures are the real risk. The project caught one that dropped 99.98% of USDC mints.</li>
+</ul></div>
+
+<div class="body">
+<h3>The pieces</h3>
+<p>A <strong>blockchain</strong> is a shared ledger. Ethereum adds a <strong>block</strong> about every 12 seconds. Each block holds <strong>transactions</strong>. A transaction that calls a token contract produces a <strong>receipt</strong>, and the receipt holds <strong>logs</strong>. A contract emits a log to announce that something happened. We call that announcement an <strong>event</strong>.</p>
+<p>A node answers questions about the ledger through an <strong>RPC</strong> (remote procedure call). The call <code>eth_getLogs</code> says: give me every log from this contract between block A and block B.</p>
+</div>
+<figure class="figure" id="fig-eventlog">
+<p class="fig-title">Every mint leaves a log. The first topic says what happened; the data says how much.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 280" role="img" aria-label="Diagram of a transaction receipt containing a log with the contract address, event signature hash, two indexed addresses and an amount that decodes to $50,000."><defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<rect x="0" y="30" width="200" height="70" rx="6" class="box"/><text x="100" y="56" text-anchor="middle" class="strong"><tspan x="100" dy="0">Transaction</tspan><tspan x="100" dy="19">0x86d357f7…18c6</tspan></text>
+<path d="M100 104 V134" class="arrow" marker-end="url(#ar3)"/><text x="112" y="124" text-anchor="start" class="small">has a receipt</text>
+<rect x="0" y="138" width="200" height="70" rx="6" class="box"/><text x="100" y="164" text-anchor="middle" class="strong"><tspan x="100" dy="0">Receipt</tspan><tspan x="100" dy="19">logs: [ … ]</tspan></text>
+<path d="M204 172 H258" class="arrow" marker-end="url(#ar3)"/><text x="231" y="162" text-anchor="middle" class="small">one log</text>
+<rect x="262" y="8" width="600" height="262" rx="6" class="box"/>
+<text x="280" y="36" text-anchor="start" class="strong">One log (a USDC Mint)</text>
+<text x="280" y="68" text-anchor="start" class="muted">address</text><text x="400" y="68" text-anchor="start">0xA0b8…eB48, the USDC contract that emitted it</text>
+<text x="280" y="100" text-anchor="start" class="muted">topics[0]</text><text x="400" y="100" text-anchor="start"><tspan x="400" dy="0">0xab8530f87dc9…, the hash of</tspan><tspan x="400" dy="19">"Mint(address,address,uint256)"</tspan></text>
+<text x="280" y="150" text-anchor="start" class="muted">topics[1]</text><text x="400" y="150" text-anchor="start">minter (indexed): who was allowed to mint</text>
+<text x="280" y="182" text-anchor="start" class="muted">topics[2]</text><text x="400" y="182" text-anchor="start">to (indexed): who received the new tokens</text>
+<text x="280" y="214" text-anchor="start" class="muted">data</text><text x="400" y="214" text-anchor="start" class="strong">0x…ba43b7400  =  50,000,000,000</text>
+<text x="400" y="242" text-anchor="start" class="strong">÷ 1,000,000 (USDC has 6 decimals)  =  $50,000</text></svg></div>
+<figcaption>A real USDC mint from the dashboard’s spot check, decoded by hand. The same shape holds for every asset in the study; only the event name and the amount field change. Indexed arguments live in topics; everything else is packed into data.</figcaption>
+</figure>
+<div class="body">
+<h3>Anatomy of a log</h3>
+<ul>
+<li><strong>address</strong>: the contract that emitted it (for example the USDC contract).</li>
+<li><strong>topics[0]</strong>: a fingerprint of the event's name and argument types. It tells you <em>which</em> event this is.</li>
+<li><strong>other topics</strong>: arguments marked <em>indexed</em>, such as the wallet addresses.</li>
+<li><strong>data</strong>: the remaining arguments packed together, such as the amount.</li>
+</ul>
+<p>Amounts are whole numbers in the smallest unit. USDC, USDT, PYUSD and BUIDL use <strong>6 decimals</strong>, so divide by 1,000,000. Ondo's USD value fields use <strong>18 decimals</strong>.</p>
+
+<h3>What counts as a mint or a redeem</h3>
+<p>Every issuer names the events differently. Part of the project's work was a translation table.</p>
+</div>
+<figure class="figure" id="tbl-events"><p class="fig-title">One idea, six vocabularies.</p>
+<div class="table-wrap"><table class="data">
+<thead><tr><th>Asset</th><th>Mint event</th><th>Redeem event</th><th>Amount field</th></tr></thead>
+<tbody>
+<tr><th scope="row">USDC</th><td><code>Mint</code></td><td><code>Burn</code></td><td>amount, 6 decimals</td></tr>
+<tr><th scope="row">USDT</th><td><code>Issue</code></td><td><code>Redeem</code></td><td>amount, 6 decimals</td></tr>
+<tr><th scope="row">PYUSD</th><td><code>Transfer</code> from the zero address</td><td><code>Transfer</code> to the zero address</td><td>value, 6 decimals</td></tr>
+<tr><th scope="row">BUIDL</th><td><code>Issue</code></td><td><code>Burn</code></td><td>amount, 6 decimals, $1 each</td></tr>
+<tr><th scope="row">OUSG, USDY</th><td><code>Subscription</code></td><td><code>Redemption</code></td><td>USD value, 18 decimals</td></tr>
+</tbody></table></div>
+<figcaption>PYUSD has no mint event of its own. By convention, a token that appears "from" the zero address was created, and one sent "to" it was destroyed. Source: <code>docs/METHODOLOGY.md</code>, Pillar 5.</figcaption></figure>
+
+<div class="body">
+<h3>From blocks to weeks</h3>
+<p>A log knows its block number, not its date. The script fetches the real timestamp of a block every 25,000 blocks and <strong>interpolates</strong> (draws a straight line) between those anchors. The error is under an hour. Weeks start Monday 00:00 UTC. The newest, partial week is dropped.</p>
+</div>
+<figure class="figure" id="fig-pipeline">
+<p class="fig-title">Two scripts write dated snapshots; one library does all the arithmetic; two pages draw it.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 226" role="img" aria-label="Pipeline diagram from Ethereum logs, DefiLlama and FRED through two backfill scripts and JSON files into a library and two pages."><defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<rect x="0" y="20" width="170" height="56" rx="6" class="box"/><text x="85" y="44" text-anchor="middle" class="strong"><tspan x="85" dy="0">Ethereum node</tspan><tspan x="85" dy="17">(Tenderly RPC)</tspan></text>
+<path d="M174 48 H206" class="arrow" marker-end="url(#ar4)"/>
+<rect x="210" y="20" width="170" height="56" rx="6" class="box"/><text x="295" y="44" text-anchor="middle" class="strong"><tspan x="295" dy="0">backfill-</tspan><tspan x="295" dy="17">issuance.mjs</tspan></text>
+<path d="M384 48 H416" class="arrow" marker-end="url(#ar4)"/>
+<rect x="420" y="20" width="150" height="56" rx="6" class="box"/><text x="495" y="44" text-anchor="middle" class="strong"><tspan x="495" dy="0">issuance.json</tspan><tspan x="495" dy="17">weekly rows</tspan></text>
+<path d="M574 48 H606" class="arrow" marker-end="url(#ar4)"/>
+<rect x="610" y="20" width="120" height="56" rx="6" class="box"/><text x="670" y="44" text-anchor="middle" class="strong"><tspan x="670" dy="0">issuance.ts</tspan><tspan x="670" dy="17">maths</tspan></text>
+<path d="M734 48 H766" class="arrow" marker-end="url(#ar4)"/>
+<rect x="770" y="20" width="110" height="56" rx="6" class="box"/><text x="825" y="44" text-anchor="middle" class="strong"><tspan x="825" dy="0">/issuance</tspan><tspan x="825" dy="17">/summary</tspan></text>
+<text x="190" y="102" text-anchor="middle" class="small">eth_getLogs, 100,000 blocks at a time</text>
+<rect x="0" y="130" width="170" height="56" rx="6" class="box"/><text x="85" y="154" text-anchor="middle" class="strong"><tspan x="85" dy="0">DefiLlama</tspan><tspan x="85" dy="17">and FRED</tspan></text>
+<path d="M174 158 H206" class="arrow" marker-end="url(#ar4)"/>
+<rect x="210" y="130" width="170" height="56" rx="6" class="box"/><text x="295" y="154" text-anchor="middle" class="strong"><tspan x="295" dy="0">backfill-</tspan><tspan x="295" dy="17">context.mjs</tspan></text>
+<path d="M384 158 H416" class="arrow" marker-end="url(#ar4)"/>
+<rect x="420" y="130" width="150" height="56" rx="6" class="box"/><text x="495" y="154" text-anchor="middle" class="strong"><tspan x="495" dy="0">supply-by-chain</tspan><tspan x="495" dy="17">rates .json</tspan></text>
+<path d="M574 158 H606 M570 158 H640 V82" class="arrow" marker-end="url(#ar4)"/>
+<text x="190" y="212" text-anchor="middle" class="small">circulating supply by chain, fed funds target</text></svg></div>
+<figcaption>Read left to right. Nothing on the pages calls the network at render time; the snapshots are the evidence. That is why the data carry a date and why a rerun is needed before sending anything.</figcaption>
+</figure>
+<div class="body">
+<h3>The traps</h3>
+<h4>1. The silent truncation</h4>
+<p>A single wide <code>eth_getLogs</code> call over the whole history returned 22 USDC mints out of about 100,000. It did not raise an error. The server just stopped. The fix was to ask in windows of 100,000 blocks and to halve the window whenever a call fails or returns the server's 20,000-result cap. <em>Lesson:</em> a total that looks plausible can still be wrong. Always reconcile against a second source.</p>
+<h4>2. The wrong decimal place</h4>
+<p>The first decode of Ondo's dollar value read the wrong data word. Totals were off by a lot, which made the error findable. It was fixed by matching the totals to the dashboard's existing live pipeline (2,416 events on both).</p>
+<h4>3. Outliers that are errors</h4>
+<p>The 300 trillion PYUSD mistake would have made PYUSD look larger than the world economy. Two transactions are excluded by hash, and the check script asserts that PYUSD stays plausible.</p>
+<h4>4. Free RPC limits</h4>
+<p>One free endpoint blocked the project's IP after about ten calls. Another timed out on USDC's huge history. The script uses a public gateway that tolerates windowed calls. Public infrastructure has rate limits, so design for retries.</p>
+
+<h3>How we know it is right</h3>
+<ul>
+<li><strong>Spot checks.</strong> Three transactions (a USDC mint of $50,000, a USDT issue of $1 billion, a BUIDL burn of $350,000) were decoded by hand and matched Blockscout's own decoding.</li>
+<li><strong>Reconciliation.</strong> Ethereum mints minus burns land within 16% of DefiLlama's Ethereum supply change for USDC and 5% for PYUSD. The gap is explained by timing and by supply moves that are not mints.</li>
+<li><strong>Assertions.</strong> <code>src/lib/issuance.check.ts</code> fails if the totals or the claims in the summary drift.</li>
+</ul>
+
+<div class="callout"><h4>Limit</h4><p>Logs on Ethereum only. A mint on Tron or Solana never appears. Chain coverage comes from supply (DefiLlama), which is a different kind of evidence than logs.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>scripts/backfill-issuance.mjs</code> (constants <code>CHUNK</code>, <code>LOG_CAP</code>, <code>EXCLUDED_TX</code>), <code>scripts/backfill-context.mjs</code>, <code>src/lib/issuance.check.ts</code>.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>What does topics[0] tell you?</summary><p>Which event this log is. It is the hash of the event's name and argument types.</p></details>
+<details><summary>A USDC mint's data field is 50,000,000,000. How many dollars?</summary><p>$50,000. USDC has 6 decimals, so divide by 1,000,000.</p></details>
+<details><summary>Why query 100,000 blocks at a time?</summary><p>A wide query silently returned a tiny part of the data. Small windows stay under the server's result cap, and the script halves a window that fails.</p></details>
+<details><summary>How do you turn a block number into a week?</summary><p>Look up the timestamps of anchor blocks every 25,000 blocks, interpolate linearly between them, then bucket by Monday 00:00 UTC.</p></details>
+<details><summary>Name two independent ways the numbers were validated.</summary><p>Hand-decoded spot checks against an explorer, and reconciliation of mints minus burns against DefiLlama supply changes (also the 2,416-event match with the live Ondo pipeline).</p></details>
+</div>
+</section>
+<section class="chapter" id="c5"><div class="ch-head"><div class="ch-num" aria-hidden="true">5</div><h2>Measuring flows without fooling yourself</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Gross flow is plumbing traffic. Net issuance is growth. The "$1 trillion" is gross.</li>
+<li>Logs can double count (cross-chain moves) and miss (other chains). The study fixes both on purpose.</li>
+<li>A "standard deviation" puts a small fund and a huge stablecoin on one axis. Two episodes still prove nothing.</li>
+</ul></div>
+
+<div class="body">
+<h3>Gross versus net</h3>
+</div>
+<figure class="figure" id="fig-grossnet">
+<p class="fig-title">The same $100 mint counts as $200 of gross activity or $100 of new money, depending on what came back. <span class="tag">Illustration</span></p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 284" role="img" aria-label="Two bar panels in toy dollars: a market maker mints and burns 100 for gross 200 and net 0; an investor mints 100 for gross 100 and net 100."><defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><text x="0" y="22" text-anchor="start" class="strong">Market maker round trip</text><line x1="0" x2="360" y1="120" y2="120" class="zero"/><rect x="20" y="50" width="70" height="70" class="seg" style="fill:#A9AAA2"/><text x="55" y="44" text-anchor="middle" class="strong">+100</text><text x="55" y="236" text-anchor="middle" class="muted">Mon: mint</text><rect x="130" y="120" width="70" height="70" class="seg" style="fill:#A9AAA2"/><text x="165" y="208" text-anchor="middle" class="strong">−100</text><text x="165" y="236" text-anchor="middle" class="muted">Wed: burn</text><text x="0" y="268" text-anchor="start" class="strong">Gross 200   ·   Net +0</text><text x="460" y="22" text-anchor="start" class="strong">Fund investor adds money</text><line x1="460" x2="820" y1="120" y2="120" class="zero"/><rect x="480" y="50" width="70" height="70" class="seg-hi" style=""/><text x="515" y="44" text-anchor="middle" class="strong">+100</text><text x="515" y="236" text-anchor="middle" class="muted">Mon: mint</text><text x="460" y="268" text-anchor="start" class="strong">Gross 100   ·   Net +100</text></svg></div>
+<figcaption>Toy numbers on one scale. Gross activity measures how busy the plumbing is. Net issuance measures whether the stock of tokens grew. The "$1 trillion" headline is gross; the rate study uses net.</figcaption>
+</figure>
+<div class="body">
+<p>A market maker mints $100 on Monday and burns $100 on Wednesday. Gross activity is $200. Net new money is zero. Large stablecoins have a lot of this round-tripping, which is why <strong>85% of the $1.01 trillion gross total is USDC</strong> even though USDC's net on Ethereum is −$22.8B.</p>
+<p>When you say the headline number, say what it is: "gross mints and redemptions on Ethereum." It is a true statement about how much passed through the issuers' windows. It is not a statement about how much money entered crypto.</p>
+
+<h3>Double counting: the cross-chain trap</h3>
+</div>
+<figure class="figure" id="fig-cctp">
+<p class="fig-title">Moving USDC between chains burns it on one chain and mints it on the other. Supply is unchanged.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 296" role="img" aria-label="Diagram of a cross-chain USDC transfer: a burn on Ethereum and a mint on another chain, and the reverse."><defs><marker id="ar6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<text x="0" y="22" text-anchor="start" class="strong">Ethereum: the cross-chain minter</text><text x="560" y="22" text-anchor="start" class="strong">Another chain (Base, Solana, …)</text>
+<rect x="0" y="36" width="300" height="74" rx="6" class="box"/><text x="150" y="62" text-anchor="middle" class="strong"><tspan x="150" dy="0">Burns 1,000,000 USDC</tspan><tspan x="150" dy="19">log: Burn 1,000,000</tspan></text>
+<rect x="560" y="36" width="300" height="74" rx="6" class="box"/><text x="710" y="62" text-anchor="middle" class="strong"><tspan x="710" dy="0">Mints 1,000,000 USDC</tspan><tspan x="710" dy="19">not in Ethereum logs</tspan></text>
+<path d="M304 73 H556" class="arrow" marker-end="url(#ar6)"/><text x="430" y="64" text-anchor="middle" class="small">Circle signs the message</text>
+<rect x="0" y="150" width="300" height="74" rx="6" class="box"/><text x="150" y="176" text-anchor="middle" class="strong"><tspan x="150" dy="0">Mints 1,000,000 USDC</tspan><tspan x="150" dy="19">log: Mint 1,000,000</tspan></text>
+<rect x="560" y="150" width="300" height="74" rx="6" class="box"/><text x="710" y="176" text-anchor="middle" class="strong"><tspan x="710" dy="0">Burns 1,000,000 USDC</tspan><tspan x="710" dy="19">not in Ethereum logs</tspan></text>
+<path d="M556 187 H304" class="arrow" marker-end="url(#ar6)"/><text x="430" y="178" text-anchor="middle" class="small">Circle signs the message</text>
+<text x="0" y="258" text-anchor="start" class="small"><tspan x="0" dy="0">Row 1 moves USDC off Ethereum. Row 2 moves it back. Global supply never changes.</tspan><tspan x="0" dy="19">A naive sum of Ethereum logs would count $2M of activity.</tspan></text></svg></div>
+<figcaption>In the real data this is $189B of USDC Ethereum volume. The tracker counts it separately and removes it from issuance (ADR-009).</figcaption>
+</figure>
+<div class="body">
+<p>Moving USDC from Ethereum to another chain burns it on Ethereum and mints it on the other. An Ethereum-only count would call that a redemption. The tracker finds mints and burns by Circle's cross-chain minter contracts and sets them aside ($189B in total). They are real events but they are not issuance.</p>
+
+<h3>Under-counting: the missing chains</h3>
+<p>A log-based net for USDT on Ethereum would show almost only mints, because Tether redeems rarely on Ethereum, and it would miss Tron entirely. So for USDC, USDT and PYUSD the rate study uses the <strong>change in circulating supply on all chains</strong> from DefiLlama. For BUIDL, OUSG and USDY, which are issued on Ethereum, it uses Ethereum mints minus redemptions.</p>
+<p>That is two data sources inside one comparison. Say so when asked. The reconciliation check (16% for USDC, 5% for PYUSD) is the evidence that they agree where they overlap.</p>
+
+<h3>Standard deviations: putting assets on one axis</h3>
+<p>USDC changes by billions a week. OUSG changes by millions. A chart in dollars would show only USDC. Instead, for each asset we take its own average weekly net issuance over the whole sample, and its own <strong>standard deviation</strong> (a typical size of deviation from that average). Then:</p>
+<p><code>z = (mean weekly net in the window − the asset's overall mean) ÷ the asset's standard deviation</code></p>
+<p>A z of +0.5 means "half a typical deviation above this asset's usual week". It is unitless, so you can compare it across assets. It is not a statistical test.</p>
+</div>
+<figure class="figure" id="fig-window">
+<p class="fig-title">One easing episode is a 12-week baseline against a measurement window that starts at the first cut.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 240" role="img" aria-label="Timeline of the first easing episode showing a twelve week baseline in gray and the during window in yellow, with each cut marked."><defs><marker id="ar7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<line x1="20" x2="860" y1="110" y2="110" class="zero"/>
+<rect x="20" y="120" width="347.58620689655174" height="22" class="seg" style="fill:#A9AAA2"/>
+<text x="193.79310344827587" y="160" text-anchor="middle" class="strong">12 weeks before (the baseline)</text>
+<rect x="367.58620689655174" y="120" width="492.41379310344826" height="22" class="seg-hi"/>
+<text x="613.7931034482758" y="160" text-anchor="middle" class="strong">During: first cut to 4 weeks after the last</text>
+<line x1="367.58620689655174" x2="367.58620689655174" y1="70" y2="110" class="event"/><text x="367.58620689655174" y="62" text-anchor="middle" class="small">Sep 19  −50 bp</text><line x1="574.4827586206897" x2="574.4827586206897" y1="70" y2="110" class="event"/><text x="574.4827586206897" y="62" text-anchor="middle" class="small">Nov 8  −25 bp</text><line x1="744.1379310344827" x2="744.1379310344827" y1="70" y2="110" class="event"/><text x="744.1379310344827" y="62" text-anchor="middle" class="small">Dec 19  −25 bp</text>
+<text x="20" y="100" text-anchor="start" class="muted">week −12</text><text x="860" y="100" text-anchor="end" class="muted">+4 weeks</text>
+<text x="440" y="214" text-anchor="middle" class="small"><tspan x="440" dy="0">Question: is the average weekly net issuance in the yellow window unusual, compared with the gray window</tspan><tspan x="440" dy="19">and with every other window of the same length in the sample?</tspan></text></svg></div>
+<figcaption>Sep 2024 to Dec 2024 drawn to scale in weeks. The same two windows are built for the second episode and for every asset. Then each asset’s during-mean is converted to standard deviations of its own weekly net issuance so assets can share an axis.</figcaption>
+</figure>
+<div class="body">
+<h3>The percentile</h3>
+<p>For each asset and episode the study also asks: of all other windows of the same length (ignoring the episode and its baseline), what share had a lower mean? A percentile near 50% is ordinary. Near 95% or 5% is unusual. With roughly three years of weekly data there are only a few dozen non-overlapping windows, so the percentile is rough.</p>
+
+<h3>Why this cannot be a causal claim</h3>
+<ul>
+<li><strong>Two episodes.</strong> Two data points cannot separate a rate effect from anything else that happened.</li>
+<li><strong>Anticipation.</strong> Markets price cuts before they happen, so the 12-week baseline may already contain the response.</li>
+<li><strong>Confounders.</strong> An election (November 2024), a law (July 2025) and shifting appetite for crypto all moved in the same windows.</li>
+<li><strong>Autocorrelation.</strong> Weekly flows are not independent, so "every other window" is a loose yardstick.</li>
+<li><strong>Choosing the windows after seeing the cuts.</strong> The comparison starts from the event, which flatters any pattern.</li>
+<li><strong>Short histories.</strong> USDY starts December 2025 and has no episode comparison. BUIDL starts March 2024.</li>
+<li><strong>Measurement error.</strong> Block-to-time interpolation has up to an hour of error. The newest week is dropped as partial.</li>
+</ul>
+<p>The honest phrase is "descriptive." Use it.</p>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>netSeries()</code>, <code>episodeResults()</code>, <code>PRE_WEEKS</code>, <code>TAIL_WEEKS</code> in <code>src/lib/issuance.ts</code>. The method is written out in <code>docs/METHODOLOGY.md</code> under "Event comparison".</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>State the headline number in one honest sentence.</summary><p>"$1.01 trillion of gross mints and redemptions on Ethereum across five issuers, 85% of it USDC, with a separate net-issuance study around two Fed easing episodes."</p></details>
+<details><summary>Why does USDC show a negative net on Ethereum when its supply grew overall?</summary><p>Much of the growth was minted on other chains, and some Ethereum supply moved there. Ethereum logs alone see a part of the story. The supply data cover all chains.</p></details>
+<details><summary>Compute a z-score: an asset averages +$10M a week with a standard deviation of $20M. In a window it averages +$30M.</summary><p>z = (30 − 10) ÷ 20 = +1.0, one typical deviation above its normal week.</p></details>
+<details><summary>Give three reasons two easing episodes cannot prove that rate cuts move flows.</summary><p>Only two observations; other events in the same windows; markets price cuts early so the baseline is contaminated; weekly data are autocorrelated. Any three.</p></details>
+<details><summary>Why is CCTP excluded from issuance but kept in the data?</summary><p>It is real on-chain activity, but it moves existing money between chains. Keeping it separately lets a reader see the amount removed.</p></details>
+</div>
+</section>
+<section class="chapter" id="c6"><div class="ch-head"><div class="ch-num" aria-hidden="true">6</div><h2>Interest rates and why they might move flows</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>The Fed sets a target range for its policy rate. The study uses the upper bound and the dates the changes took effect.</li>
+<li>Lower rates make a zero-yield stablecoin cheaper to hold, and a Treasury fund less attractive. They also move risk appetite.</li>
+<li>These channels push in different directions. The data can show direction, not cause.</li>
+</ul></div>
+
+<div class="body">
+<h3>The vocabulary</h3>
+<p>The <strong>federal funds rate</strong> is the interest rate at which banks lend reserves to each other overnight. The Federal Open Market Committee (FOMC) sets a <strong>target range</strong> for it, such as 4.25% to 4.50%. A <strong>basis point</strong> (bp) is one hundredth of a percentage point, so a "25 bp cut" lowers the range by 0.25 points. <strong>Treasury bills</strong> are short-term US government debt; their yield tracks the expected path of the policy rate closely.</p>
+<p>The study uses the FRED series <code>DFEDTARU</code>, the upper bound of the range. FRED dates a change by the day it took <em>effect</em>, which is the day after the FOMC announcement.</p>
+
+<h3>The two easing episodes</h3>
+<p>The study joins cuts that came less than 120 days apart into one <strong>easing episode</strong>. That gives two:</p>
+<ul>
+<li><strong>Episode 1: Sep 2024 to Dec 2024.</strong> 3 cuts, 100 bp in total, first effective Sep 19, 2024.</li>
+<li><strong>Episode 2: Sep 2025 to Dec 2025.</strong> 3 cuts, 75 bp in total, first effective Sep 18, 2025.</li>
+</ul>
+<p>The series also shows a 25 bp <em>increase</em> effective 17 September 2026. It is not analyzed. If someone asks, say it is recorded and outside the study.</p>
+</div>
+<figure class="figure" id="fig-rates">
+<p class="fig-title">The Fed cut in two bursts, Sep 2024 to Dec 2024 and Sep 2025 to Dec 2025, with no cuts between them.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 320" role="img" aria-label="Step chart of the Fed target rate upper bound from 2023 to 2026, with two shaded easing episodes of 100 and 75 basis points."><defs><marker id="ar8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><rect x="362.2" y="34" width="57.7" height="246" class="band"/><text x="391.0888086642599" y="272" text-anchor="middle" class="strong">−100 bp</text><text x="391.0888086642599" y="24" text-anchor="middle" class="muted">Episode 1</text><rect x="538.8" y="34" width="54.3" height="246" class="band"/><text x="566.0028880866425" y="272" text-anchor="middle" class="strong">−75 bp</text><text x="566.0028880866425" y="24" text-anchor="middle" class="muted">Episode 2</text>
+<line x1="58" x2="58" y1="34" y2="280" class="axis"/>
+<text x="48" y="223.5" text-anchor="end" class="muted">4.00%</text><text x="48" y="162" text-anchor="end" class="muted">4.50%</text><text x="48" y="100.5" text-anchor="end" class="muted">5.00%</text><text x="48" y="39" text-anchor="end" class="muted">5.50%</text><text x="58" y="310" text-anchor="middle" class="muted">2023</text><text x="235.09747292418774" y="310" text-anchor="middle" class="muted">2024</text><text x="412.6801444043321" y="310" text-anchor="middle" class="muted">2025</text><text x="589.7776173285199" y="310" text-anchor="middle" class="muted">2026</text>
+<path d="M58.0 218.5 H58.0 V157.0 H73.5 V126.3 H97.3 V95.5 H117.7 V64.8 H158.4 V34.0 H362.2 V95.5 H386.5 V126.3 H406.4 V157.0 H538.8 V187.8 H559.2 V218.5 H579.6 V249.3 H715.4 V218.5 H730.0" class="series"/>
+<line x1="91.5" x2="91.5" y1="48" y2="280" class="event"/><text x="97.47870036101082" y="200.04999999999995" text-anchor="start" class="small"><tspan x="97.47870036101082" dy="0">Mar 2023:</tspan><tspan x="97.47870036101082" dy="19">SVB, USDC depeg</tspan></text><line x1="508.7" x2="508.7" y1="48" y2="280" class="event"/><text x="502.7494584837545" y="200.04999999999995" text-anchor="end" class="small"><tspan x="502.7494584837545" dy="0">Jul 2025:</tspan><tspan x="502.7494584837545" dy="19">GENIUS Act signed</tspan></text>
+<text x="738" y="223.5" text-anchor="start" class="strong">4.00% (hike, Sep 2026)</text>
+<text x="264.2093862815884" y="26" text-anchor="middle" class="muted">5.50% peak</text></svg></div>
+<figcaption>Compare the shaded windows with the flat stretches between them. Each shaded window runs from the first cut to 4 weeks after the last, the window the study measures. The vertical axis starts at 3.5%, not zero, which is fine for a line. Source: FRED DFEDTARU, <code>src/data/rates.json</code>.</figcaption>
+</figure>
+<div class="body">
+<h3>Why a cut could change flows</h3>
+</div>
+<figure class="figure" id="fig-transmission">
+<p class="fig-title">A cut might push stablecoin demand up and Treasury-fund demand down. These are guesses to test, not results.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 380" role="img" aria-label="Causal map from a Fed rate cut to lower yields, then to issuer income, stablecoin demand and Treasury fund demand, with question marks on the signs."><defs><marker id="ar9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<rect x="0" y="110" width="170" height="60" rx="6" class="box hi"/><text x="85" y="136" text-anchor="middle" class="strong"><tspan x="85" dy="0">The Fed cuts</tspan><tspan x="85" dy="19">its target rate</tspan></text>
+<path d="M174 140 H226" class="arrow" marker-end="url(#ar9)"/>
+<rect x="230" y="110" width="190" height="60" rx="6" class="box"/><text x="325" y="136" text-anchor="middle" class="strong"><tspan x="325" dy="0">T-bill and money</tspan><tspan x="325" dy="19">market yields fall</tspan></text>
+<path d="M424 128 L498 62" class="arrow" marker-end="url(#ar9)"/>
+<rect x="502" y="28" width="378" height="60" rx="6" class="box"/><text x="691" y="54" text-anchor="middle" class="strong"><tspan x="691" dy="0">Issuer reserve income falls</tspan><tspan x="691" dy="19">(Circle, Tether, Paxos keep it)</tspan></text>
+<path d="M424 140 H498" class="arrow" marker-end="url(#ar9)"/>
+<rect x="502" y="110" width="378" height="60" rx="6" class="box"/><text x="691" y="136" text-anchor="middle" class="strong"><tspan x="691" dy="0">Cash and stablecoins give up less</tspan><tspan x="691" dy="19">by paying 0 to holders</tspan></text>
+<path d="M690 174 V204" class="arrow" marker-end="url(#ar9)"/><text x="702" y="196" text-anchor="start" class="strong">+?</text>
+<rect x="502" y="208" width="378" height="46" rx="6" class="box"/><text x="691" y="234" text-anchor="middle" class="strong"><tspan x="691" dy="0">Demand for payment stablecoins may rise</tspan></text>
+<path d="M326 174 V286" class="arrow" marker-end="url(#ar9)"/><text x="338" y="236" text-anchor="start" class="small">funds pass</text><text x="338" y="254" text-anchor="start" class="small">the yield on</text>
+<rect x="230" y="290" width="190" height="50" rx="6" class="box"/><text x="325" y="316" text-anchor="middle" class="strong"><tspan x="325" dy="0">Treasury funds</tspan><tspan x="325" dy="19">yield less</tspan></text>
+<path d="M424 316 H498" class="arrow" marker-end="url(#ar9)"/>
+<rect x="502" y="290" width="378" height="50" rx="6" class="box"/><text x="691" y="316" text-anchor="middle" class="strong"><tspan x="691" dy="0">Demand for Treasury funds may fall</tspan></text>
+<text x="440" y="306" text-anchor="middle" class="strong">−?</text></svg></div>
+<figcaption>Every arrow here is a hypothesis. The tracker can show whether flows moved in these directions around the cuts; it cannot show why. Other things changed in the same weeks (an election, a law, stock-market risk appetite).</figcaption>
+</figure>
+<div class="body">
+<h4>Channel 1: the opportunity cost of holding a stablecoin</h4>
+<p>A stablecoin pays holders 0%. Cash elsewhere pays the Treasury bill rate. Holding the stablecoin therefore costs the rate each year. When rates fall, that cost falls. Standard money-demand logic says people hold more of a good when its holding cost drops, so <strong>net issuance of payment stablecoins may rise</strong>.</p>
+<h4>Channel 2: the yield advantage of the fund</h4>
+<p>A Treasury fund pays about the bill rate. Against a zero-yield stablecoin its advantage is the rate itself. When the rate falls, the advantage narrows, and <strong>fund demand may fall</strong> relative to stablecoins.</p>
+<h4>Channel 3: risk appetite</h4>
+<p>Cuts can lift stock and crypto prices. If traders then want more crypto exposure, they mint stablecoins to fund purchases. This works the same way as channel 1 on stablecoins but it is a different story and cannot be told apart in these data.</p>
+<h4>Channel 4: the issuer</h4>
+<p>Lower rates cut issuer income (chapter 2). That could change how aggressively issuers court new customers, but the logs cannot see it.</p>
+
+<h3>Anticipation</h3>
+<p>Markets move before the Fed does. Yields fall as soon as traders expect cuts, so the 12 weeks before the first cut may already contain the effect. The baseline is therefore not "before the policy". Whenever you describe the study, say it compares flows in windows around the dates, not the effect of the decision.</p>
+
+<div class="callout"><h4>What would a better test look like?</h4><p>Use the <em>level</em> of the T-bill yield, or the gap between the T-bill yield and zero, as a continuous variable across all weeks, and regress weekly net issuance on its change with controls. That uses hundreds of weeks instead of two episodes. It is a natural thing to propose to a professor as the next step.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>scripts/backfill-context.mjs</code> writes <code>src/data/rates.json</code> from FRED; <code>episodes()</code> in <code>src/lib/issuance.ts</code> groups the cuts.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>What is a basis point, and how large was episode 1 in them?</summary><p>One hundredth of a percentage point. Episode 1 was 100 bp, or 100 hundredths of a point.</p></details>
+<details><summary>State channel 1 in one sentence.</summary><p>When the interest rate on cash falls, it costs less to hold a zero-yield stablecoin, so people may want more of them.</p></details>
+<details><summary>Why does anticipation weaken the pre/during comparison?</summary><p>The market has already priced in the cuts, so behavior may change before the first cut. The pre-window is not clean "before".</p></details>
+<details><summary>What does the study do about the September 2026 rate increase?</summary><p>Nothing. It is recorded in the data and left out of the analysis. State that, and offer to extend.</p></details>
+</div>
+</section>
+<section class="chapter" id="c7"><div class="ch-head"><div class="ch-num" aria-hidden="true">7</div><h2>Runs, depegs and news events</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>A stablecoin run is a bank-run story: redeeming first is better than redeeming last.</li>
+<li>The March 2023 episode is the clearest run-like event in the sample.</li>
+<li>An event window shows what happened around a date. It does not show why.</li>
+</ul></div>
+
+<div class="body">
+<h3>The bank-run logic</h3>
+<p>In 1983 Douglas Diamond and Philip Dybvig modeled why banks are fragile. Depositors can withdraw any time, but the bank's assets cannot be sold at full value instantly. If you think others will withdraw, withdrawing first is the safe choice. When enough people think so, the run happens, even at a healthy bank.</p>
+<p>A stablecoin copies the structure. Holders can redeem at $1 on demand, but the reserves are only worth $1 if sold at full value. If a holder worries that part of the reserves is stuck or lost, redeeming early is rational. Gary Gorton and Jeffery Zhang have argued that stablecoins resemble the "wildcat" banks of the 19th century for this reason (see the reading list).</p>
+
+<h3>Case: March 2023</h3>
+<p>Silicon Valley Bank was closed by regulators on Friday 10 March 2023. On Saturday 11 March, Circle disclosed that $3.3 billion of USDC's reserves were held at the bank. USDC fell to about $0.88 at its lowest. Banks were shut for the weekend, so the dollar side of arbitrage could not run: nobody could wire dollars to Circle to redeem. Once the US authorities backed the bank's depositors, USDC returned to $1 within a few days.</p>
+</div>
+<figure class="figure" id="fig-shock">
+<p class="fig-title">Around the March 2023 USDC depeg, USDC supply shrank for weeks while USDT supply grew.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 432" role="img" aria-label="Two bar panels of weekly change in circulating supply for USDC and USDT, eight weeks either side of the SVB week, on one scale."><defs><marker id="ar10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><text x="70" y="24" text-anchor="start" class="strong">USDC, weekly change in supply</text><line x1="70" x2="860" y1="111" y2="111" class="zero"/><text x="62" y="191" text-anchor="end" class="muted">−$5B</text><text x="62" y="116" text-anchor="end" class="muted">$0B</text><text x="62" y="41" text-anchor="end" class="muted">+$5B</text><rect x="77.0" y="111.0" width="32.5" height="0.9" class="seg" style="fill:#A9AAA2"><title>2023-01-09: −$56.7M</title></rect><rect x="123.4" y="111.0" width="32.5" height="6.1" class="seg" style="fill:#A9AAA2"><title>2023-01-16: −$404M</title></rect><rect x="169.9" y="111.0" width="32.5" height="7.5" class="seg" style="fill:#A9AAA2"><title>2023-01-23: −$502M</title></rect><rect x="216.4" y="111.0" width="32.5" height="16.1" class="seg" style="fill:#A9AAA2"><title>2023-01-30: −$1.1B</title></rect><rect x="262.9" y="111.0" width="32.5" height="11.8" class="seg" style="fill:#A9AAA2"><title>2023-02-06: −$786M</title></rect><rect x="309.3" y="100.5" width="32.5" height="10.5" class="seg" style="fill:#A9AAA2"><title>2023-02-13: $700M</title></rect><rect x="355.8" y="99.7" width="32.5" height="11.3" class="seg" style="fill:#A9AAA2"><title>2023-02-20: $752M</title></rect><rect x="402.3" y="91.1" width="32.5" height="19.9" class="seg" style="fill:#A9AAA2"><title>2023-02-27: $1.3B</title></rect><rect x="448.7" y="111.0" width="32.5" height="45.3" class="seg-hi" style=""><title>2023-03-06: −$3.0B</title></rect><text x="465" y="174.295939365" text-anchor="middle" class="strong">−3.0B</text><rect x="495.2" y="111.0" width="32.5" height="69.1" class="seg" style="fill:#A9AAA2"><title>2023-03-13: −$4.6B</title></rect><rect x="541.7" y="111.0" width="32.5" height="33.2" class="seg" style="fill:#A9AAA2"><title>2023-03-20: −$2.2B</title></rect><rect x="588.1" y="111.0" width="32.5" height="21.2" class="seg" style="fill:#A9AAA2"><title>2023-03-27: −$1.4B</title></rect><rect x="634.6" y="109.4" width="32.5" height="1.6" class="seg" style="fill:#A9AAA2"><title>2023-04-03: $106M</title></rect><rect x="681.1" y="111.0" width="32.5" height="10.1" class="seg" style="fill:#A9AAA2"><title>2023-04-10: −$676M</title></rect><rect x="727.6" y="111.0" width="32.5" height="15.1" class="seg" style="fill:#A9AAA2"><title>2023-04-17: −$1.0B</title></rect><rect x="774.0" y="111.0" width="32.5" height="4.3" class="seg" style="fill:#A9AAA2"><title>2023-04-24: −$287M</title></rect><rect x="820.5" y="111.0" width="32.5" height="2.0" class="seg" style="fill:#A9AAA2"><title>2023-05-01: −$132M</title></rect><text x="70" y="230" text-anchor="start" class="strong">USDT, weekly change in supply</text><line x1="70" x2="860" y1="317" y2="317" class="zero"/><text x="62" y="397" text-anchor="end" class="muted">−$5B</text><text x="62" y="322" text-anchor="end" class="muted">$0B</text><text x="62" y="247" text-anchor="end" class="muted">+$5B</text><rect x="77.0" y="315.8" width="32.5" height="1.2" class="seg" style="fill:#A9AAA2"><title>2023-01-09: $82.9M</title></rect><rect x="123.4" y="311.2" width="32.5" height="5.8" class="seg" style="fill:#A9AAA2"><title>2023-01-16: $389M</title></rect><rect x="169.9" y="301.5" width="32.5" height="15.5" class="seg" style="fill:#A9AAA2"><title>2023-01-23: $1.0B</title></rect><rect x="216.4" y="312.7" width="32.5" height="4.3" class="seg" style="fill:#A9AAA2"><title>2023-01-30: $289M</title></rect><rect x="262.9" y="311.8" width="32.5" height="5.2" class="seg" style="fill:#A9AAA2"><title>2023-02-06: $347M</title></rect><rect x="309.3" y="287.1" width="32.5" height="29.9" class="seg" style="fill:#A9AAA2"><title>2023-02-13: $2.0B</title></rect><rect x="355.8" y="309.8" width="32.5" height="7.2" class="seg" style="fill:#A9AAA2"><title>2023-02-20: $481M</title></rect><rect x="402.3" y="308.1" width="32.5" height="8.9" class="seg" style="fill:#A9AAA2"><title>2023-02-27: $596M</title></rect><rect x="448.7" y="300.7" width="32.5" height="16.3" class="seg-hi" style=""><title>2023-03-06: $1.1B</title></rect><text x="465" y="294.71995454" text-anchor="middle" class="strong">+1.1B</text><rect x="495.2" y="263.8" width="32.5" height="53.2" class="seg" style="fill:#A9AAA2"><title>2023-03-13: $3.5B</title></rect><rect x="541.7" y="272.1" width="32.5" height="44.9" class="seg" style="fill:#A9AAA2"><title>2023-03-20: $3.0B</title></rect><rect x="588.1" y="306.5" width="32.5" height="10.5" class="seg" style="fill:#A9AAA2"><title>2023-03-27: $698M</title></rect><rect x="634.6" y="310.9" width="32.5" height="6.1" class="seg" style="fill:#A9AAA2"><title>2023-04-03: $408M</title></rect><rect x="681.1" y="306.2" width="32.5" height="10.8" class="seg" style="fill:#A9AAA2"><title>2023-04-10: $720M</title></rect><rect x="727.6" y="309.2" width="32.5" height="7.8" class="seg" style="fill:#A9AAA2"><title>2023-04-17: $518M</title></rect><rect x="774.0" y="313.0" width="32.5" height="4.0" class="seg" style="fill:#A9AAA2"><title>2023-04-24: $266M</title></rect><rect x="820.5" y="311.4" width="32.5" height="5.6" class="seg" style="fill:#A9AAA2"><title>2023-05-01: $373M</title></rect><text x="93.23529411764706" y="410" text-anchor="middle" class="muted">−8 wk</text><text x="279.11764705882354" y="410" text-anchor="middle" class="muted">−4 wk</text><text x="465" y="410" text-anchor="middle" class="muted">depeg week</text><text x="650.8823529411765" y="410" text-anchor="middle" class="muted">+4 wk</text><text x="836.7647058823529" y="410" text-anchor="middle" class="muted">+8 wk</text></svg></div>
+<figcaption>Weekly change in circulating supply on all chains, eight weeks either side of the week of 2023-03-06 (yellow). Both panels share one scale. This is the clearest run-like episode in the sample: money left one stablecoin and entered another. Source: DefiLlama via <code>netSeries()</code>.</figcaption>
+</figure>
+<div class="body">
+<p>In the weeks around the event, USDC's circulating supply changed by about <strong>$498M per week before</strong> and <strong>−$2.8B per week from the event week</strong>. USDT moved from <strong>$854M</strong> to <strong>$2.1B</strong> per week. Redemptions of one coin and mints of another happened together: money moved between stablecoins.</p>
+<p>What you can say: the flows fit a flight from the stablecoin with the problem to the one without it. What you cannot say: how much of the move was panic and how much was ordinary rebalancing, or why Tether's supply grew.</p>
+
+<h3>Case: the GENIUS Act</h3>
+<p>The GENIUS Act was signed on 18 July 2025. The study measures USDC, USDT and PYUSD net issuance for four weeks before and four weeks from the event week. The law passed Congress in the days and weeks before, so any response may sit before the signing date. Treat the window as a descriptive check, not a measurement of the law's effect.</p>
+
+<h3>Case: an operational error</h3>
+<p>The PYUSD 300 trillion mint on 15 October 2025 is a data point about <em>operational risk</em> at an issuer, not demand. It is useful to mention, because it shows why the tracker excludes it by transaction hash instead of by a statistical filter.</p>
+
+<h3>Event windows: a short recipe</h3>
+<ol>
+<li>Fix the date from a source before you look at the data.</li>
+<li>Pick the window length (four weeks each side here) before you look.</li>
+<li>Compute the average weekly net issuance before and from the event.</li>
+<li>Compare to how large a typical week is. Use the standard deviation, or percentile.</li>
+<li>List the other things that happened in the window.</li>
+</ol>
+
+<div class="callout"><h4>Limit</h4><p>Both event dates were checked against news reports on 2026-10-17. They are not fetched during the build. The chosen events are famous ones; a skeptic would ask how they were selected.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>NEWS_EVENTS</code>, <code>eventWindow()</code> in <code>src/lib/issuance.ts</code>; the news table on <code>/issuance</code>.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Why is the run logic rational for each holder but harmful for the group?</summary><p>If the others redeem, the reserves may not cover the late ones, so each wants to be early. Everyone acting that way creates the run.</p></details>
+<details><summary>Why did the SVB weekend make the depeg worse?</summary><p>Banks were closed, so arbitrageurs could not send dollars to redeem tokens. The mechanism that pins the price was switched off.</p></details>
+<details><summary>What can an event window not tell you?</summary><p>The cause. Other events share the window, news is often anticipated, and the event choice may be biased.</p></details>
+<details><summary>Why is the 300T PYUSD mint excluded by hash and not by a size filter?</summary><p>A size filter could remove real large mints. Two known transactions were an issuer error, so removing exactly them is transparent and testable.</p></details>
+</div>
+</section>
+<section class="chapter" id="c8"><div class="ch-head"><div class="ch-num" aria-hidden="true">8</div><h2>What the tracker found</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>$1.01 trillion gross on Ethereum, 85% of it USDC. Net issuance differs a lot by asset.</li>
+<li>2024: stablecoin issuance rose around the cuts and Treasury funds' fell. 2025: the pattern blurred.</li>
+<li>Ethereum is the home of most USDC and PYUSD but not USDT.</li>
+</ul></div>
+
+<div class="body">
+<h3>Result 1: size</h3>
+<p>From Dec 26, 2022 to the week of Oct 5, 2026, the six assets saw $1.01 trillion of gross mints and redemptions on Ethereum. The table splits it by asset. Net on Ethereum is not the same as net globally (chapter 5), so read the net column with care.</p>
+</div>
+<figure class="figure" id="fig-gross">
+<p class="fig-title">USDC is 85% of the $1.01 trillion that was minted and redeemed on Ethereum.</p>
+<div class="table-wrap"><table class="data">
+<thead><tr><th>Asset</th><th class="num">Minted</th><th class="num">Redeemed</th><th class="num">Net (mint − redeem)</th><th>Share of gross</th></tr></thead>
+<tbody><tr><th scope="row">USDC<small>Circle</small></th>
+<td class="num">$416B</td><td class="num">$438B</td><td class="num">−$22.8B</td>
+<td class="bar-cell"><span class="bar hi" style="width:68.0%"></span><span class="bar-label">85%</span></td></tr><tr><th scope="row">USDT<small>Tether</small></th>
+<td class="num">$82.8B</td><td class="num">$26.1B</td><td class="num">$56.7B</td>
+<td class="bar-cell"><span class="bar" style="width:8.7%"></span><span class="bar-label">11%</span></td></tr><tr><th scope="row">PYUSD<small>PayPal (Paxos)</small></th>
+<td class="num">$19.0B</td><td class="num">$17.2B</td><td class="num">$1.8B</td>
+<td class="bar-cell"><span class="bar" style="width:2.9%"></span><span class="bar-label">4%</span></td></tr><tr><th scope="row">BUIDL<small>BlackRock (Securitize)</small></th>
+<td class="num">$2.3B</td><td class="num">$2.1B</td><td class="num">$196M</td>
+<td class="bar-cell"><span class="bar" style="width:0.6%"></span><span class="bar-label">0.43%</span></td></tr><tr><th scope="row">OUSG<small>Ondo</small></th>
+<td class="num">$1.3B</td><td class="num">$748M</td><td class="num">$598M</td>
+<td class="bar-cell"><span class="bar" style="width:0.6%"></span><span class="bar-label">0.21%</span></td></tr><tr><th scope="row">USDY<small>Ondo</small></th>
+<td class="num">$215M</td><td class="num">$66.6M</td><td class="num">$148M</td>
+<td class="bar-cell"><span class="bar" style="width:0.6%"></span><span class="bar-label">0.03%</span></td></tr></tbody></table></div>
+<figcaption>Compare the bars: gross volume (mints plus redemptions) as a share of the total. Ethereum event logs only, from 2022-12-26 to the week of 2026-10-05. USDC net is negative here because USDC also lives on other chains (chapter 5). Source: <code>src/data/issuance.json</code>, snapshot 2026-10-17.</figcaption>
+</figure>
+<div class="body">
+<h3>Result 2: the rate episodes</h3>
+<p>The figure shows each asset's average weekly net issuance before and during each easing episode, in standard deviations of that asset's own normal week.</p>
+</div>
+<figure class="figure" id="fig-dumbbell">
+<p class="fig-title">2024: cuts coincided with USDC and USDT issuance above normal and Treasury funds below. 2025: the split blurred.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 374" role="img" aria-label="Dumbbell chart of mean weekly net issuance before and during two Fed easing episodes, in standard deviations, for six assets."><defs><marker id="ar11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><text x="0" y="81" text-anchor="start" class="strong">USDC</text><text x="62" y="81" text-anchor="start" class="muted">payment</text><text x="0" y="125" text-anchor="start" class="strong">USDT</text><text x="62" y="125" text-anchor="start" class="muted">payment</text><text x="0" y="169" text-anchor="start" class="strong">PYUSD</text><text x="62" y="169" text-anchor="start" class="muted">payment</text><text x="0" y="233" text-anchor="start" class="strong">BUIDL</text><text x="62" y="233" text-anchor="start" class="muted">Treasury</text><text x="0" y="277" text-anchor="start" class="strong">OUSG</text><text x="62" y="277" text-anchor="start" class="muted">Treasury</text><text x="0" y="321" text-anchor="start" class="strong">USDY</text><text x="62" y="321" text-anchor="start" class="muted">Treasury</text><text x="150" y="22" text-anchor="start" class="strong">Sep 2024 to Dec 2024</text><text x="150" y="40" text-anchor="start" class="muted">3 cuts, −100 bp</text><line x1="317.5" x2="317.5" y1="52" y2="334" class="zero"/><text x="150" y="360" text-anchor="middle" class="muted">−1</text><text x="317.5" y="360" text-anchor="middle" class="muted">0</text><text x="485" y="360" text-anchor="middle" class="muted">+1</text><line x1="335.7318716955556" x2="402.37608881870426" y1="76" y2="76" class="link"/><circle cx="335.7318716955556" cy="76" r="6" class="dot-pre"/><circle cx="402.37608881870426" cy="76" r="8" class="dot-during"><title>USDC: $268M per week before, $708M per week during</title></circle><text x="416.37608881870426" y="81" text-anchor="start" class="strong">+0.51</text><line x1="301.007231585624" x2="398.35993940555795" y1="120" y2="120" class="link"/><circle cx="301.007231585624" cy="120" r="6" class="dot-pre"/><circle cx="398.35993940555795" cy="120" r="8" class="dot-during"><title>USDT: $496M per week before, $1.1B per week during</title></circle><text x="412.35993940555795" y="125" text-anchor="start" class="strong">+0.48</text><line x1="346.0898098121595" x2="280.5528887100999" y1="164" y2="164" class="link"/><circle cx="346.0898098121595" cy="164" r="6" class="dot-pre"/><circle cx="280.5528887100999" cy="164" r="8" class="dot-during"><title>PYUSD: $40.9M per week before, −$12.6M per week during</title></circle><text x="266.5528887100999" y="169" text-anchor="end" class="strong">−0.22</text><line x1="324.5541511779477" x2="283.96096138631196" y1="228" y2="228" class="link"/><circle cx="324.5541511779477" cy="228" r="6" class="dot-pre"/><circle cx="283.96096138631196" cy="228" r="8" class="dot-during"><title>BUIDL: $3.2M per week before, −$7.0M per week during</title></circle><text x="269.96096138631196" y="233" text-anchor="end" class="strong">−0.20</text><line x1="290.2257063864156" x2="258.88649708896673" y1="272" y2="272" class="link"/><circle cx="290.2257063864156" cy="272" r="6" class="dot-pre"/><circle cx="258.88649708896673" cy="272" r="8" class="dot-during"><title>OUSG: $1.3M per week before, −$2.6M per week during</title></circle><text x="244.88649708896673" y="277" text-anchor="end" class="strong">−0.35</text><text x="156" y="321" text-anchor="start" class="muted">no history</text><text x="525" y="22" text-anchor="start" class="strong">Sep 2025 to Dec 2025</text><text x="525" y="40" text-anchor="start" class="muted">3 cuts, −75 bp</text><line x1="692.5" x2="692.5" y1="52" y2="334" class="zero"/><text x="525" y="360" text-anchor="middle" class="muted">−1</text><text x="692.5" y="360" text-anchor="middle" class="muted">0</text><text x="860" y="360" text-anchor="middle" class="muted">+1</text><line x1="820.9912132975578" x2="685.8422337208664" y1="76" y2="76" class="link"/><circle cx="820.9912132975578" cy="76" r="6" class="dot-pre"/><circle cx="685.8422337208664" cy="76" r="8" class="dot-during"><title>USDC: $996M per week before, $103M per week during</title></circle><text x="671.8422337208664" y="81" text-anchor="end" class="strong">−0.04</text><line x1="784.8872729175137" x2="756.6387711981602" y1="120" y2="120" class="link"/><circle cx="784.8872729175137" cy="120" r="6" class="dot-pre"/><circle cx="756.6387711981602" cy="120" r="8" class="dot-during"><title>USDT: $1.2B per week before, $986M per week during</title></circle><text x="742.6387711981602" y="125" text-anchor="end" class="strong">+0.38</text><line x1="710.9612006079028" x2="838.6318534185604" y1="164" y2="164" class="link"/><circle cx="710.9612006079028" cy="164" r="6" class="dot-pre"/><circle cx="838.6318534185604" cy="164" r="8" class="dot-during"><title>PYUSD: $32.6M per week before, $137M per week during</title></circle><text x="852.6318534185604" y="169" text-anchor="start" class="strong">+0.87</text><line x1="662.932649614596" x2="641.355303270225" y1="228" y2="228" class="link"/><circle cx="662.932649614596" cy="228" r="6" class="dot-pre"/><circle cx="641.355303270225" cy="228" r="8" class="dot-during"><title>BUIDL: −$6.0M per week before, −$11.5M per week during</title></circle><text x="627.355303270225" y="233" text-anchor="end" class="strong">−0.31</text><line x1="660.3074750141136" x2="698.1698559229337" y1="272" y2="272" class="link"/><circle cx="660.3074750141136" cy="272" r="6" class="dot-pre"/><circle cx="698.1698559229337" cy="272" r="8" class="dot-during"><title>OUSG: $657,117 per week before, $5.3M per week during</title></circle><text x="712.1698559229337" y="277" text-anchor="start" class="strong">+0.03</text><text x="531" y="321" text-anchor="start" class="muted">no history</text></svg></div>
+<figcaption>Open dot: 12 weeks before the first cut. Yellow dot: first cut through 4 weeks after the last. Both panels share one scale, in standard deviations of that asset's own weekly net issuance, so a small fund and a huge stablecoin can sit on one axis (hover a dot for dollars). Two episodes are a description, not a test.</figcaption>
+</figure>
+<div class="body">
+<p>In the first episode (Sep 2024 to Dec 2024), USDC moved to +0.51 σ and USDT to +0.48 σ. PYUSD moved to −0.22 σ, BUIDL to −0.20 σ and OUSG to −0.35 σ. In the second (Sep 2025 to Dec 2025), USDC was −0.04, USDT +0.38, PYUSD +0.87, BUIDL −0.31 and OUSG +0.03.</p>
+<p>The first episode fits the "stablecoins up, funds down" story from chapter 6 for the larger assets. The second does not: PYUSD is the strongest and USDC is flat. BUIDL had its lowest window of its history in 2025. So the honest summary is <strong>mixed</strong>.</p>
+
+<h3>Result 3: where the supply sits</h3>
+</div>
+<figure class="figure" id="fig-chains">
+<p class="fig-title">Ethereum holds 40% of USDT, 62% of USDC and 60% of PYUSD. The rest sits on other chains.</p>
+<div class="scroll"><svg class="diagram" viewBox="0 0 880 266" role="img" aria-label="Stacked bars of circulating supply share by blockchain for USDT, USDC and PYUSD, with Ethereum highlighted."><defs><marker id="ar12" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs><text x="0" y="36" text-anchor="start" class="strong">USDT</text><text x="0" y="56" text-anchor="start" class="muted">$184B</text><rect x="80.0" y="14" width="400.0" height="52" class="seg" style="fill:#C6C7BF"><title>USDT on Tron: $93.3B</title></rect><text x="87" y="36" text-anchor="start" class="strong">Tron</text><text x="87" y="55" text-anchor="start" class="small">51%</text><rect x="480.0" y="14" width="313.8" height="52" class="seg-hi" style=""><title>USDT on Ethereum: $73.2B</title></rect><text x="487.00270719719384" y="36" text-anchor="start" class="strong">Ethereum</text><text x="487.00270719719384" y="55" text-anchor="start" class="small">40%</text><rect x="793.8" y="14" width="39.4" height="52" class="seg" style="fill:#D9DAD3"><title>USDT on BSC: $9.2B</title></rect><rect x="833.1" y="14" width="12.3" height="52" class="seg" style="fill:#B4B5AD"><title>USDT on Solana: $2.9B</title></rect><rect x="845.5" y="14" width="3.6" height="52" class="seg" style="fill:#CFD0C9"><title>USDT on Arbitrum: $830M</title></rect><rect x="849.0" y="14" width="21.0" height="52" class="seg" style="fill:#98998F"><title>USDT on Other: $4.9B</title></rect><text x="0" y="120" text-anchor="start" class="strong">USDC</text><text x="0" y="140" text-anchor="start" class="muted">$73.1B</text><rect x="80.0" y="98" width="487.9" height="52" class="seg-hi" style=""><title>USDC on Ethereum: $45.1B</title></rect><text x="87" y="120" text-anchor="start" class="strong">Ethereum</text><text x="87" y="139" text-anchor="start" class="small">62%</text><rect x="567.9" y="98" width="77.1" height="52" class="seg" style="fill:#A9AAA2"><title>USDC on Hyperliquid L1: $7.1B</title></rect><text x="574.9182940656879" y="120" text-anchor="start" class="strong">Hyperli…</text><text x="574.9182940656879" y="139" text-anchor="start" class="small">10%</text><rect x="645.0" y="98" width="73.4" height="52" class="seg" style="fill:#D9DAD3"><title>USDC on Solana: $6.8B</title></rect><text x="652.0205672834102" y="120" text-anchor="start" class="strong">Solana</text><text x="652.0205672834102" y="139" text-anchor="start" class="small">9%</text><rect x="718.4" y="98" width="47.8" height="52" class="seg" style="fill:#B4B5AD"><title>USDC on Base: $4.4B</title></rect><text x="725.4130081409892" y="120" text-anchor="start" class="strong">Base</text><text x="725.4130081409892" y="139" text-anchor="start" class="small">6%</text><rect x="766.2" y="98" width="25.0" height="52" class="seg" style="fill:#CFD0C9"><title>USDC on Arbitrum: $2.3B</title></rect><rect x="791.3" y="98" width="78.7" height="52" class="seg" style="fill:#98998F"><title>USDC on Other: $7.3B</title></rect><text x="798.2516812224961" y="120" text-anchor="start" class="strong">Other</text><text x="798.2516812224961" y="139" text-anchor="start" class="small">10%</text><text x="0" y="204" text-anchor="start" class="strong">PYUSD</text><text x="0" y="224" text-anchor="start" class="muted">$2.9B</text><rect x="80.0" y="182" width="475.8" height="52" class="seg-hi" style=""><title>PYUSD on Ethereum: $1.7B</title></rect><text x="87" y="204" text-anchor="start" class="strong">Ethereum</text><text x="87" y="223" text-anchor="start" class="small">60%</text><rect x="555.8" y="182" width="193.8" height="52" class="seg" style="fill:#A9AAA2"><title>PYUSD on Solana: $711M</title></rect><text x="562.8489128435481" y="204" text-anchor="start" class="strong">Solana</text><text x="562.8489128435481" y="223" text-anchor="start" class="small">25%</text><rect x="749.6" y="182" width="98.0" height="52" class="seg" style="fill:#D9DAD3"><title>PYUSD on Arbitrum: $360M</title></rect><text x="756.6072263499169" y="204" text-anchor="start" class="strong">Arbitrum</text><text x="756.6072263499169" y="223" text-anchor="start" class="small">12%</text><rect x="847.6" y="182" width="18.9" height="52" class="seg" style="fill:#B4B5AD"><title>PYUSD on Flow: $69.5M</title></rect><rect x="866.6" y="182" width="2.8" height="52" class="seg" style="fill:#CFD0C9"><title>PYUSD on Polygon: $10.4M</title></rect><rect x="869.4" y="182" width="0.6" height="52" class="seg" style="fill:#98998F"><title>PYUSD on Other: $2.2M</title></rect></svg></div>
+<figcaption>Compare the yellow segment (Ethereum) across the three bars. Each bar is 100% of that coin's circulating supply in the week of 2026-10-12. USDT: Tron 51%, Ethereum 40%, BSC 5%, Solana 2%, Other 3%. USDC: Ethereum 62%, Hyperliquid L1 10%, Solana 9%, Base 6%, Arbitrum 3%, Other 10%. PYUSD: Ethereum 60%, Solana 25%, Arbitrum 12%, Flow 2%. Shares are of supply, not of flows. Source: DefiLlama, <code>src/data/supply-by-chain.json</code>.</figcaption>
+</figure>
+<div class="body">
+<p>Ethereum has most of USDC and PYUSD but a minority of USDT. That is why the log-based gross flows describe USDC and PYUSD better than USDT, and why net issuance for those three uses all-chain supply.</p>
+
+<h3>Result 4: the shock</h3>
+<p>Around SVB (chapter 7) USDC supply fell for weeks while USDT supply rose.</p>
+
+<h3>What you can claim, and what you cannot</h3>
+<div class="callout"><h4>Safe to say</h4><ul>
+<li>$1.01 trillion was minted and redeemed on Ethereum across five issuers, mostly USDC churn.</li>
+<li>In the 2024 easing episode, the larger payment stablecoins issued more than usual and the Treasury-fund tokens less.</li>
+<li>That pattern is not repeated cleanly in 2025.</li>
+<li>Data are dated snapshots. Method and checks are documented.</li>
+</ul></div>
+<div class="callout"><h4>Do not say</h4><ul>
+<li>"Rate cuts cause stablecoin growth." Two episodes. No causal design.</li>
+<li>"Total stablecoin issuance across all chains." The logs are Ethereum only.</li>
+<li>"Nexus volumes." It is OUSG and USDY as a proxy.</li>
+<li>Anything about the September 2026 rate increase. It was not analyzed.</li>
+</ul></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> the same numbers drive <code>/issuance</code>, the one-page <code>/summary</code> and <code>/api/metrics</code>. The textbook rebuilds from the snapshot, so a data refresh updates every figure here too.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Say the 2024 result in one sentence, with the caveat.</summary><p>Around the 2024 cuts, USDC and USDT issuance was above their normal weeks while the Treasury-fund tokens were below, but there are only two episodes and 2025 did not repeat it.</p></details>
+<details><summary>Why is "mixed" a good word here?</summary><p>It is accurate. The two episodes disagree, and it avoids implying a pattern the data cannot support.</p></details>
+<details><summary>Which of the three stablecoins is least well covered by Ethereum logs?</summary><p>USDT. Tron holds about half its supply.</p></details>
+<details><summary>Where do you check whether the numbers changed since this was written?</summary><p>Rerun the backfill scripts, then <code>npx tsx src/lib/issuance.check.ts</code>, then rebuild the textbook.</p></details>
+</div>
+</section>
+<section class="chapter" id="c9"><div class="ch-head"><div class="ch-num" aria-hidden="true">9</div><h2>Talking to the professors</h2></div>
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Lead with one true number and its limit. Show the one-page summary. Ask a real question.</li>
+<li>Expect questions about identification, coverage and reserves. All have honest answers.</li>
+<li>Offer the next step (a rate-level regression), not a bigger claim.</li>
+</ul></div>
+
+<div class="body">
+<h3>The email line</h3>
+<p>The first draft line was "I tracked $X billion in stablecoin mints and redemptions across 5 issuers." The number is true. The phrase needs a limit to stay true. Three versions, most careful last:</p>
+<ul>
+<li>"I tracked $1.01 trillion of gross mints and redemptions on Ethereum across five issuers."</li>
+<li>"…across five issuers, 85% of it USDC market-maker churn, and studied net issuance around two Fed easing episodes."</li>
+<li>"…and compared payment stablecoins with tokenized Treasury funds around the 2024 and 2025 rate cuts."</li>
+</ul>
+<p>Use the second as the default. It shows you know what the big number is.</p>
+
+<h3>Before you write</h3>
+<ol>
+<li>Read each professor's recent papers or talks. Pick one idea from <em>their</em> work that your data touches. This book cannot do that for you.</li>
+<li>Refresh the data (rerun the two backfill scripts) so the numbers are current.</li>
+<li>Open <code>/summary</code> and print it. One page, two charts.</li>
+<li>Decide the single question you want to ask them.</li>
+</ol>
+
+<div class="callout"><h4>A draft to adapt, not to send</h4><p>Subject: Question about stablecoin flows around Fed easing<br><br>Dear Professor [Name],<br><br>I'm [your program and year]. I built an open-source tracker of weekly mints and redemptions for USDC, USDT, PYUSD, BlackRock's BUIDL and Ondo's OUSG and USDY, from Ethereum event logs, and I looked at net issuance around the 2024 and 2025 Fed easing episodes. The first episode shows stablecoin issuance above its normal pace and Treasury-fund issuance below; the second does not repeat it, and with two episodes I make no causal claim. [One sentence tying this to their work.] I attached a one-page summary. Would you be open to [a 15-minute question about how you would identify the rate channel / a pointer to the right data]?<br><br>[Name]</p></div>
+
+<h3>Questions to expect</h3>
+</div>
+<div class="check qa">
+<details><summary>"How do you know the mints are real issuance and not just transfers?"</summary><p>Mints are defined by the token contract's own mint event (or a transfer from the zero address for PYUSD), so they are creations of supply. Cross-chain USDC moves by Circle's own minter are detected and set aside, and Ethereum mints minus burns reconcile to DefiLlama's Ethereum supply change within 16% for USDC and 5% for PYUSD.</p></details>
+<details><summary>"Why Ethereum only?"</summary><p>Ethereum is where BUIDL, OUSG and USDY issue, and where decoded events are easiest to verify. Tron and others matter for USDT, so for net issuance of the three stablecoins I use all-chain circulating supply. Extending logs to Tron and Solana is the obvious next step.</p></details>
+<details><summary>"What identifies the effect of rates?"</summary><p>Nothing yet. It is two easing episodes, with overlapping events and anticipation. It is a description that suggests where to look. A weekly regression on the change in T-bill yields, with controls, would use all the data.</p></details>
+<details><summary>"Is the $1 trillion meaningful?"</summary><p>It is gross volume through issuers' windows on Ethereum. Most is USDC round trips by market makers. Net issuance is the better measure of growth, so the rate study uses net.</p></details>
+<details><summary>"Why standard deviations?"</summary><p>To put six very different sizes on one axis. It rescales each asset by its own volatility. It is not a hypothesis test.</p></details>
+<details><summary>"What do you assume about reserves and redemption risk?"</summary><p>The tracker measures quantities only and says nothing about reserve quality. The SVB episode shows reserve doubts can drive redemptions, but the logs don't reveal motives.</p></details>
+<details><summary>"How do you treat BUIDL's dividends?"</summary><p>BUIDL pays yield as newly issued tokens. They sit in the mint events at about 1% of mint volume. I flag it, and do not use BUIDL mint counts.</p></details>
+<details><summary>"Why should I trust the data?"</summary><p>Three transactions were decoded by hand and matched an independent explorer, totals reconcile with a second source, and an assertion script fails if the numbers or the prose drift. The scripts and snapshots are in the repository.</p></details>
+<details><summary>"What would you do next?"</summary><p>Add Tron and Solana logs for USDT and USDC, use the T-bill yield level in a weekly regression, and control for crypto prices to separate risk appetite from the opportunity-cost channel.</p></details>
+</div>
+<div class="body">
+<h3>Things to avoid</h3>
+<ul>
+<li>Claiming the cuts <em>caused</em> anything.</li>
+<li>Calling the gross number "inflows".</li>
+<li>Describing Nexus volumes. Say OUSG and USDY as proxy.</li>
+<li>Claiming experience you don't have. Say what you built and what you checked.</li>
+<li>Sending anything before you rerun the data and reread the summary page.</li>
+</ul>
+</div>
+</section>
+<section class="chapter" id="glossary"><div class="ch-head"><div class="ch-num" aria-hidden="true">A</div><h2>Glossary</h2></div>
+<dl class="terms">
+<dt>Arbitrage</dt><dd>Buying where a thing is cheap and selling where it is dear at the same time. It pins a stablecoin near $1.</dd>
+<dt>Attestation</dt><dd>A limited accountant's check of reserves at one date. Weaker than an audit.</dd>
+<dt>Basis point (bp)</dt><dd>One hundredth of a percentage point.</dd>
+<dt>Block</dt><dd>A batch of transactions added to the chain, about every 12 seconds on Ethereum.</dd>
+<dt>Burn</dt><dd>Destroying tokens. How a redemption appears on the chain.</dd>
+<dt>CCTP</dt><dd>Circle's cross-chain transfer protocol. Burns USDC on one chain and mints it on another.</dd>
+<dt>Circulating supply</dt><dd>Tokens that exist and are not destroyed: all mints minus all burns.</dd>
+<dt>Depeg</dt><dd>A stablecoin trading away from its $1 target.</dd>
+<dt>Easing episode</dt><dd>Fed cuts less than 120 days apart, grouped as one.</dd>
+<dt>Event (log)</dt><dd>A record a contract writes to the chain to announce an action, such as a mint.</dd>
+<dt>Federal funds rate</dt><dd>The overnight interbank lending rate that the Fed targets.</dd>
+<dt>FOMC</dt><dd>The Fed committee that sets the target range.</dd>
+<dt>Gross flow</dt><dd>Mints plus redemptions.</dd>
+<dt>Issuer</dt><dd>The company that creates and redeems a token.</dd>
+<dt>KYC</dt><dd>Know your customer. Identity checks required before using an issuer's window.</dd>
+<dt>Mint</dt><dd>Creating new tokens against dollars.</dd>
+<dt>NAV</dt><dd>Net asset value: the fund's holdings per share.</dd>
+<dt>Net issuance</dt><dd>Mints minus redemptions. Growth in the amount outstanding.</dd>
+<dt>Par</dt><dd>Exactly $1.</dd>
+<dt>Percentile</dt><dd>The share of comparison windows that were lower.</dd>
+<dt>Primary market</dt><dd>Dealing with the issuer directly.</dd>
+<dt>Rebasing</dt><dd>A token whose balance in your wallet changes to carry the yield.</dd>
+<dt>Redeem</dt><dd>Returning tokens to the issuer for dollars.</dd>
+<dt>Reserves</dt><dd>Assets an issuer holds against its tokens.</dd>
+<dt>RPC</dt><dd>The interface a node offers for asking about the chain.</dd>
+<dt>Run</dt><dd>Many holders redeeming at once because each fears being last.</dd>
+<dt>Secondary market</dt><dd>Trading between holders, such as on an exchange.</dd>
+<dt>Standard deviation (σ)</dt><dd>A typical size of deviation from the average. The unit for putting assets on one axis.</dd>
+<dt>Topic</dt><dd>A searchable field of a log. Topic 0 names the event.</dd>
+<dt>Transfer agent</dt><dd>The firm that keeps the official owner record for a fund and enforces who may hold it.</dd>
+<dt>Treasury bill</dt><dd>Short-term US government debt.</dd>
+<dt>z-score</dt><dd>A value minus the average, divided by the standard deviation.</dd>
+</dl>
+</section>
+<section class="chapter" id="reading-list"><div class="ch-head"><div class="ch-num" aria-hidden="true">B</div><h2>Reading list</h2></div>
+<div class="body">
+<div class="callout"><h4>Verify before you cite</h4><p>The papers below are listed from memory of their titles, authors and venues. Search each one and confirm the details before quoting it to a professor.</p></div>
+
+<h3>Start here (this repo)</h3>
+<ol class="read">
+<li><code>/summary</code>: the one-page write-up.</li>
+<li><code>docs/METHODOLOGY.md</code>, Pillar 5: every definition.</li>
+<li><code>docs/DECISIONS.md</code>, ADR-003, ADR-004, ADR-009: why the project is shaped this way.</li>
+<li><code>src/lib/issuance.check.ts</code>: the claims that are tested.</li>
+</ol>
+
+<h3>Runs and fragility</h3>
+<ul class="read">
+<li>Diamond and Dybvig, "Bank Runs, Deposit Insurance, and Liquidity", <em>Journal of Political Economy</em>, 1983.</li>
+<li>Gorton and Zhang, "Taming Wildcat Stablecoins", <em>University of Chicago Law Review</em>, 2023.</li>
+</ul>
+
+<h3>How stablecoins hold their price</h3>
+<ul class="read">
+<li>Lyons and Viswanath-Natraj, "What Keeps Stablecoins Stable?", <em>Journal of International Money and Finance</em>, 2023.</li>
+<li>Ma, Zeng and Zhang, "Stablecoin Runs and the Centralization of Arbitrage", working paper.</li>
+</ul>
+
+<h3>Stablecoins and the traditional system</h3>
+<ul class="read">
+<li>Liao and Caramichael, "Stablecoins: Growth Potential and Impact on Banking", Federal Reserve Board IFDP, 2022.</li>
+<li>The Federal Reserve's and the Treasury Borrowing Advisory Committee's recent materials on stablecoins and Treasury demand.</li>
+</ul>
+
+<h3>Primary documents</h3>
+<ul class="read">
+<li>The text of the GENIUS Act (S. 1582) and the current implementing rules.</li>
+<li>Each issuer's reserve reports: Circle, Tether, Paxos, BlackRock's BUIDL fund documents, Ondo's OUSG and USDY pages.</li>
+<li>FRED series <code>DFEDTARU</code> and <code>DFF</code> for the policy rate.</li>
+</ul>
+
+<h3>Method</h3>
+<ul class="read">
+<li>Any event-study chapter in a standard empirical finance textbook, for abnormal returns, estimation windows and why overlapping events break independence.</li>
+<li>Edward Tufte, <em>The Visual Display of Quantitative Information</em>, for the figure rules used here.</li>
+</ul>
+</div>
+</section>
+<section class="chapter" id="seven-day-study-plan"><div class="ch-head"><div class="ch-num" aria-hidden="true">C</div><h2>Seven-day study plan</h2></div>
+<div class="body"><p>About 90 minutes a day. Each row ends in an output. Do the check-yourself questions before you move on.</p></div>
+<div class="plan-wrap"><table class="plan">
+<thead><tr><th>Day</th><th>Read</th><th>Do</th><th>You can now</th></tr></thead>
+<tbody>
+<tr><th>1</th><td>Chapters 1 and 2</td><td>Sketch the mint/redeem loop from memory. Open each issuer's own page and check the table in chapter 2.</td><td>Explain how a stablecoin is made and how an issuer earns.</td></tr>
+<tr><th>2</th><td>Chapter 3</td><td>Open <code>/flows</code>. Find one OUSG mint in the table and say which event it came from.</td><td>Explain Nexus, and why the project says "proxy".</td></tr>
+<tr><th>3</th><td>Chapter 4</td><td>Decode one transaction by hand on an explorer. Divide by the decimals.</td><td>Read a log and explain the silent-truncation bug.</td></tr>
+<tr><th>4</th><td>Chapter 5</td><td>Compute one z-score on paper. Run <code>npx tsx src/lib/issuance.check.ts</code> and read each assertion.</td><td>Defend gross versus net and name five reasons not to claim causation.</td></tr>
+<tr><th>5</th><td>Chapters 6 and 7</td><td>Draw the transmission map from memory. Read the Diamond and Dybvig abstract and the Gorton and Zhang introduction.</td><td>Explain the two rate channels and the SVB run.</td></tr>
+<tr><th>6</th><td>Chapter 8</td><td>Rerun the backfills. Rebuild the textbook. Compare the old and new numbers.</td><td>State the results and their limits in 90 seconds.</td></tr>
+<tr><th>7</th><td>Chapter 9</td><td>Read each professor's recent work. Rewrite the draft email. Rehearse the nine answers aloud.</td><td>Send nothing until you have checked every number against the page.</td></tr>
+</tbody></table></div>
+</section>
+<footer class="footer">Built from <code>src/data</code> snapshots on Oct 17, 2026 with <code>npx tsx docs/textbook/build.ts</code>. Fonts: Anton and IBM Plex Sans, SIL OFL (licenses in <code>fonts/</code>). Print to PDF from the browser; the print stylesheet switches to a light page.</footer>
+</main>
+</body>
+</html>

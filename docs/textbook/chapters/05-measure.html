@@ -1,0 +1,57 @@
+<!--ch|5|Measuring flows without fooling yourself|Gross vs net, double counting, standard deviations and windows-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Gross flow is plumbing traffic. Net issuance is growth. The "$1 trillion" is gross.</li>
+<li>Logs can double count (cross-chain moves) and miss (other chains). The study fixes both on purpose.</li>
+<li>A "standard deviation" puts a small fund and a huge stablecoin on one axis. Two episodes still prove nothing.</li>
+</ul></div>
+
+<div class="body">
+<h3>Gross versus net</h3>
+</div>
+{{fig:grossnet}}
+<div class="body">
+<p>A market maker mints $100 on Monday and burns $100 on Wednesday. Gross activity is $200. Net new money is zero. Large stablecoins have a lot of this round-tripping, which is why <strong>{{v:usdcShare}} of the {{v:gross}} gross total is USDC</strong> even though USDC's net on Ethereum is {{net:USDC}}.</p>
+<p>When you say the headline number, say what it is: "gross mints and redemptions on Ethereum." It is a true statement about how much passed through the issuers' windows. It is not a statement about how much money entered crypto.</p>
+
+<h3>Double counting: the cross-chain trap</h3>
+</div>
+{{fig:cctp}}
+<div class="body">
+<p>Moving USDC from Ethereum to another chain burns it on Ethereum and mints it on the other. An Ethereum-only count would call that a redemption. The tracker finds mints and burns by Circle's cross-chain minter contracts and sets them aside ({{v:cctp}} in total). They are real events but they are not issuance.</p>
+
+<h3>Under-counting: the missing chains</h3>
+<p>A log-based net for USDT on Ethereum would show almost only mints, because Tether redeems rarely on Ethereum, and it would miss Tron entirely. So for USDC, USDT and PYUSD the rate study uses the <strong>change in circulating supply on all chains</strong> from DefiLlama. For BUIDL, OUSG and USDY, which are issued on Ethereum, it uses Ethereum mints minus redemptions.</p>
+<p>That is two data sources inside one comparison. Say so when asked. The reconciliation check (16% for USDC, 5% for PYUSD) is the evidence that they agree where they overlap.</p>
+
+<h3>Standard deviations: putting assets on one axis</h3>
+<p>USDC changes by billions a week. OUSG changes by millions. A chart in dollars would show only USDC. Instead, for each asset we take its own average weekly net issuance over the whole sample, and its own <strong>standard deviation</strong> (a typical size of deviation from that average). Then:</p>
+<p><code>z = (mean weekly net in the window − the asset's overall mean) ÷ the asset's standard deviation</code></p>
+<p>A z of +0.5 means "half a typical deviation above this asset's usual week". It is unitless, so you can compare it across assets. It is not a statistical test.</p>
+</div>
+{{fig:window}}
+<div class="body">
+<h3>The percentile</h3>
+<p>For each asset and episode the study also asks: of all other windows of the same length (ignoring the episode and its baseline), what share had a lower mean? A percentile near 50% is ordinary. Near 95% or 5% is unusual. With roughly three years of weekly data there are only a few dozen non-overlapping windows, so the percentile is rough.</p>
+
+<h3>Why this cannot be a causal claim</h3>
+<ul>
+<li><strong>Two episodes.</strong> Two data points cannot separate a rate effect from anything else that happened.</li>
+<li><strong>Anticipation.</strong> Markets price cuts before they happen, so the 12-week baseline may already contain the response.</li>
+<li><strong>Confounders.</strong> An election (November 2024), a law (July 2025) and shifting appetite for crypto all moved in the same windows.</li>
+<li><strong>Autocorrelation.</strong> Weekly flows are not independent, so "every other window" is a loose yardstick.</li>
+<li><strong>Choosing the windows after seeing the cuts.</strong> The comparison starts from the event, which flatters any pattern.</li>
+<li><strong>Short histories.</strong> USDY starts December 2025 and has no episode comparison. BUIDL starts March 2024.</li>
+<li><strong>Measurement error.</strong> Block-to-time interpolation has up to an hour of error. The newest week is dropped as partial.</li>
+</ul>
+<p>The honest phrase is "descriptive." Use it.</p>
+</div>
+
+<div class="repo"><b>In this repo:</b> <code>netSeries()</code>, <code>episodeResults()</code>, <code>PRE_WEEKS</code>, <code>TAIL_WEEKS</code> in <code>src/lib/issuance.ts</code>. The method is written out in <code>docs/METHODOLOGY.md</code> under "Event comparison".</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>State the headline number in one honest sentence.</summary><p>"{{v:gross}} of gross mints and redemptions on Ethereum across five issuers, {{v:usdcShare}} of it USDC, with a separate net-issuance study around two Fed easing episodes."</p></details>
+<details><summary>Why does USDC show a negative net on Ethereum when its supply grew overall?</summary><p>Much of the growth was minted on other chains, and some Ethereum supply moved there. Ethereum logs alone see a part of the story. The supply data cover all chains.</p></details>
+<details><summary>Compute a z-score: an asset averages +$10M a week with a standard deviation of $20M. In a window it averages +$30M.</summary><p>z = (30 − 10) ÷ 20 = +1.0, one typical deviation above its normal week.</p></details>
+<details><summary>Give three reasons two easing episodes cannot prove that rate cuts move flows.</summary><p>Only two observations; other events in the same windows; markets price cuts early so the baseline is contaminated; weekly data are autocorrelated. Any three.</p></details>
+<details><summary>Why is CCTP excluded from issuance but kept in the data?</summary><p>It is real on-chain activity, but it moves existing money between chains. Keeping it separately lets a reader see the amount removed.</p></details>
+</div>

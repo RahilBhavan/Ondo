@@ -1,0 +1,53 @@
+<!--ch|2|The five issuers and six assets|Who they are, what backs them, and how they earn money-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Issuers earn the interest on reserves. Holders of a payment stablecoin earn nothing.</li>
+<li>The study covers five issuers (Circle, Tether, Paxos for PayPal, BlackRock, Ondo) and six assets.</li>
+<li>Payment stablecoins and Treasury funds are different products. A rate cut should not affect them the same way.</li>
+</ul></div>
+
+<div class="body">
+<h3>How an issuer makes money</h3>
+<p>The issuer takes in $100 and puts it into reserves, mostly short-term US Treasury bills and cash-like holdings. Those reserves earn interest. The issuer pays the token holder none of it. The difference is the issuer's income. At a 4% yield, $100 of reserves earns $4.00 a year.</p>
+</div>
+{{fig:reserve}}
+<div class="body">
+<p>Two consequences matter for this project. First, issuer income <strong>moves with interest rates</strong>, so a rate cut hurts the issuer even if nobody changes behavior. Second, a holder who wants to <em>earn</em> the yield has to hold something else, such as a Treasury fund. That is why we place payment stablecoins and Treasury-backed products side by side.</p>
+
+<h3>The six assets</h3>
+<p>Terms change often. Check each issuer's own page before quoting any of this to someone else.</p>
+</div>
+<figure class="figure" id="tbl-assets"><p class="fig-title">Four things that differ between the six assets.</p>
+<div class="table-wrap"><table class="data">
+<thead><tr><th>Asset</th><th>Issuer</th><th>Type</th><th>Holder earns yield?</th><th>Who can buy from the issuer</th></tr></thead>
+<tbody>
+<tr><th scope="row">USDC</th><td>Circle</td><td>Payment stablecoin</td><td>No</td><td>Approved institutions; everyone else on exchanges</td></tr>
+<tr><th scope="row">USDT</th><td>Tether</td><td>Payment stablecoin</td><td>No</td><td>Approved institutions; everyone else on exchanges</td></tr>
+<tr><th scope="row">PYUSD</th><td>Paxos, for PayPal</td><td>Payment stablecoin</td><td>No</td><td>Approved parties; PayPal users through PayPal</td></tr>
+<tr><th scope="row">BUIDL</th><td>BlackRock fund, tokenized with Securitize</td><td>Treasury fund token</td><td>Yes, paid as extra tokens</td><td>Qualified institutions</td></tr>
+<tr><th scope="row">OUSG</th><td>Ondo</td><td>Treasury fund token</td><td>Yes, the token price rises</td><td>Qualified purchasers</td></tr>
+<tr><th scope="row">USDY</th><td>Ondo</td><td>Tokenized Treasury note</td><td>Yes, the token price rises</td><td>Non-US persons, per Ondo's terms</td></tr>
+</tbody></table></div>
+<figcaption>The first three rows are what the finance literature calls payment (or fiat-backed) stablecoins. The last three are the Treasury-backed products. Eligibility columns are summaries; confirm against the issuer's current documents.</figcaption></figure>
+
+<div class="body">
+<h3>One paragraph on each issuer</h3>
+<p><strong>Circle (USDC).</strong> Circle is a US company, listed on the stock market since 2025. USDC reserves are held mainly in cash and short Treasuries, largely through a government money-market fund. USDC exists natively on many blockchains, and Circle's cross-chain transfer protocol (CCTP) moves it between them by burning on one and minting on another (chapter 5). Circle shares some revenue with its distribution partner Coinbase.</p>
+<p><strong>Tether (USDT).</strong> The largest stablecoin. Most of its reserves are Treasury bills, but Tether also reports other assets, and it publishes attestations (a limited check) rather than full audits. Most USDT sits on Tron, not Ethereum, so Ethereum logs see only a part of its activity. This is the biggest coverage limit in the study.</p>
+<p><strong>PayPal USD (PYUSD).</strong> PayPal's stablecoin, issued by Paxos Trust Company under New York financial regulation. It is much smaller than the other two. On 2025-10-15 Paxos minted 300 trillion PYUSD by mistake and burned it minutes later. The tracker removes those two transactions because they were an error, not demand.</p>
+<p><strong>BlackRock BUIDL.</strong> A fund, run by the world's largest asset manager, that holds cash, Treasury bills and repo. Its shares are recorded as tokens on blockchains. The token stays at $1 and yield arrives as newly issued tokens. In the data this shows up as small "mints" (about 1% of mint volume).</p>
+<p><strong>Ondo (OUSG and USDY).</strong> Ondo wraps Treasury exposure in two tokens. OUSG is for qualified purchasers and USDY for non-US persons. Both rise in price as interest accrues. Ondo runs "instant" mint and redeem contracts (chapter 3). The original dashboard tracked only these.</p>
+
+<h3>The law arrives: the GENIUS Act</h3>
+<p>The GENIUS Act was signed on 18 July 2025. As summarized in news coverage, it requires issuers of payment stablecoins to hold liquid reserves one for one, to disclose reserves regularly, to redeem at par, and <strong>not to pay interest to holders</strong>. The last rule matters here: it keeps payment stablecoins as zero-yield products and leaves yield to funds. Read the statute and the current rule-making yourself before describing the details.</p>
+
+<div class="callout"><h4>Limit</h4><p>"Backed by Treasuries" means different things at different issuers: how short the bills are, who holds them, who checks. The tracker does not assess reserve quality.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> asset list in <code>src/lib/issuance.ts</code>; contract addresses in the table in <code>docs/METHODOLOGY.md</code> (Pillar 5).</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Who earns the interest on USDC reserves?</summary><p>Circle, the issuer, and in part its distribution partner under their agreement. USDC holders earn nothing from the reserves.</p></details>
+<details><summary>Why is a rate cut bad for an issuer even if demand does not change?</summary><p>The reserves earn the yield. A lower yield on the same reserves means less income.</p></details>
+<details><summary>Why might Ethereum logs understate USDT activity?</summary><p>Most USDT supply is on Tron. Mints and burns there are not in Ethereum logs.</p></details>
+<details><summary>Name the one rule in the GENIUS Act that separates stablecoins from Treasury funds.</summary><p>Issuers may not pay interest to holders. Funds pass yield through.</p></details>
+</div>

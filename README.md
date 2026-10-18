@@ -59,3 +59,7 @@ The repo ships its own agent setup, so a fresh clone is ready to go:
 ## License
 
 [MIT](LICENSE)
+
+## Study textbook
+
+`docs/textbook/index.html` is a study guide to the flows tracker (open it in a browser; print to PDF from there). Rebuild after refreshing data: `npx tsx docs/textbook/build.ts`.
