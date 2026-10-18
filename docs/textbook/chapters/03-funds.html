@@ -1,0 +1,41 @@
+<!--ch|3|Tokenized Treasury funds and Ondo Nexus|NAV, yield, instant mint and what Nexus actually is-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>A tokenized fund is ordinary fund shares recorded as tokens, with a price set by the fund's net asset value.</li>
+<li>Funds pass yield to the holder. Payment stablecoins do not. That is the contrast in this study.</li>
+<li>Ondo Nexus has no contracts of its own. The tracker uses OUSG and USDY as the on-chain proxy.</li>
+</ul></div>
+
+<div class="body">
+<h3>What a tokenized fund is</h3>
+<p>A traditional money-market or Treasury fund holds short-term government debt and sells shares. The <strong>net asset value (NAV)</strong> is the value of the holdings per share. A <strong>tokenized fund</strong> keeps the same structure but records ownership as a token on a blockchain. A <strong>transfer agent</strong> (here, firms such as Securitize for BUIDL) keeps the official record and enforces who may hold the token.</p>
+<p>Because buyers must pass identity checks and the token can only move between approved wallets, these are <em>not</em> open like USDC. That is one reason the numbers are small.</p>
+
+<h3>Three ways yield reaches the holder</h3>
+<ul>
+<li><strong>Price goes up.</strong> One token is worth more dollars each day. OUSG and USDY work like this.</li>
+<li><strong>Balance goes up.</strong> The number of tokens in your wallet grows ("rebasing"). Ondo also offers rebasing versions, rOUSG and rUSDY.</li>
+<li><strong>Extra tokens are issued.</strong> The price stays at $1 and new tokens are minted to you. BUIDL does this, which is why its mints include a small dividend amount.</li>
+</ul>
+<p>This matters for measurement. A price-up token has a dollar value that grows without any mint. The tracker therefore reads the dollar value that the contract emits for each mint and redemption, and does not infer flows from supply changes.</p>
+
+<h3>Ondo's instant mint and redeem</h3>
+<p>Ondo's InstantManager contracts let a qualified customer swap USDC for OUSG or USDY and back in one transaction at the current NAV. The contract logs a <code>Subscription</code> event (mint) or <code>Redemption</code> event (redeem) with the dollar value. "Instant" means the swap settles in one transaction, so there is no waiting period to measure. The project's earlier plan to measure settlement delay was dropped for that reason (ADR-004).</p>
+
+<h3>What Ondo Nexus is</h3>
+<p>Nexus is a business initiative announced by Ondo in 2025. It diversifies what backs OUSG, so that OUSG can hold other managers' tokenized Treasury funds such as BlackRock's BUIDL. There is <strong>no Nexus contract</strong> to read. All the on-chain activity is in the existing OUSG and USDY contracts, so the dashboard tracks those as the proxy (ADR-003).</p>
+<p>This is the most important sentence to get right with a professor: the tracker measures OUSG and USDY InstantManager flows. It does not measure "Nexus" directly. Say "proxy".</p>
+
+<h3>Why put funds beside stablecoins</h3>
+<p>Both are ways to hold dollars on a blockchain. One pays 0%. The other pays about the Treasury bill rate. The gap between them is the cost of holding the zero-yield coin, and it shrinks when rates fall. If investors respond to that gap, a cut should shift flows. Whether it does is exactly the question the study can describe but not settle.</p>
+
+<div class="callout"><h4>Limit</h4><p>Fund tokens trade little in secondary markets, so the price can be off NAV with no easy arbitrage. Treat their flows as institutional decisions made at the issuer's window.</p></div>
+</div>
+
+<div class="repo"><b>In this repo:</b> contracts and events in <code>docs/CONTRACT_RESEARCH.md</code>; decisions ADR-003, ADR-004, ADR-006 in <code>docs/DECISIONS.md</code>; live weekly flows at <code>/flows</code>.</div>
+
+<div class="check"><h3>Check yourself</h3>
+<details><summary>Name the three ways yield reaches a Treasury-fund token holder, with one example each.</summary><p>Price rises (OUSG, USDY). Balance rises (rebasing versions rOUSG, rUSDY). Extra tokens are issued while the price stays $1 (BUIDL).</p></details>
+<details><summary>Why can't the tracker infer OUSG flows from supply changes?</summary><p>Supply can change without a mint or redemption (rebasing, bridge moves) and mints can leave the dollar value in different forms. The contract's own dollar field is cleaner.</p></details>
+<details><summary>A professor asks "how much did Nexus grow?" What do you say?</summary><p>That Nexus has no contract of its own, so you track OUSG and USDY instant mint and redeem flows as a proxy, and you can show those.</p></details>
+<details><summary>Why is the stablecoin-versus-fund contrast interesting when rates fall?</summary><p>The yield advantage of the fund over a zero-yield stablecoin shrinks. If flows respond to that gap, funds should lose relative appeal.</p></details>
+</div>

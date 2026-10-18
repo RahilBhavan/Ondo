@@ -138,3 +138,32 @@
     is blocked for up to an hour) and Routescan's Etherscan-style API (its address filter
     drops 5 legacy OUSG events in the week of 2024-09-23, which Dune and Blockscout have)
   - If Blockscout fails, the page shows the labeled mock series, as before
+
+## ADR-009: Multi-Issuer Flows Tracker, Precomputed Snapshots
+**Date:** 2026-10-17
+**Status:** Accepted
+**Context:** The dashboard covered only Ondo's OUSG and USDY. The goal is a stablecoin and tokenized-fund
+  flows study: weekly mints and redemptions for USDC, USDT, PYUSD and BlackRock's BUIDL beside OUSG and
+  USDY, by chain, and around Fed rate cuts. The Ondo pipeline (ADR-008) pages Blockscout's v2 logs API, which
+  cannot serve this: USDC alone has about 3 million Mint and Burn events since 2023, and Blockscout's REST
+  endpoint times out on the USDC address. Blockscout's keyless JSON-RPC allows about 10 calls, then blocks the
+  IP for about 40 minutes.
+**Decision:**
+  1. A backfill script (`scripts/backfill-issuance.mjs`) reads event logs from Tenderly's public mainnet
+     gateway in 100,000-block windows (halving on the 20,000-result cap) and writes `src/data/issuance.json`.
+     A single wide `eth_getLogs` returned 22 of about 100,000 USDC mints with no error, so wide calls are never used.
+  2. `scripts/backfill-context.mjs` writes DefiLlama circulating supply by chain and the FRED target rate.
+  3. The page and the write-up read those dated snapshots through `src/lib/issuance.ts`. The existing live
+     OUSG/USDY flows page is unchanged.
+  4. Cross-chain USDC (Circle CCTP) mints and burns are counted separately and excluded from issuance:
+     moving USDC between chains is not new money. Paxos's mistaken 300 trillion PYUSD mint and its burn
+     (2025-10-15) are excluded for the same reason.
+  5. Gross flows are Ethereum only. Chain coverage comes from circulating supply (DefiLlama), not from
+     per-chain logs.
+**Consequences:**
+  - Badge semantics: rows read from chain logs by the script carry `live` with an `asOf` date that is the
+    script run, not the page render. METHODOLOGY states this.
+  - The snapshot goes stale until the script is rerun (about 25 minutes for USDC).
+  - BUIDL mints include its daily dividend issuance, about 1% of mint volume; counts are not reported.
+  - USDT and USDC volumes on other chains (Tron is the largest USDT chain) are not in the gross flows.
+  - No claim about causation: there are two easing episodes in the sample.

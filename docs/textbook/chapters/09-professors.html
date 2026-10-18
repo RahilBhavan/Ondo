@@ -1,0 +1,50 @@
+<!--ch|9|Talking to the professors|The email line, the questions to expect and the answers that hold up-->
+<div class="keep"><h4>Leave with</h4><ul>
+<li>Lead with one true number and its limit. Show the one-page summary. Ask a real question.</li>
+<li>Expect questions about identification, coverage and reserves. All have honest answers.</li>
+<li>Offer the next step (a rate-level regression), not a bigger claim.</li>
+</ul></div>
+
+<div class="body">
+<h3>The email line</h3>
+<p>The first draft line was "I tracked $X billion in stablecoin mints and redemptions across 5 issuers." The number is true. The phrase needs a limit to stay true. Three versions, most careful last:</p>
+<ul>
+<li>"I tracked {{v:gross}} of gross mints and redemptions on Ethereum across five issuers."</li>
+<li>"…across five issuers, {{v:usdcShare}} of it USDC market-maker churn, and studied net issuance around two Fed easing episodes."</li>
+<li>"…and compared payment stablecoins with tokenized Treasury funds around the 2024 and 2025 rate cuts."</li>
+</ul>
+<p>Use the second as the default. It shows you know what the big number is.</p>
+
+<h3>Before you write</h3>
+<ol>
+<li>Read each professor's recent papers or talks. Pick one idea from <em>their</em> work that your data touches. This book cannot do that for you.</li>
+<li>Refresh the data (rerun the two backfill scripts) so the numbers are current.</li>
+<li>Open <code>/summary</code> and print it. One page, two charts.</li>
+<li>Decide the single question you want to ask them.</li>
+</ol>
+
+<div class="callout"><h4>A draft to adapt, not to send</h4><p>Subject: Question about stablecoin flows around Fed easing<br><br>Dear Professor [Name],<br><br>I'm [your program and year]. I built an open-source tracker of weekly mints and redemptions for USDC, USDT, PYUSD, BlackRock's BUIDL and Ondo's OUSG and USDY, from Ethereum event logs, and I looked at net issuance around the 2024 and 2025 Fed easing episodes. The first episode shows stablecoin issuance above its normal pace and Treasury-fund issuance below; the second does not repeat it, and with two episodes I make no causal claim. [One sentence tying this to their work.] I attached a one-page summary. Would you be open to [a 15-minute question about how you would identify the rate channel / a pointer to the right data]?<br><br>[Name]</p></div>
+
+<h3>Questions to expect</h3>
+</div>
+<div class="check qa">
+<details><summary>"How do you know the mints are real issuance and not just transfers?"</summary><p>Mints are defined by the token contract's own mint event (or a transfer from the zero address for PYUSD), so they are creations of supply. Cross-chain USDC moves by Circle's own minter are detected and set aside, and Ethereum mints minus burns reconcile to DefiLlama's Ethereum supply change within 16% for USDC and 5% for PYUSD.</p></details>
+<details><summary>"Why Ethereum only?"</summary><p>Ethereum is where BUIDL, OUSG and USDY issue, and where decoded events are easiest to verify. Tron and others matter for USDT, so for net issuance of the three stablecoins I use all-chain circulating supply. Extending logs to Tron and Solana is the obvious next step.</p></details>
+<details><summary>"What identifies the effect of rates?"</summary><p>Nothing yet. It is two easing episodes, with overlapping events and anticipation. It is a description that suggests where to look. A weekly regression on the change in T-bill yields, with controls, would use all the data.</p></details>
+<details><summary>"Is the $1 trillion meaningful?"</summary><p>It is gross volume through issuers' windows on Ethereum. Most is USDC round trips by market makers. Net issuance is the better measure of growth, so the rate study uses net.</p></details>
+<details><summary>"Why standard deviations?"</summary><p>To put six very different sizes on one axis. It rescales each asset by its own volatility. It is not a hypothesis test.</p></details>
+<details><summary>"What do you assume about reserves and redemption risk?"</summary><p>The tracker measures quantities only and says nothing about reserve quality. The SVB episode shows reserve doubts can drive redemptions, but the logs don't reveal motives.</p></details>
+<details><summary>"How do you treat BUIDL's dividends?"</summary><p>BUIDL pays yield as newly issued tokens. They sit in the mint events at about 1% of mint volume. I flag it, and do not use BUIDL mint counts.</p></details>
+<details><summary>"Why should I trust the data?"</summary><p>Three transactions were decoded by hand and matched an independent explorer, totals reconcile with a second source, and an assertion script fails if the numbers or the prose drift. The scripts and snapshots are in the repository.</p></details>
+<details><summary>"What would you do next?"</summary><p>Add Tron and Solana logs for USDT and USDC, use the T-bill yield level in a weekly regression, and control for crypto prices to separate risk appetite from the opportunity-cost channel.</p></details>
+</div>
+<div class="body">
+<h3>Things to avoid</h3>
+<ul>
+<li>Claiming the cuts <em>caused</em> anything.</li>
+<li>Calling the gross number "inflows".</li>
+<li>Describing Nexus volumes. Say OUSG and USDY as proxy.</li>
+<li>Claiming experience you don't have. Say what you built and what you checked.</li>
+<li>Sending anything before you rerun the data and reread the summary page.</li>
+</ul>
+</div>

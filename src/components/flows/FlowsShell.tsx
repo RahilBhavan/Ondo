@@ -2,6 +2,7 @@ import { PageShell } from '@/components/ui/PageShell';
 
 const LINKS = [
   { label: 'All pillars', href: '/' },
+  { label: 'Stablecoin flows', href: '/issuance' },
   { label: 'Methodology', href: '#methodology' },
 ];
 

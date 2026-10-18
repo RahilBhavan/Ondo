@@ -146,3 +146,48 @@ Each entry follows this structure:
 
 **Next Session**
 - Deploy to Vercel (personal scope) and watch the first cold render's Blockscout call count
+
+### [2026-10-17] — Stablecoin Flows Tracker (USDC, USDT, PYUSD, BUIDL + OUSG, USDY)
+**Phase:** Phase 3
+**Duration:** ~1 day
+**Goal:** Turn the dashboard into a six-asset flows study: weekly mints and redemptions, chains, and flows around Fed cuts, with a one-page write-up
+
+**Shipped**
+- `scripts/backfill-issuance.mjs`: Ethereum logs for six assets from 2023-01-01, about 3.1M USDC events, to `src/data/issuance.json`
+- `scripts/backfill-context.mjs`: DefiLlama supply by chain and FRED fed funds target
+- `src/lib/issuance.ts` and `issuance.check.ts`: totals, easing-episode comparison, chains, news windows; reconciles with DefiLlama (USDC 16%, PYUSD 5%) and matches the live OUSG/USDY event count (2,416)
+- `/issuance` page and `/summary` one-page write-up with two charts (SVG, prints to one A4 page)
+- ADR-009, METHODOLOGY Pillar 5
+
+**Attempted / Blocked**
+- Blockscout keyless JSON-RPC: 10 calls then blocked about 40 minutes; REST logs time out on USDC
+- A single wide `eth_getLogs` on Tenderly returned 22 of about 100,000 USDC mints with no error
+
+**Learned**
+- Cross-chain CCTP mints and burns are $189B of $1.06T raw USDC volume; excluded as not issuance
+- Paxos minted 300 trillion PYUSD by mistake on 2025-10-15 and burned it minutes later
+- Net issuance for USDT needs supply, not logs: Tether redeems rarely on Ethereum and Tron holds 51% of supply
+- Rate result is mixed: 2024 split stablecoins up and Treasury funds down; 2025 blurred it (two episodes, no causal claim)
+
+**Decisions Made**
+- Precomputed snapshots instead of a live pipeline (ADR-009)
+
+**Next Session**
+- Merge the PR; settle the wording of the headline number; rerun the backfill before sending
+
+### [2026-10-17] — Study textbook for the outreach
+**Phase:** Phase 3
+**Duration:** ~2hr
+**Goal:** A study guide for what Rahil needs to know to explain and defend the flows tracker to finance professors
+
+**Shipped**
+- `docs/textbook/`: nine chapters plus glossary, reading list and a 7-day plan, one self-contained HTML file (`index.html`), printable
+- 13 figures: 6 from the dashboard's own snapshots, 7 mechanism diagrams with labeled toy numbers
+- `build.ts` regenerates every number and figure from `src/lib/issuance.ts`, so a data refresh updates the book
+- Styled with the rahil-design tokens (charcoal, yellow, Anton and IBM Plex), figures per tufte-graphics and present-data
+
+**Learned**
+- Event-log decoding, gross versus net and anticipation of rate cuts are the three points a professor is most likely to press
+
+**Next Session**
+- Verify the reading-list citations (listed from memory); read each professor's recent work before emailing

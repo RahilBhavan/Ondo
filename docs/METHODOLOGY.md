@@ -1,7 +1,7 @@
 # Ondo Nexus Dashboard — Data Methodology
 
 **Version:** 2.0
-**Last Updated:** 2026-09-24
+**Last Updated:** 2026-10-17
 
 This document explains how every number on the dashboard is sourced, computed, and labeled. If a metric cannot be verified from on-chain data alone, this document explains why and what assumptions fill the gap.
 
@@ -131,6 +131,45 @@ See ADR-004 in DECISIONS.md.
 - Accounting may differ between products (accrued yield, which chains count).
 - Ondo's on-chain total and competitors' DefiLlama totals use different methods; the footnote says so.
 - Redemption terms are not comparable one to one; products have different designs.
+
+---
+
+## Pillar 5: Multi-Issuer Flows (USDC, USDT, PYUSD, BUIDL, OUSG, USDY)
+
+**What we track:** Weekly gross mints and redemptions on Ethereum for five issuers' six assets, from 2023-01-01 (OUSG and USDY from their first events, BUIDL from March 2024). Code: `src/lib/issuance.ts`; data: `src/data/*.json`, written by `scripts/backfill-issuance.mjs` and `scripts/backfill-context.mjs`. Page: `/issuance`; one-page summary: `/summary`.
+
+| Asset | Contract (Ethereum) | Mint | Redeem | Amount |
+|-------|---------------------|------|--------|--------|
+| USDC | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` | `Mint` | `Burn` | amount, 6 decimals |
+| USDT | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | `Issue` | `Redeem` | amount, 6 decimals |
+| PYUSD | `0x6c3ea9036406852006290770BEdFcAbA0e23A0e8` | `Transfer` from 0x0 | `Transfer` to 0x0 | value, 6 decimals |
+| BUIDL | `0x7712c34205737192402172409a8F7ccef8aA2AEc` | `Issue` | `Burn` | amount, 6 decimals, $1 NAV |
+| OUSG, USDY | InstantManagers (Pillar 2) | `Subscription` | `Redemption` | `*USDValue`, 1e18 |
+
+**Definition:** a mint is new supply created, a redemption is supply destroyed. Weeks are Monday 00:00 UTC. A block's time is interpolated between anchor blocks fetched every 25,000 blocks (error under an hour). The week of the snapshot is partial and dropped.
+
+**Exclusions:**
+- Circle CCTP mints and burns (TokenMinter v1 `0xc4922d64...`, v2 `0xfd78ee91...`) move USDC between chains. Counted, then removed from issuance. The summary states the amount.
+- Paxos minted 300 trillion PYUSD by mistake on 2025-10-15 and burned it minutes later. Both transactions are excluded.
+
+**Known gaps:**
+- Ethereum only. Tron carries most USDT supply and Solana, Base and Arbitrum carry much USDC, so USDT and USDC gross flows here understate their global issuance. Chain mix comes from circulating supply (DefiLlama), not flow logs.
+- Ethereum `Mint` events for USDC include mints by market makers and integrators, not only Circle's own wallet. Gross volume is therefore larger than net, and mostly offset by burns.
+- BUIDL `Issue` includes daily dividend issuance (about 1% of mint volume); BUIDL mint counts are not used.
+- Ondo's InstantManager is one of several ways to mint OUSG; USDY history starts December 2025.
+
+**Net issuance (for the rate comparison):**
+- USDC, USDT, PYUSD: weekly change in circulating supply on all chains (DefiLlama, Monday to Monday). Ethereum logs alone miss Tron, where about half of USDT sits, and show USDC moving between chains; USDT also redeems rarely on Ethereum, so a log-based net would read as all issuance.
+- BUIDL, OUSG, USDY: Ethereum mints minus redemptions, since these are issued there.
+- Check: Ethereum mints minus burns (CCTP included) match DefiLlama's Ethereum supply change within 16% for USDC and 5% for PYUSD (`src/lib/issuance.check.ts`).
+
+**Rates:** FRED `DFEDTARU` (target upper bound); change dates are effective dates (the day after the FOMC announcement). Cuts less than 120 days apart form one easing episode: Sep 2024 to Dec 2024 (3 cuts, 100 bp) and Sep 2025 to Dec 2025 (3 cuts, 75 bp). FRED also shows a 25 bp increase effective 2026-09-17, not analyzed.
+
+**Event comparison:** mean weekly net issuance in the 12 weeks before an episode's first cut against the mean from the first cut to 4 weeks after the last, in standard deviations of that asset's own weekly net issuance over the whole sample (so six assets of very different size share one axis; dollars are in the tooltips). The percentile ranks the episode mean among all same-length windows of the same asset outside the episode and its pre-window. With two episodes this is descriptive, not a test, and windows overlap in time.
+
+**News events:** mean weekly net issuance in the 4 weeks before an event's week against the 4 weeks from it: USDC and USDT around 2023-03-11 (Silicon Valley Bank, USDC depeg) and USDC, USDT, PYUSD around 2025-07-18 (GENIUS Act signed). Dates are public record, checked 2026-10-17 against news reports (SVB closed 2023-03-10, Circle disclosed its exposure and USDC broke the peg 2023-03-11; GENIUS Act signed Friday 2025-07-18, per the White House release); they are not fetched in the build.
+
+**Data source label:** `live` for rows decoded from chain logs by the script, with `asOf` the script run date (a snapshot, not a render-time read). Chain supply and rates are labeled `live` with their own dates.
 
 ---
 

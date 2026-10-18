@@ -21,6 +21,12 @@ It counts instant mints and redemptions only. Secondary transfers, DEX trades, a
 
 Every number on the page carries a badge: **live** (read from its public source), **estimated**, or **mocked** (cited public disclosures in `src/lib/mockData.ts`).
 
+## Stablecoin flows tracker
+
+`/issuance` extends the same idea to six assets from five issuers: USDC (Circle), USDT (Tether), PYUSD (PayPal), BUIDL (BlackRock), OUSG and USDY (Ondo). It shows weekly mints and redemptions on Ethereum since 2023, where each stablecoin's supply sits by chain, and what net issuance did around the Fed's rate cuts. `/summary` is the one-page write-up with two charts; print it to PDF from the browser.
+
+The data are dated snapshots, not read on each page load: `node scripts/backfill-issuance.mjs` (about 25 minutes, free public RPC) and `node scripts/backfill-context.mjs` write `src/data/*.json`, and `npx tsx src/lib/issuance.check.ts` reconciles them against DefiLlama. Method and exclusions: [METHODOLOGY Pillar 5](docs/METHODOLOGY.md), [ADR-009](docs/DECISIONS.md).
+
 ## Run it
 
 ```bash
@@ -31,10 +37,12 @@ npm run dev                  # http://localhost:3000
 ## Layout
 
 ```
+scripts/        Backfill scripts for the flows tracker (src/data/*.json)
 queries/        Metric definitions in Dune SQL (the app computes the flows from on-chain logs)
 src/lib/        Data getters (event logs, chain supply, holders, benchmark), types, mock data
 src/components/ Dashboard charts and UI atoms
 src/app/api/    /api/metrics (aggregated)
+src/app/issuance, src/app/summary   Stablecoin flows page and one-page write-up
 docs/           Contract research, methodology, architecture decisions
 ```
 
@@ -51,3 +59,7 @@ The repo ships its own agent setup, so a fresh clone is ready to go:
 ## License
 
 [MIT](LICENSE)
+
+## Study textbook
+
+`docs/textbook/index.html` is a study guide to the flows tracker (open it in a browser; print to PDF from there). Rebuild after refreshing data: `npx tsx docs/textbook/build.ts`.
