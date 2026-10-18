@@ -167,7 +167,7 @@ See ADR-004 in DECISIONS.md.
 
 **Event comparison:** mean weekly net issuance in the 12 weeks before an episode's first cut against the mean from the first cut to 4 weeks after the last, in standard deviations of that asset's own weekly net issuance over the whole sample (so six assets of very different size share one axis; dollars are in the tooltips). The percentile ranks the episode mean among all same-length windows of the same asset outside the episode and its pre-window. With two episodes this is descriptive, not a test, and windows overlap in time.
 
-**News events:** mean weekly net issuance in the 4 weeks before an event's week against the 4 weeks from it: USDC and USDT around 2023-03-11 (Silicon Valley Bank, USDC depeg) and USDC, USDT, PYUSD around 2025-07-18 (GENIUS Act signed). Dates are public record, not fetched in the build.
+**News events:** mean weekly net issuance in the 4 weeks before an event's week against the 4 weeks from it: USDC and USDT around 2023-03-11 (Silicon Valley Bank, USDC depeg) and USDC, USDT, PYUSD around 2025-07-18 (GENIUS Act signed). Dates are public record, checked 2026-10-17 against news reports (SVB closed 2023-03-10, Circle disclosed its exposure and USDC broke the peg 2023-03-11; GENIUS Act signed Friday 2025-07-18, per the White House release); they are not fetched in the build.
 
 **Data source label:** `live` for rows decoded from chain logs by the script, with `asOf` the script run date (a snapshot, not a render-time read). Chain supply and rates are labeled `live` with their own dates.
 
