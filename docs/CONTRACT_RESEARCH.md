@@ -1,5 +1,7 @@
 # Ondo Nexus — Contract Research Findings
 
+Ondo contract addresses on each chain, the InstantManager event schemas and the Dune table names, with answers to the PRD's open questions about Nexus.
+
 **Date:** 2026-04-09
 **Status:** Complete
 **Researcher:** Rahil Bhavan (via on-chain research + official docs)
