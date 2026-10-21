@@ -1,8 +1,10 @@
 # Architecture Decision Records
 
+Why the dashboard is built the way it is: each record gives the context, the decision and its consequences, in date order. Later records can supersede earlier ones.
+
 ## ADR-001: Dune over Custom Subgraph
 **Date:** 2026-04-09
-**Status:** Accepted
+**Status:** Accepted. Superseded by ADR-008 (2026-09-24): the app no longer calls Dune.
 **Context:** Solo build, 28-day timeline, learning-as-we-go constraints
 **Decision:** Use Dune Analytics managed indexing + SparkSQL instead of building
   a custom subgraph on The Graph
@@ -55,7 +57,7 @@
 
 ## ADR-005: Ethereum-First Data Strategy
 **Date:** 2026-04-09
-**Status:** Accepted
+**Status:** Accepted. Superseded by ADR-007 (2026-09-24): supply is read directly on all 13 chains, so non-EVM cells are no longer mocked by design.
 **Context:** InstantManager contracts (where mint/redeem events fire) exist only on
   Ethereum. Other chains have bridged USDY tokens via LayerZero OFT adapters. Non-EVM
   chains (Solana, Sui, Aptos) lack Dune coverage entirely.
