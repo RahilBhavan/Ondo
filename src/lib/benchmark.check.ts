@@ -1,4 +1,4 @@
-/** Self-check for the benchmark row mapper. Run: npx --yes tsx src/lib/benchmark.check.ts */
+/** Self-check for the benchmark row mapper. Run: npx tsx src/lib/benchmark.check.ts */
 import assert from 'node:assert/strict';
 import { DEFILLAMA_SLUGS, latestStablecoinUsd, mapBenchmarkRow, STABLECOIN_IDS, withOnchainOndo } from './benchmark';
 import { MOCK_DATA } from './mockData';

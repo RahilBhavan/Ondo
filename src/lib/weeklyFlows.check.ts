@@ -1,4 +1,4 @@
-/** Self-check for the weekly flow series math. Run: npx --yes tsx src/lib/weeklyFlows.check.ts */
+/** Self-check for the weekly flow series math. Run: npx tsx src/lib/weeklyFlows.check.ts */
 import assert from 'node:assert/strict';
 import { MOCK_DATA } from './mockData';
 import { fourWeekStats, growth12w, isCompleteWeek, mondayOf, weeklySeries } from './flowStats';
