@@ -1,6 +1,6 @@
 /** Self-check for the benchmark row mapper. Run: npx --yes tsx src/lib/benchmark.check.ts */
 import assert from 'node:assert/strict';
-import { DEFILLAMA_SLUGS, mapBenchmarkRow, withOnchainOndo } from './benchmark';
+import { DEFILLAMA_SLUGS, latestStablecoinUsd, mapBenchmarkRow, STABLECOIN_IDS, withOnchainOndo } from './benchmark';
 import { MOCK_DATA } from './mockData';
 
 const asOf = '2026-09-24T12:00:00.000Z';
@@ -54,5 +54,14 @@ assert.equal(swapped[1], live);
 const partial = [{ ...chain[0], dataSource: 'mocked' as const }, ...chain.slice(1)];
 assert.equal(withOnchainOndo([rwa, live], partial)[0], rwa);
 assert.equal(withOnchainOndo([rwa], [])[0], rwa);
+
+// Stablecoin series: last point wins; a bad shape throws so the caller falls back.
+assert.equal(latestStablecoinUsd([{ totalCirculatingUSD: { peggedUSD: 1 } }, { totalCirculatingUSD: { peggedUSD: 2_165_301_032.01 } }]), 2_165_301_032.01);
+for (const bad of [[], {}, null, [{}], [{ totalCirculatingUSD: { peggedUSD: '5' } }]]) {
+  assert.throws(() => latestStablecoinUsd(bad), /stablecoin series/);
+}
+const buidlLive = mapBenchmarkRow(buidl, 2_165_301_032, asOf, STABLECOIN_IDS['blackrock-buidl']!.page);
+assert.equal(buidlLive.source, 'https://defillama.com/stablecoin/blackrock-usd-buidl');
+assert.equal(buidlLive.dataSource, 'live');
 
 console.log('benchmark check ok');
