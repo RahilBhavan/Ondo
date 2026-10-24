@@ -1,7 +1,7 @@
 # Ondo Nexus Dashboard — Data Methodology
 
 **Version:** 2.0
-**Last Updated:** 2026-10-17
+**Last Updated:** 2026-10-24
 
 This document explains how every number on the dashboard is sourced, computed, and labeled. If a metric cannot be verified from on-chain data alone, this document explains why and what assumptions fill the gap.
 
@@ -121,11 +121,11 @@ See ADR-004 in DECISIONS.md.
 
 **What we track:** TVL, chain count and redemption terms for Ondo (OUSG + USDY), Invesco USTB on Superstate, OpenEden TBILL and BlackRock BUIDL. Code: `src/lib/benchmark.ts`.
 
-**TVL:** DefiLlama `GET https://api.llama.fi/tvl/<slug>` per product (slugs `invesco-ustb`, `openeden-tbill`, `blackrock-buidl`, `ondo-yield-assets`), cached 1hr. The Ondo row is replaced by the Pillar 3 on-chain total when every chain row is live, so it equals the Total TVL KPI; otherwise it keeps DefiLlama. A table footnote says which source the Ondo row uses.
+**TVL:** The Ondo row is the Pillar 3 on-chain total when every chain row is live, so it equals the Total TVL KPI. BUIDL is the latest total circulating USD from DefiLlama's stablecoin series (`GET stablecoins.llama.fi/stablecoincharts/all?stablecoin=173`), cached 1hr; this is circulating supply, not DefiLlama's RWA TVL. DefiLlama's `/tvl/<slug>` and `/protocol/<slug>` return 0 or an empty series for `ondo-yield-assets`, `invesco-ustb`, `openeden-tbill` and `blackrock-buidl` (checked 2026-10-24), so Superstate (USTB) and OpenEden (TBILL) have no free live source and keep their 2026-09-24 rows labeled Mocked. Their TVL needs DefiLlama's keyed RWA API.
 
 **Chain count and redemption:** Static text quoted from each issuer's own docs, with a link. DefiLlama's `chains` for these slugs is a placeholder, so it is not used. BUIDL shows "Not disclosed" for both: no issuer page could be cited.
 
-**Data source label:** Per row. **Live** when the fetch (or on-chain total) succeeds, else the 2026-09-24 DefiLlama snapshot as **Mocked**.
+**Data source label:** Per row. **Live** when the fetch (or on-chain total) succeeds, else the 2026-09-24 DefiLlama snapshot as **Mocked** (always, for USTB and TBILL).
 
 **Known gaps:**
 - Accounting may differ between products (accrued yield, which chains count).
@@ -161,7 +161,7 @@ See ADR-004 in DECISIONS.md.
 **Net issuance (for the rate comparison):**
 - USDC, USDT, PYUSD: weekly change in circulating supply on all chains (DefiLlama, Monday to Monday). Ethereum logs alone miss Tron, where about half of USDT sits, and show USDC moving between chains; USDT also redeems rarely on Ethereum, so a log-based net would read as all issuance.
 - BUIDL, OUSG, USDY: Ethereum mints minus redemptions, since these are issued there.
-- Check: Ethereum mints minus burns (CCTP included) match DefiLlama's Ethereum supply change within 16% for USDC and 5% for PYUSD (`src/lib/issuance.check.ts`).
+- Check: Ethereum mints minus burns (CCTP included) match DefiLlama's Ethereum supply change within 17% for USDC and 7% for PYUSD (`src/lib/issuance.check.ts`).
 
 **Rates:** FRED `DFEDTARU` (target upper bound); change dates are effective dates (the day after the FOMC announcement). Cuts less than 120 days apart form one easing episode: Sep 2024 to Dec 2024 (3 cuts, 100 bp) and Sep 2025 to Dec 2025 (3 cuts, 75 bp). FRED also shows a 25 bp increase effective 2026-09-17, not analyzed.
 

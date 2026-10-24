@@ -1,14 +1,17 @@
 # Nexus Dashboard — Current Status
-Last updated: 2026-10-17
+Last updated: 2026-10-24
 
 ## Phase
 [x] Phase 0 — Contract Research
 [x] Phase 1 — Data Layer (weekly flows live from on-chain logs, ADR-008)
 [x] Phase 2 — Frontend Build (home, /flows)
-[x] Home page on real data, Phases 0-5 of #30 (PR from phase5-finish, awaiting merge)
+[x] Home page on real data, Phases 0-5 of #30 (merged)
 [x] Stablecoin flows tracker: USDC, USDT, PYUSD, BUIDL + OUSG, USDY (ADR-009), `/issuance` and `/summary`
 [x] Study textbook for the outreach (`docs/textbook/index.html`, rebuilt from the data snapshots)
-[ ] Deploy the merged home page to Vercel (personal scope)
+[x] Deployed to Vercel (ondo-nexus.vercel.app, personal scope)
+[x] Benchmark: BUIDL live from DefiLlama's stablecoin series (#54); USTB and TBILL stay labeled snapshots (no free source)
+[x] Hourly warm-up workflow so the first visitor after idle does not see a stale ISR render
+[x] Stablecoin snapshots rerun 2026-10-24
 
 ## Live Pages
 - `/` — home: KPIs, top holders, chain breakdown, heatmap, 12-week flows, benchmark
@@ -21,15 +24,15 @@ Last updated: 2026-10-17
 - Weekly flows + 4-week KPIs: InstantManager event logs from Blockscout, refreshed hourly (ADR-008)
 - Total TVL, chain breakdown, heatmap: on-chain supply on 13 chains × OndoOracle price
 - Top holders: Blockscout, Ethereum only
-- Benchmark: DefiLlama; Ondo row uses the on-chain total when all chains are live
+- Benchmark: BUIDL from DefiLlama's stablecoin series (circulating supply); Ondo row is the on-chain total when all chains are live; USTB and TBILL are the 2026-09-24 snapshot (DefiLlama's `/tvl` and `/protocol` return nothing for these RWA slugs; needs its keyed RWA API)
 - Every getter falls back to a dated, labeled snapshot in `src/lib/mockData.ts`
 
 ## Open Items
 - After refreshing the snapshots, rebuild the textbook: `npx tsx docs/textbook/build.ts`.
-- Flows tracker data are dated snapshots: rerun `node scripts/backfill-issuance.mjs` (about 25 min) and `node scripts/backfill-context.mjs`, then `npx tsx src/lib/issuance.check.ts`.
+- Flows tracker data are dated snapshots (last run 2026-10-24): rerun `node scripts/backfill-issuance.mjs` (about 25 min for the first pass; the dense USDC, PYUSD and BUIDL series take about 40 min at the 10k-block window and Tenderly's public gateway may 429, so rerun those with `node scripts/backfill-issuance.mjs USDC PYUSD BUIDL`) and `node scripts/backfill-context.mjs`, then `npx tsx src/lib/issuance.check.ts`.
 - Flows tracker is Ethereum logs only; Tron USDT and non-Ethereum USDC issuance are covered through supply, not logs.
 - BUIDL chain count and redemption terms: no issuer page to cite, shown as "Not disclosed".
-- Dune API key rotation pending (the app no longer uses Dune; only the MCP server does).
+- Rahil action: rotate the Dune API key (the app no longer uses Dune; only the MCP server does).
 
 ## Key Decisions
 - Nexus has no contracts; track OUSG/USDY as proxy (ADR-003)

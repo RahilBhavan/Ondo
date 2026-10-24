@@ -106,14 +106,16 @@ async function rpc(method, params, tries = 8, url = RPC) {
 }
 const hex = (n) => '0x' + n.toString(16);
 
-const CHUNK = 100_000;
+// 100k-block windows silently returned 82 of ~63k USDC mints in the densest recent range (found
+// 2026-10-24); 10k, 5k and 2k windows agree, so 10k is the largest size known to be complete.
+const CHUNK = 10_000;
 const LOG_CAP = 20_000; // Tenderly errors above this many results
 /** One range; on error (too many results) or a full page, halve it. A wide single call silently
  * returned 22 of ~100k USDC mints, so the range is always walked in CHUNK-sized windows. */
 async function getRange(address, topics, from, to, out) {
   let r;
   try {
-    r = await rpc('eth_getLogs', [{ address, topics, fromBlock: hex(from), toBlock: hex(to) }], 4);
+    r = await rpc('eth_getLogs', [{ address, topics, fromBlock: hex(from), toBlock: hex(to) }], 8);
   } catch (e) {
     if (to - from < 100) throw e;
     r = null;
@@ -130,7 +132,7 @@ async function getLogs(address, topics, from, to, out) {
   for (let b = from; b <= to; b += CHUNK) windows.push([b, Math.min(b + CHUNK - 1, to)]);
   const parts = windows.map(() => []);
   let next = 0;
-  await Promise.all(Array.from({ length: 4 }, async () => {
+  await Promise.all(Array.from({ length: 3 }, async () => {
     while (next < windows.length) {
       const i = next++;
       await getRange(address, topics, windows[i][0], windows[i][1], parts[i]);
