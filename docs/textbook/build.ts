@@ -1,6 +1,6 @@
 /**
  * Builds docs/textbook/index.html from chapters/*.html, style.css and the dashboard's data snapshots.
- * Run: npx --yes tsx docs/textbook/build.ts
+ * Run: npx tsx docs/textbook/build.ts
  * Chapter files start with <!--ch|NUMBER|TITLE|ONE-LINE DESCRIPTION-->. Tokens: {{fig:name}}, {{v:name}},
  * {{z:ASSET:episodeIndex}}, {{net:ASSET}}, {{gross:ASSET}}, {{ep:index:label|cuts|bps|first|last}}.
  */

@@ -1,4 +1,4 @@
-/** Self-check for the Blockscout holder mapper. Run: npx --yes tsx src/lib/topHolders.check.ts */
+/** Self-check for the Blockscout holder mapper. Run: npx tsx src/lib/topHolders.check.ts */
 import assert from 'node:assert/strict';
 import { holdersPageUrl, mapHolderItem, publicTag } from './topHolders';
 import { MOCK_DATA } from './mockData';
