@@ -9,11 +9,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "next": "^16.4.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "recharts": "^3.10.1",
-    "viem": "^2.57.4"
+    "viem": "^2.57.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -22,7 +22,7 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.0",
-    "postcss": "^8.5.29",
+    "postcss": "^8.5.30",
     "tailwindcss": "^4.3.3",
     "typescript": "^5"
   }
