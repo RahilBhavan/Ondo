@@ -10,7 +10,6 @@ Last updated: 2026-10-24
 [x] Study textbook for the outreach (`docs/textbook/index.html`, rebuilt from the data snapshots)
 [x] Deployed to Vercel (ondo-nexus.vercel.app, personal scope)
 [x] Benchmark: BUIDL live from DefiLlama's stablecoin series (#54); USTB and TBILL stay labeled snapshots (no free source)
-[x] Hourly warm-up workflow so the first visitor after idle does not see a stale ISR render
 [x] Stablecoin snapshots rerun 2026-10-24
 
 ## Live Pages
