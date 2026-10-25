@@ -1,4 +1,4 @@
-/** Self-check for chain supply parsing and fallback. No network. Run: npx --yes tsx src/lib/chainSupply.check.ts */
+/** Self-check for chain supply parsing and fallback. No network. Run: npx tsx src/lib/chainSupply.check.ts */
 import assert from 'node:assert/strict';
 import { buildRows, fromBaseUnits, stellarSupply, SUPPLY_SOURCES, toLiquidityCells, xrplSupply } from './chainSupply';
 import { MOCK_DATA } from './mockData';

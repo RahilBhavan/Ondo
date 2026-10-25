@@ -43,19 +43,19 @@ Prerequisites: Node.js 20 or later (CI uses 20) and npm. No API keys are needed.
 npm ci
 npm run lint
 npx tsc --noEmit
-for f in src/lib/*.check.ts; do npx --yes tsx "$f" || break; done
+npm test
 npm run dev        # http://localhost:3000
 ```
 
-The project has no `npm test` script. Its tests are six self-check scripts in `src/lib/*.check.ts`, run with `tsx`. All six passed on 2026-10-21. `issuance.check.ts` reconciles the committed snapshots. CI runs lint, the type check and `npm run build`. It does not run the self-checks.
+`npm test` runs the six self-check scripts in `src/lib/*.check.ts` with `tsx` (pinned in `package.json`). They need no network. All six passed on 2026-10-24. `issuance.check.ts` reconciles the committed snapshots. CI runs lint, the type check, `npm test` and `npm run build`.
 
 To refresh the stablecoin snapshots (about 25 minutes on the free public RPC), then rebuild the study guide:
 
 ```bash
 node scripts/backfill-issuance.mjs
 node scripts/backfill-context.mjs
-npx --yes tsx src/lib/issuance.check.ts
-npx --yes tsx docs/textbook/build.ts
+npx tsx src/lib/issuance.check.ts
+npx tsx docs/textbook/build.ts
 ```
 
 ## Repository layout

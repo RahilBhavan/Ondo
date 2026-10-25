@@ -1,4 +1,4 @@
-/** Self-check for log decoding and weekly aggregation. No network. Run: npx --yes tsx src/lib/flowEvents.check.ts */
+/** Self-check for log decoding and weekly aggregation. No network. Run: npx tsx src/lib/flowEvents.check.ts */
 import assert from 'node:assert/strict';
 import { aggregateWeekly, decodeFlowLog, topic0, type BlockscoutLog } from './flowEvents';
 import type { FlowEvent } from './types';

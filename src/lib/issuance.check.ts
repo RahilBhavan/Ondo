@@ -1,5 +1,5 @@
 /**
- * Self-check for the flows tracker. Run: npx --yes tsx src/lib/issuance.check.ts
+ * Self-check for the flows tracker. Run: npx tsx src/lib/issuance.check.ts
  * Reconciles the log-derived flows with independent sources and pins the claims the summary makes.
  */
 import assert from 'node:assert/strict';
