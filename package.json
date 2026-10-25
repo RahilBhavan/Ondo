@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "for f in src/lib/*.check.ts; do tsx \"$f\" || exit 1; done"
+    "test": "for f in src/lib/*.check.ts; do tsx \"$f\" || exit 1; done",
+    "card:usdc-share": "tsx scripts/usdc-share-card.ts",
+    "card:usdc-share:fresh": "tsx scripts/usdc-share-card.ts --refresh"
   },
   "dependencies": {
     "next": "^16.4.2",

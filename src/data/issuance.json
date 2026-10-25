@@ -1,31 +1,31 @@
 {
- "asOf": "2026-10-24T20:24:48.539Z",
+ "asOf": "2026-10-25T19:06:58.998Z",
  "startBlock": 16308190,
- "headBlock": 26264879,
+ "headBlock": 26271672,
  "audit": {
-  "USDC:mint": 2015024,
-  "USDC:redeem": 1158907,
+  "USDC:mint": 2017925,
+  "USDC:redeem": 1160746,
   "USDT:mint": 80,
   "USDT:redeem": 12,
-  "PYUSD:mint": 13948,
-  "PYUSD:redeem": 8426,
+  "PYUSD:mint": 13967,
+  "PYUSD:redeem": 8432,
   "BUIDL:mint": 13570,
   "BUIDL:redeem": 225,
   "OUSG:mint": 234,
   "OUSG:redeem": 304,
   "OUSG-legacy:mint": 173,
   "OUSG-legacy:redeem": 203,
-  "USDY:mint": 797,
+  "USDY:mint": 802,
   "USDY:redeem": 753
  },
  "usdcCounterparties": {
   "mint": {
-   "other": 424202977279.74664,
-   "cctp": 112530478614.17215
+   "other": 424327937828.7949,
+   "cctp": 112593426868.90857
   },
   "redeem": {
-   "other": 448808775705.0318,
-   "cctp": 81673174270.20108
+   "other": 448936775757.7956,
+   "cctp": 81783747493.26077
   }
  },
  "rows": [
@@ -8625,37 +8625,37 @@
    "week": "2026-10-19",
    "asset": "PYUSD",
    "issuer": "PayPal (Paxos)",
-   "mintUsd": 305241219,
-   "redeemUsd": 221200337,
+   "mintUsd": 305462079,
+   "redeemUsd": 222100773,
    "bridgeMintUsd": 0,
    "bridgeRedeemUsd": 0,
-   "mintCount": 353,
-   "redeemCount": 128,
-   "wallets": 304
+   "mintCount": 372,
+   "redeemCount": 134,
+   "wallets": 325
   },
   {
    "week": "2026-10-19",
    "asset": "USDC",
    "issuer": "Circle",
-   "mintUsd": 4908418272,
-   "redeemUsd": 5397256618,
-   "bridgeMintUsd": 1248505307,
-   "bridgeRedeemUsd": 815652278,
-   "mintCount": 29369,
-   "redeemCount": 14505,
-   "wallets": 7503
+   "mintUsd": 5096327076,
+   "redeemUsd": 5635829894,
+   "bridgeMintUsd": 1311453562,
+   "bridgeRedeemUsd": 926225501,
+   "mintCount": 32270,
+   "redeemCount": 16344,
+   "wallets": 8284
   },
   {
    "week": "2026-10-19",
    "asset": "USDY",
    "issuer": "Ondo",
-   "mintUsd": 17211119,
+   "mintUsd": 17284764,
    "redeemUsd": 2330443,
    "bridgeMintUsd": 0,
    "bridgeRedeemUsd": 0,
-   "mintCount": 25,
+   "mintCount": 30,
    "redeemCount": 19,
-   "wallets": 17
+   "wallets": 19
   }
  ]
 }

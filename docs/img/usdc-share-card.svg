@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1106" viewBox="0 0 1024 1106" font-family="'Liberation Sans', Helvetica, Arial, sans-serif">
+<title>USDC share of mint and redemption volume on Ethereum, data as of Oct 25, 2026</title>
+<rect width="1024" height="1106" fill="#ffffff"/>
+<text x="56" y="104" font-size="48" font-weight="700" fill="#0b2545" text-anchor="start">USDC is 85.0% of the $1,016.8B</text>
+<text x="56" y="160" font-size="48" font-weight="700" fill="#0b2545" text-anchor="start">minted and redeemed on Ethereum</text>
+<text x="56" y="214" font-size="28" font-weight="400" fill="#0b2545" text-anchor="start">Six assets, Jan 2023 to the week of Oct 12, 2026</text>
+<rect x="56" y="258" width="776" height="72" fill="#0b2545"/>
+<rect x="832" y="258" width="136" height="72" fill="#c8102e"/>
+<text x="76" y="307" font-size="36" font-weight="700" fill="#ffffff" text-anchor="start">USDC 85.0%</text>
+<text x="968" y="376" font-size="28" font-weight="700" fill="#c8102e" text-anchor="end">Other five assets 15.0%</text>
+<text x="56" y="440" font-size="26" font-weight="700" fill="#0b2545" text-anchor="start">Asset</text>
+<text x="818" y="440" font-size="26" font-weight="700" fill="#0b2545" text-anchor="end">Mints + redemptions</text>
+<text x="968" y="440" font-size="26" font-weight="700" fill="#0b2545" text-anchor="end">Share</text>
+<rect x="56" y="454" width="912" height="2" fill="#0b2545"/>
+<text x="56" y="502" font-size="30" font-weight="700" fill="#0b2545" text-anchor="start">USDC</text>
+<rect x="206" y="478" width="255" height="28" fill="#0b2545"/>
+<text x="818" y="502" font-size="30" font-weight="400" fill="#0b2545" text-anchor="end">$864.8B</text>
+<text x="968" y="502" font-size="30" font-weight="700" fill="#0b2545" text-anchor="end">85.0%</text>
+<text x="56" y="558" font-size="30" font-weight="700" fill="#c8102e" text-anchor="start">USDT</text>
+<rect x="206" y="534" width="32" height="28" fill="#c8102e"/>
+<text x="818" y="558" font-size="30" font-weight="400" fill="#c8102e" text-anchor="end">$108.8B</text>
+<text x="968" y="558" font-size="30" font-weight="700" fill="#c8102e" text-anchor="end">10.7%</text>
+<text x="56" y="614" font-size="30" font-weight="700" fill="#c8102e" text-anchor="start">PYUSD</text>
+<rect x="206" y="590" width="11" height="28" fill="#c8102e"/>
+<text x="818" y="614" font-size="30" font-weight="400" fill="#c8102e" text-anchor="end">$36.5B</text>
+<text x="968" y="614" font-size="30" font-weight="700" fill="#c8102e" text-anchor="end">3.6%</text>
+<text x="56" y="670" font-size="30" font-weight="700" fill="#c8102e" text-anchor="start">BUIDL</text>
+<rect x="206" y="646" width="2" height="28" fill="#c8102e"/>
+<text x="818" y="670" font-size="30" font-weight="400" fill="#c8102e" text-anchor="end">$4.3B</text>
+<text x="968" y="670" font-size="30" font-weight="700" fill="#c8102e" text-anchor="end">0.4%</text>
+<text x="56" y="726" font-size="30" font-weight="700" fill="#c8102e" text-anchor="start">OUSG</text>
+<rect x="206" y="702" width="2" height="28" fill="#c8102e"/>
+<text x="818" y="726" font-size="30" font-weight="400" fill="#c8102e" text-anchor="end">$2.1B</text>
+<text x="968" y="726" font-size="30" font-weight="700" fill="#c8102e" text-anchor="end">0.2%</text>
+<text x="56" y="782" font-size="30" font-weight="700" fill="#c8102e" text-anchor="start">USDY</text>
+<rect x="206" y="758" width="2" height="28" fill="#c8102e"/>
+<text x="818" y="782" font-size="30" font-weight="400" fill="#c8102e" text-anchor="end">$0.3B</text>
+<text x="968" y="782" font-size="30" font-weight="700" fill="#c8102e" text-anchor="end">0.0%</text>
+<rect x="56" y="808" width="912" height="2" fill="#0b2545"/>
+<text x="56" y="856" font-size="30" font-weight="700" fill="#0b2545" text-anchor="start">Total</text>
+<text x="818" y="856" font-size="30" font-weight="700" fill="#0b2545" text-anchor="end">$1,016.8B</text>
+<text x="968" y="856" font-size="30" font-weight="700" fill="#0b2545" text-anchor="end">100.0%</text>
+<text x="56" y="920" font-size="28" font-weight="400" fill="#0b2545" text-anchor="start">USDC: $420.5B minted, $444.2B redeemed.</text>
+<text x="56" y="960" font-size="28" font-weight="400" fill="#0b2545" text-anchor="start">Mostly market-maker churn. Ethereum logs only.</text>
+<rect x="56" y="1012" width="912" height="2" fill="#c8102e"/>
+<text x="56" y="1062" font-size="28" font-weight="700" fill="#c8102e" text-anchor="start">Data as of Oct 25, 2026</text>
+<text x="968" y="1062" font-size="28" font-weight="400" fill="#0b2545" text-anchor="end">github.com/RahilBhavan/Ondo</text>
+</svg>
