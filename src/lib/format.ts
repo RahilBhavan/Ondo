@@ -30,6 +30,11 @@ export function formatUsdCompact(value: number): string {
   return USD_COMPACT.format(value);
 }
 
+/** Trillions to two decimals, for headline totals where "$1T" would hide the CCTP gap. */
+export function formatTrillions(value: number): string {
+  return `$${(value / 1e12).toFixed(2)}T`;
+}
+
 export function formatUsd(value: number): string {
   return USD_FULL.format(value);
 }

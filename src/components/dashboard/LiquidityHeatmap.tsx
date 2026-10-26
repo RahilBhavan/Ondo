@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import type { LiquidityCell, Chain, DataSource } from '@/lib/types';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { formatUsdCompact } from '@/lib/format';
+import { cachedAsOf } from '@/lib/dataSource';
 
 interface LiquidityHeatmapProps {
   data: LiquidityCell[];
@@ -73,7 +74,7 @@ export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
         </div>
         <div className="flex items-center gap-2">
           {sources.map((s) => (
-            <DataSourceBadge key={s} source={s} />
+            <DataSourceBadge key={s} source={s} asOf={cachedAsOf(data)} />
           ))}
         </div>
       </div>
@@ -102,7 +103,7 @@ export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
               {CHAIN_ORDER.map((chain) => {
                 const cell = cellMap.get(`${issuer}:${chain}`);
                 const value = cell?.tvlUsd ?? 0;
-                const isMocked = cell?.dataSource === 'mocked';
+                const isCached = cell?.dataSource === 'cached';
 
                 return (
                   <div
@@ -111,7 +112,7 @@ export function LiquidityHeatmap({ data }: LiquidityHeatmapProps) {
                     style={{ backgroundColor: getHeatColor(value, maxVal) }}
                   >
                     <span className="text-xs font-mono tabular-nums text-[color:var(--ink)]">
-                      {value === 0 ? '–' : `${isMocked ? '~' : ''}${formatUsdCompact(value)}`}
+                      {value === 0 ? '–' : `${isCached ? '~' : ''}${formatUsdCompact(value)}`}
                     </span>
 
                     {/* Tooltip on hover */}

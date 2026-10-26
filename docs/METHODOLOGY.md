@@ -14,16 +14,18 @@ Every data point on the dashboard carries one of three labels:
 | Label | Meaning | Criteria |
 |-------|---------|----------|
 | **Live** | Read from its source on this render: on-chain RPC, Blockscout, or DefiLlama | No manual assumptions, independently verifiable. Cached up to 1hr |
-| **Estimated** | A total that mixes live and mocked rows | Shown when some but not all rows behind a number are live |
-| **Mocked** | Dated snapshot or illustrative value, shown when the source fails | Carries its own source and asOf; prefixed with "~" |
+| **Estimated** | A total that mixes live and last good rows | Shown when some but not all rows behind a number are live |
+| **Last good** | The most recent real read, shown when the source fails | Stored in `src/data/last-good.json`; carries its original asOf, shown in the badge, and a "~" prefix |
+
+The dashboard has no mocked or illustrative numbers. If a source fails and `last-good.json` has no row for it, the row is left out and the page says the value is unavailable. `scripts/snapshot-last-good.ts` rewrites the file from the live getters and keeps a part only if every row came back live.
 
 The `DataSourceBadge` component renders this label inline with every metric. The methodology drawer explains each gap.
 
 ---
 
-## Pillar 1: Top Ethereum Holders
+## Pillar 1: Top Holders
 
-**What we track:** The top 15 holders of OUSG and USDY on Ethereum, with balance and USD value. Code: `src/lib/topHolders.ts`.
+**What we track:** The top 15 holders of OUSG and USDY on Ethereum, and of USDY on Stellar, with balance and USD value. Code: `src/lib/topHolders.ts`.
 
 **Data source:** Blockscout token holders API, no key needed:
 `https://eth.blockscout.com/api/v2/tokens/<token>/holders` for OUSG (`0x1B19C19393e2d034D8Ff31ff34c81252FcBbee92`) and USDY (`0x96F6eF951840721AdBF46Ac996b59E0235CB985C`). Balances are 18-decimal integers.
@@ -32,10 +34,12 @@ The `DataSourceBadge` component renders this label inline with every metric. The
 
 **Names:** First the manual registry in `addressRegistry.ts`, then the highest-ordinal Blockscout public tag of type `name`. Generic tags, ordinal-0 tags, tags equal to the contract name (such as `CErc20DelegatorKYC`) and `GnosisSafeProxy*` tags are ignored, since they name a contract class, not an owner. Anything else shows as "Unknown wallet (0x...)".
 
-**Data source label:** **Live** when both holder calls and the oracle read succeed. Otherwise **Mocked**: a Blockscout snapshot from 2026-09-24 in `mockData.ts`.
+**Stellar:** the stellar.expert asset holders API (`api.stellar.expert/explorer/public/asset/USDY-<issuer>/holders`, keyless), balances in 1e7 units, valued at the same Ethereum oracle price. The top 15 hold 467.49M of the 467.50M USDY on Stellar (read 2026-10-26). Stellar was added because USDY there (467.5M tokens) is the second-largest supply after Ethereum, and stellar.expert serves a keyless holders list.
+
+**Data source label:** Per group (Ethereum OUSG, Ethereum USDY, Stellar USDY). **Live** when that group's fetch and the oracle read succeed. Otherwise **Last good**: that group's rows from `src/data/last-good.json` with their original date.
 
 **Known gaps:**
-- Ethereum only. Holders on other chains are not listed.
+- Ethereum and Stellar USDY only. Holders on other chains are not listed.
 - Contract holders (lending markets, Safes, bridges) hold on behalf of others; the dashboard does not look through them.
 - OUSG's backing composition (which third-party assets) is not on-chain.
 
@@ -64,7 +68,7 @@ The `DataSourceBadge` component renders this label inline with every metric. The
 
 **Source:** event logs from Blockscout's keyless v2 logs API (`/api/v2/addresses/<contract>/logs?topic=<topic0>`, one series per contract and event), decoded with viem and grouped by week in `src/lib/flowEvents.ts` (ADR-008). The definition is written out in SQL in `queries/mint_redeem_volume.sql`, saved on Dune as [query 8822192](https://dune.com/queries/8822192); the app no longer calls Dune. The on-chain rows matched every Dune row through the week of 2026-09-14. Output: `week, token, mint_volume_usd, redeem_volume_usd, net_flow_usd, mint_count, redeem_count, unique_minters, unique_redeemers, unique_wallets`.
 
-**Data source label:** **Live** when every log read succeeds and returns events. Otherwise **Mocked**: an illustrative series shaped from public disclosures, with a server log line giving the reason. `asOf` is when the logs were read; the home page shows it as "as of <date>" on the flows section and the net flow KPI.
+**Data source label:** **Live** when every log read succeeds and returns events. Otherwise **Last good**: the stored series from `src/data/last-good.json` with its original read date, and a server log line giving the reason. `asOf` is when the logs were read; the home page shows it as "as of <date>" on the flows section and the net flow KPI.
 
 **Home page KPIs:** 4-week volume, net flow and average transaction size sum the last 4 complete weeks of both tokens. The trend compares volume to the 4 complete weeks before; a change that rounds to 0.0% is shown as flat.
 
@@ -108,7 +112,9 @@ See ADR-004 in DECISIONS.md.
 | USDY | BNB Chain | `0x608593d17A2decBbc4399e4185bE4922F97eD32E` | ERC-20 `totalSupply()` |
 | OUSG | XRP Ledger | `4F55534700000000000000000000000000000000.rHuiXXjHLpMP8ZE9sSQU5aADQVWDwv6h5p` | `gateway_balances` obligations on the issuer |
 
-**Data source label:** Per row. **Live** when both the supply read and the oracle read succeed. A failed supply read shows that row's 2026-09-24 snapshot as **Mocked**; a failed oracle read makes every row Mocked. The Total TVL KPI is **Estimated** when rows are mixed.
+**Data source label:** Per row. **Live** when both the supply read and the oracle read succeed. A failed supply read shows that row's last good value (its original date in the badge); a failed oracle read does this for every row. The Total TVL KPI is **Estimated** when rows are mixed.
+
+**Cross-check (2026-10-26, `npx tsx scripts/verify-supply.ts`):** the dashboard's reads match an independent explorer to the token on Ethereum USDY (1,106,268,931.74) and OUSG (1,145,233.42) against Blockscout, Mantle USDY (319,742.91) against Routescan, and Plume USDY (0) against Plume's Blockscout. Stellar USDY is 467,502,151.70 on Horizon and 467,502,127.77 on stellar.expert (0.000005% apart). The other chains were not cross-checked: on 2026-10-26 the Arbitrum and Polygon Blockscout instances answered a scripted request with a Cloudflare challenge and Routescan does not cover Arbitrum or BNB Chain, so those rows rest on the chain's own RPC or API.
 
 **Known gaps:**
 - Supply counts every token in circulation, including any inventory Ondo itself holds (treasury, bridge or market-making wallets).
@@ -121,11 +127,11 @@ See ADR-004 in DECISIONS.md.
 
 **What we track:** TVL, chain count and redemption terms for Ondo (OUSG + USDY), Invesco USTB on Superstate, OpenEden TBILL and BlackRock BUIDL. Code: `src/lib/benchmark.ts`.
 
-**TVL:** The Ondo row is the Pillar 3 on-chain total when every chain row is live, so it equals the Total TVL KPI. BUIDL is the latest total circulating USD from DefiLlama's stablecoin series (`GET stablecoins.llama.fi/stablecoincharts/all?stablecoin=173`), cached 1hr; this is circulating supply, not DefiLlama's RWA TVL. DefiLlama's `/tvl/<slug>` and `/protocol/<slug>` return 0 or an empty series for `ondo-yield-assets`, `invesco-ustb`, `openeden-tbill` and `blackrock-buidl` (checked 2026-10-24), so Superstate (USTB) and OpenEden (TBILL) have no free live source and keep their 2026-09-24 rows labeled Mocked. Their TVL needs DefiLlama's keyed RWA API.
+**TVL:** The Ondo row is always the Pillar 3 on-chain total, so it equals the Total TVL KPI; if a chain row fell back, the row is Estimated and shows the oldest cached date. BUIDL is the latest total circulating USD from DefiLlama's stablecoin series (`GET stablecoins.llama.fi/stablecoincharts/all?stablecoin=173`), cached 1hr; this is circulating supply, not DefiLlama's RWA TVL. DefiLlama's `/tvl/<slug>` and `/protocol/<slug>` return 0 or an empty series for `ondo-yield-assets`, `invesco-ustb`, `openeden-tbill` and `blackrock-buidl` (checked 2026-10-24), so Superstate (USTB) and OpenEden (TBILL) have no free live source and keep their 2026-09-24 rows labeled Last good. Their TVL needs DefiLlama's keyed RWA API.
 
 **Chain count and redemption:** Static text quoted from each issuer's own docs, with a link. DefiLlama's `chains` for these slugs is a placeholder, so it is not used. BUIDL shows "Not disclosed" for both: no issuer page could be cited.
 
-**Data source label:** Per row. **Live** when the fetch (or on-chain total) succeeds, else the 2026-09-24 DefiLlama snapshot as **Mocked** (always, for USTB and TBILL).
+**Data source label:** Per row. **Live** when the fetch (or on-chain total) succeeds, else its last good row (always, for USTB and TBILL: 2026-09-24).
 
 **Known gaps:**
 - Accounting may differ between products (accrued yield, which chains count).
@@ -198,5 +204,6 @@ All data sources are cited inline in the dashboard via the `MethodologyDrawer` c
 - On-chain reads: public RPCs and chain APIs listed in Pillar 3
 - OndoOracle on Ethereum for prices
 - Blockscout (eth.blockscout.com) for Ethereum holders and InstantManager event logs (mint and redeem flows)
+- stellar.expert for Stellar USDY holders
 - DefiLlama (api.llama.fi) for competitor TVL
 - Ondo Finance official documentation (docs.ondo.finance) and competitor docs

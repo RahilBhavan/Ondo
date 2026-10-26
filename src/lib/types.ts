@@ -6,7 +6,12 @@
 
 // --- Data Source Taxonomy ---
 
-export type DataSource = 'live' | 'estimated' | 'mocked';
+/**
+ * live: read from its source on this render. cached: the last good value, a real read from an
+ * earlier date kept in src/data/last-good.json (asOf says when). estimated: a total that mixes the two.
+ * No label means invented data: the dashboard has no mocked values.
+ */
+export type DataSource = 'live' | 'estimated' | 'cached';
 
 export interface Sourced {
   dataSource: DataSource;
@@ -16,12 +21,16 @@ export interface Sourced {
   source: string;
 }
 
-// --- Pillar 1: Top Ethereum holders ---
+// --- Pillar 1: Top holders (Ethereum and Stellar) ---
+
+export type HolderChain = 'ethereum' | 'stellar';
 
 export interface HolderMetric extends Sourced {
+  /** Chain the balance sits on */
+  chain: HolderChain;
   /** Registry label, else Blockscout public name tag, else "Unknown wallet (0x…)" */
   name: string;
-  /** Wallet address (checksummed) */
+  /** Wallet address (checksummed on Ethereum, a G or C account on Stellar) */
   address: string;
   /** Token: OUSG or USDY */
   token: 'OUSG' | 'USDY';

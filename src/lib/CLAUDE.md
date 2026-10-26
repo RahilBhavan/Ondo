@@ -3,13 +3,12 @@
 ## Types
 - All data shapes defined in `types.ts` — import from there, never inline types
 - Every data object extends `Sourced` (dataSource, asOf, source fields)
-- `DataSource` is always one of: `'live' | 'estimated' | 'mocked'`
+- `DataSource` is always one of: `'live' | 'estimated' | 'cached'`
 
-## Mock Data
-- All mocks in `mockData.ts` — never scatter mock values across components
-- Every mocked value has `source` (citation string) and `asOf` (ISO date)
-- Realistic ranges from Ondo public disclosures, not round numbers
-- `MOCK_DATA` holds the labeled fallback each live getter returns when its source fails
+## Last Good Values
+- No mock data. A failed read falls back to `src/data/last-good.json` (via `lastGood.ts`), labeled `cached`, keeping the original `asOf`
+- Only `scripts/snapshot-last-good.ts` writes that file, and only from rows that came back live. Never hand-edit a number into it
+- A getter with no stored row returns no row; the page says the value is unavailable
 
 ## Flow Events
 - `flowEvents.ts` reads InstantManager logs from Blockscout's v2 address logs API (no key), decodes them with viem, and groups them by week

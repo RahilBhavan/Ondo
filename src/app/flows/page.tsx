@@ -28,7 +28,7 @@ export default async function FlowsPage() {
           OUSG and USDY on Ethereum, from InstantManager Subscription and Redemption events.
         </p>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--mute)]">
-          <DataSourceBadge source={dataSource} />
+          <DataSourceBadge source={dataSource} asOf={asOf} />
           {asOf && <span>as of {formatWeek(asOf)}</span>}
           {dataSource === 'live' && queryUrl && (
             <a href={queryUrl} className="text-[color:var(--link)] hover:underline">
@@ -38,7 +38,13 @@ export default async function FlowsPage() {
         </p>
       </section>
 
-      <FlowsExplorer rows={rows} dataSource={dataSource} />
+      {rows.length === 0 ? (
+        <p className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] px-6 py-10 text-sm text-[color:var(--body)]">
+          Unavailable: the event-log source did not respond and no last good series is stored.
+        </p>
+      ) : (
+        <FlowsExplorer rows={rows} dataSource={dataSource} />
+      )}
 
       <FlowsMethodology />
 

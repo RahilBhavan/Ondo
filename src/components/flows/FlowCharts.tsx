@@ -98,7 +98,7 @@ interface FlowChartsProps {
   token: WeeklyFlow['token'];
   data: WeeklyFlow[];
   asOf: string;
-  /** '~' when the data is mocked, else '' */
+  /** '~' when the data is a last good value, else '' */
   prefix: string;
 }
 

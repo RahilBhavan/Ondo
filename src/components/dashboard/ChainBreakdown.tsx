@@ -1,7 +1,7 @@
 'use client';
 
 import type { Chain, ChainTVL } from '@/lib/types';
-import { combinedSource } from '@/lib/dataSource';
+import { cachedAsOf, combinedSource } from '@/lib/dataSource';
 import { DataSourceBadge } from '@/components/ui/DataSourceBadge';
 import { formatUsdCompact, formatPercent } from '@/lib/format';
 
@@ -26,16 +26,16 @@ const CHAIN_COLORS: Record<string, string> = {
 interface ChainTotal {
   chain: Chain;
   tvlUsd: number;
-  mocked: boolean;
+  cached: boolean;
 }
 
 /** Sum the per-(token, chain) rows into one entry per chain. */
 function byChain(rows: ChainTVL[]): ChainTotal[] {
   const map = new Map<Chain, ChainTotal>();
   for (const r of rows) {
-    const t = map.get(r.chain) ?? { chain: r.chain, tvlUsd: 0, mocked: false };
+    const t = map.get(r.chain) ?? { chain: r.chain, tvlUsd: 0, cached: false };
     t.tvlUsd += r.tvlUsd;
-    t.mocked ||= r.dataSource === 'mocked';
+    t.cached ||= r.dataSource === 'cached';
     map.set(r.chain, t);
   }
   return [...map.values()];
@@ -51,7 +51,7 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
         <h3 className="text-base font-semibold tracking-[-0.32px] text-[color:var(--ink)]">
           Chain breakdown
         </h3>
-        <DataSourceBadge source={combinedSource(data)} />
+        <DataSourceBadge source={combinedSource(data)} asOf={cachedAsOf(data)} />
       </div>
 
       {/* Stacked bar */}
@@ -91,7 +91,7 @@ export function ChainBreakdown({ data }: ChainBreakdownProps) {
                   {chain.tvlUsd === 0 ? '–' : formatPercent(pct)}
                 </span>
                 <span className="font-mono text-[13px] tabular-nums text-[color:var(--ink)] w-16 text-right">
-                  {chain.tvlUsd === 0 ? '–' : `${chain.mocked ? '~' : ''}${formatUsdCompact(chain.tvlUsd)}`}
+                  {chain.tvlUsd === 0 ? '–' : `${chain.cached ? '~' : ''}${formatUsdCompact(chain.tvlUsd)}`}
                 </span>
               </div>
             </div>

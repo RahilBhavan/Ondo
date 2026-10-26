@@ -1,16 +1,20 @@
 /**
- * Top Ethereum holders (Pillar 1) of OUSG and USDY.
+ * Top holders (Pillar 1) of OUSG and USDY on Ethereum, and of USDY on Stellar.
  *
- * Live path: Blockscout's token holders API (no key), top 15 per token, valued at the
- * Ondo oracle price (getTokenPrices). Any HTTP error, malformed body, or price error
- * falls back to the labeled mock snapshot and logs why.
+ * Ethereum: Blockscout's token holders API (no key), top 15 per token. Stellar: stellar.expert's
+ * asset holders API (no key), top 15 for USDY, the second-largest USDY chain by supply that has a
+ * keyless holders list. Both are valued at the Ethereum Ondo oracle price (getTokenPrices).
+ * A group whose fetch fails, or every group when the price read fails, falls back to its last
+ * good rows (src/data/last-good.json, labeled cached with their original date). A group with no
+ * last good rows is left out, never invented.
  */
 
 import { getAddress } from 'viem';
 import { holderName } from './addressRegistry';
-import { MOCK_DATA } from './mockData';
+import { asCached, LAST_GOOD } from './lastGood';
 import { OUSG_ETHEREUM, USDY_ETHEREUM, getTokenPrices } from './prices';
-import type { DataSource, HolderMetric } from './types';
+import { combinedSource } from './dataSource';
+import type { DataSource, HolderChain, HolderMetric } from './types';
 
 export const TOP_N = 15;
 const TOKENS = { OUSG: OUSG_ETHEREUM, USDY: USDY_ETHEREUM } as const;
@@ -66,6 +70,7 @@ export function mapHolderItem(
     throw new Error(`non-positive balance or price for ${address}`);
   }
   return {
+    chain: 'ethereum',
     name: holderName(address, publicTag(addr)),
     address,
     token,
@@ -90,25 +95,88 @@ async function fetchHolders(token: Token): Promise<unknown[]> {
   return body.items.slice(0, TOP_N);
 }
 
-function mockResult(reason: string): TopHoldersResult {
-  console.warn(`[topHolders] using mock data: ${reason}`);
-  return { rows: MOCK_DATA.topHolders, dataSource: 'mocked' };
+export const STELLAR_USDY_ISSUER = 'GAJMPX5NBOG6TQFPQGRABJEEB2YE7RFRLUKJDZAZGAD5GFX4J7TADAZ6';
+const STELLAR_HOLDERS_URL = `https://api.stellar.expert/explorer/public/asset/USDY-${STELLAR_USDY_ISSUER}/holders`;
+export const stellarHoldersPageUrl = `https://stellar.expert/explorer/public/asset/USDY-${STELLAR_USDY_ISSUER}`;
+
+/**
+ * Map one stellar.expert holder record ({address, balance in 1e7 stroops as a string}) to a
+ * HolderMetric. Throws on a malformed record.
+ */
+export function mapStellarHolder(item: unknown, price: number, asOf: string): HolderMetric {
+  const { address, balance: raw } = (item ?? {}) as { address?: unknown; balance?: unknown };
+  if (typeof address !== 'string' || !/^[GC][A-Z2-7]{55}$/.test(address)) {
+    throw new Error(`bad stellar address: ${String(address)}`);
+  }
+  if (typeof raw !== 'string' || !/^\d+$/.test(raw)) throw new Error(`bad balance for ${address}: ${String(raw)}`);
+  const balance = Number(raw) / 1e7;
+  if (!(balance > 0) || !Number.isFinite(price) || price <= 0) {
+    throw new Error(`non-positive balance or price for ${address}`);
+  }
+  return {
+    chain: 'stellar',
+    name: holderName(address, null),
+    address,
+    token: 'USDY',
+    balance,
+    tvlUsd: balance * price,
+    dataSource: 'live',
+    asOf,
+    source: stellarHoldersPageUrl,
+  };
+}
+
+async function fetchStellarHolders(): Promise<unknown[]> {
+  const res = await fetch(`${STELLAR_HOLDERS_URL}?limit=${TOP_N}&order=desc`, {
+    next: { revalidate: 3600 },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`stellar.expert USDY holders: HTTP ${res.status}`);
+  const body = (await res.json()) as { _embedded?: { records?: unknown } };
+  const records = body._embedded?.records;
+  if (!Array.isArray(records) || records.length === 0) throw new Error('stellar.expert USDY holders: no records');
+  return records.slice(0, TOP_N);
+}
+
+type Group = { chain: HolderChain; token: Token };
+const GROUPS: Group[] = [
+  { chain: 'ethereum', token: 'OUSG' },
+  { chain: 'ethereum', token: 'USDY' },
+  { chain: 'stellar', token: 'USDY' },
+];
+
+/** Live rows for one (chain, token) group. Throws on any fetch or shape error. */
+async function liveGroup(g: Group, price: number, asOf: string): Promise<HolderMetric[]> {
+  if (g.chain === 'stellar') return (await fetchStellarHolders()).map((i) => mapStellarHolder(i, price, asOf));
+  return (await fetchHolders(g.token)).map((i) => mapHolderItem(i, g.token, price, asOf));
+}
+
+/**
+ * Join per-group reads: a fulfilled group is live, a rejected one uses that group's last good rows.
+ * Pure: covered by topHolders.check.ts.
+ */
+export function assembleHolders(
+  groups: Group[],
+  reads: PromiseSettledResult<HolderMetric[]>[],
+  lastGood: HolderMetric[]
+): HolderMetric[] {
+  return groups.flatMap((g, i) => {
+    const got = reads[i];
+    if (got?.status === 'fulfilled') return got.value;
+    console.warn(`[topHolders] ${g.chain} ${g.token} read failed, using last good rows:`, got?.status === 'rejected' ? String(got.reason) : 'missing');
+    return asCached(lastGood.filter((r) => r.chain === g.chain && r.token === g.token));
+  });
 }
 
 export async function getTopHolders(): Promise<TopHoldersResult> {
+  const asOf = new Date().toISOString();
+  let reads: PromiseSettledResult<HolderMetric[]>[];
   try {
-    const [ousg, usdy, prices] = await Promise.all([
-      fetchHolders('OUSG'),
-      fetchHolders('USDY'),
-      getTokenPrices(),
-    ]);
-    const asOf = new Date().toISOString();
-    const rows = [
-      ...ousg.map((i) => mapHolderItem(i, 'OUSG', prices.OUSG, asOf)),
-      ...usdy.map((i) => mapHolderItem(i, 'USDY', prices.USDY, asOf)),
-    ];
-    return { rows, dataSource: 'live' };
+    const prices = await getTokenPrices();
+    reads = await Promise.allSettled(GROUPS.map((g) => liveGroup(g, prices[g.token], asOf)));
   } catch (err) {
-    return mockResult(err instanceof Error ? err.message : String(err));
+    reads = GROUPS.map(() => ({ status: 'rejected', reason: err }));
   }
+  const rows = assembleHolders(GROUPS, reads, LAST_GOOD.topHolders);
+  return { rows, dataSource: combinedSource(rows) };
 }

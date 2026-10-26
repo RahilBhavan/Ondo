@@ -6,7 +6,7 @@ import { ChainTable } from '@/components/issuance/ChainTable';
 import { Figure1, Figure2 } from '@/components/issuance/IssuanceFigures';
 import { TotalsTable } from '@/components/issuance/TotalsTable';
 import { NEWS_EVENTS, PRE_WEEKS, TAIL_WEEKS, eventWindow, issuanceSummary, totals } from '@/lib/issuance';
-import { formatUsdCompact } from '@/lib/format';
+import { formatTrillions, formatUsdCompact } from '@/lib/format';
 import { formatWeek } from '@/lib/flowStats';
 
 export const metadata: Metadata = {
@@ -30,14 +30,14 @@ export default function IssuancePage() {
     <PageShell brand={{ label: 'Stablecoin flows', href: '/issuance' }} links={LINKS}>
       <section className="space-y-4 pt-10 md:pt-16">
         <h1 className="max-w-[880px] text-[32px] font-semibold leading-[1.15] tracking-[-1.28px] text-[color:var(--ink)] md:text-[48px] md:leading-[48px] md:tracking-[-2.4px]">
-          {formatUsdCompact(s.grossUsd)} minted and redeemed across five issuers.
+          About $1T minted and redeemed across five issuers.
         </h1>
         <p className="max-w-[680px] text-lg text-[color:var(--body)]">
           Circle, Tether, PayPal, BlackRock and Ondo, on Ethereum since January 2023. Where the money sits by chain, and what
           weekly issuance did around the Fed&apos;s rate cuts.
         </p>
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--mute)]">
-          <DataSourceBadge source="live" />
+          <DataSourceBadge source="cached" asOf={s.asOf} />
           <span>Event logs read {formatWeek(s.asOf)}, through the week of {formatWeek(s.lastWeek)}</span>
         </p>
       </section>
@@ -48,8 +48,8 @@ export default function IssuancePage() {
         </h2>
         <TotalsTable rows={totals()} />
         <p className={cap}>
-          Ethereum event logs. Circle CCTP transfers ({formatUsdCompact(s.cctpBridgedUsd)} of USDC mints and burns) are excluded: moving USDC between chains is not
-          issuance. USDC is {Math.round(s.usdcShareOfGross * 100)}% of the total and is mostly market-maker churn; its net is negative on Ethereum because holders
+          Ethereum event logs. The total is {formatTrillions(s.grossUsd)} because Circle CCTP transfers ({formatUsdCompact(s.cctpBridgedUsd)} of USDC mints and burns) are excluded: moving USDC between chains is not
+          issuance. Counting them gives {formatTrillions(s.grossWithCctpUsd)}. USDC is {Math.round(s.usdcShareOfGross * 100)}% of the total and is mostly market-maker churn; its net is negative on Ethereum because holders
           redeem there and mint natively elsewhere, while its circulating supply on all chains grew.
         </p>
       </section>

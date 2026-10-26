@@ -8,6 +8,8 @@ interface MetricCardProps {
   value: string;
   subValue?: string;
   dataSource: DataSource;
+  /** Date of the real read when the value is cached or mixed */
+  asOf?: string;
   trend?: {
     direction: 'up' | 'down' | 'flat';
     label: string;
@@ -26,14 +28,14 @@ const TREND_ARROWS = {
   flat: '\u2192',
 } as const;
 
-export function MetricCard({ label, value, subValue, dataSource, trend }: MetricCardProps) {
-  const prefix = dataSource === 'mocked' ? '~' : '';
+export function MetricCard({ label, value, subValue, dataSource, asOf, trend }: MetricCardProps) {
+  const prefix = dataSource === 'cached' ? '~' : '';
 
   return (
     <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[var(--canvas)] p-5 shadow-[var(--elevation)]">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-[color:var(--mute)]">{label}</span>
-        <DataSourceBadge source={dataSource} />
+        <DataSourceBadge source={dataSource} asOf={asOf} />
       </div>
       <div className="text-2xl font-semibold tracking-[-0.96px] tabular-nums text-[color:var(--ink)] mb-1">
         {prefix}{value}

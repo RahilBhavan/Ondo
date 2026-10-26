@@ -5,12 +5,13 @@
  * Bridges are LayerZero OFT burn/mint, so each chain's supply is its own float:
  * no lockbox subtraction. rUSDY, mUSD and rOUSG wrap tokens already counted here
  * and are left out. All reads run in parallel with an 8s timeout and a 1hr
- * in-memory cache. A failed read falls back to that row's mock value; a failed
- * price read falls back on every row.
+ * in-memory cache. A failed read falls back to that row's last good value (src/data/last-good.json,
+ * labeled cached, with its original date); a failed price read falls back on every row. A row
+ * with no last good value is left out, never invented.
  */
 
 import { createPublicClient, formatUnits, http, parseAbi } from 'viem';
-import { MOCK_DATA } from './mockData';
+import { asCached, LAST_GOOD } from './lastGood';
 import { ETHEREUM_RPC, getTokenPrices, OUSG_ETHEREUM, USDY_ETHEREUM, type TokenPrices } from './prices';
 import type { Chain, ChainTVL, LiquidityCell } from './types';
 
@@ -193,22 +194,23 @@ function withPct(rows: ChainTVL[]): ChainTVL[] {
 }
 
 /**
- * Build rows from settled supply reads. A rejected read (or null prices) uses
- * the matching mock row, labeled 'mocked'. Pure: covered by chainSupply.check.ts.
+ * Build rows from settled supply reads. A rejected read (or null prices) uses the matching
+ * last good row, labeled 'cached' with the date of its original read. A source with no last
+ * good row is left out. Pure: covered by chainSupply.check.ts.
  */
 export function buildRows(
   sources: SupplySource[],
   supplies: PromiseSettledResult<number>[],
   prices: TokenPrices | null,
-  mock: ChainTVL[],
+  lastGood: ChainTVL[],
   asOf: string
 ): ChainTVL[] {
-  const mockByKey = new Map(mock.map((m) => [key(m.token, m.chain), m]));
-  return withPct(
-    sources.map((s, i) => {
-      const got = supplies[i];
-      if (prices && got?.status === 'fulfilled') {
-        return {
+  const goodByKey = new Map(asCached(lastGood).map((m) => [key(m.token, m.chain), m]));
+  const rows = sources.flatMap((s, i): ChainTVL[] => {
+    const got = supplies[i];
+    if (prices && got?.status === 'fulfilled') {
+      return [
+        {
           chain: s.chain,
           token: s.token,
           supply: got.value,
@@ -217,14 +219,14 @@ export function buildRows(
           dataSource: 'live',
           asOf,
           source: s.source,
-        };
-      }
-      const m = mockByKey.get(key(s.token, s.chain));
-      if (!m) throw new Error(`no mock row for ${key(s.token, s.chain)}`);
-      if (prices) console.warn(`[chainSupply] ${key(s.token, s.chain)} read failed, using mock:`, got?.status === 'rejected' ? String(got.reason) : 'missing');
-      return { ...m, dataSource: 'mocked' };
-    })
-  );
+        },
+      ];
+    }
+    if (prices) console.warn(`[chainSupply] ${key(s.token, s.chain)} read failed, using last good value:`, got?.status === 'rejected' ? String(got.reason) : 'missing');
+    const good = goodByKey.get(key(s.token, s.chain));
+    return good ? [good] : [];
+  });
+  return withPct(rows);
 }
 
 /** Heatmap cells from the same rows (issuer = token). */
@@ -248,10 +250,10 @@ export async function getChainTVL(): Promise<ChainTVL[]> {
     ...SUPPLY_SOURCES.map((s) => readSupply(s.reader)),
   ]);
   const prices = priceResult.status === 'fulfilled' ? (priceResult.value as TokenPrices) : null;
-  if (!prices) console.warn('[chainSupply] price read failed, using mock for every row:', String((priceResult as PromiseRejectedResult).reason));
-  const data = buildRows(SUPPLY_SOURCES, supplies as PromiseSettledResult<number>[], prices, MOCK_DATA.chainBreakdown, new Date().toISOString());
+  if (!prices) console.warn('[chainSupply] price read failed, using last good value for every row:', String((priceResult as PromiseRejectedResult).reason));
+  const data = buildRows(SUPPLY_SOURCES, supplies as PromiseSettledResult<number>[], prices, LAST_GOOD.chainTvl, new Date().toISOString());
   // Cache only a fully live read: a read with any fallback retries on the next render
-  // (the next ISR revalidation of /) instead of pinning mock rows for an hour.
+  // (the next ISR revalidation of /) instead of pinning cached rows for an hour.
   if (data.every((r) => r.dataSource === 'live')) cached = { data, timestamp: Date.now() };
   return data;
 }

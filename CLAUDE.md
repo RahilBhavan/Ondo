@@ -14,15 +14,15 @@ Portfolio project. Solo. Stack: Next.js 16, TypeScript, Tailwind, Recharts, viem
 Run /project:log-session — writes DEVLOG entry + updates STATUS.md automatically.
 
 ## Non-Negotiables
-- Every metric needs a DataSourceBadge: live | estimated | mocked
-- Mock data lives only in /src/lib/mockData.ts with source + asOf date
+- Every metric needs a DataSourceBadge: live | estimated | cached (shown as "Last good" with its date)
+- No mocked or invented values. Fallbacks are real earlier reads in /src/data/last-good.json (written by scripts/snapshot-last-good.ts)
 - No PDF generation — deferred to v2
 - Design system: `DESIGN.md` (tokens in `src/app/globals.css`).
 
 ## Structure
 - /queries     — metric definitions in Dune SQL (the app computes the same from on-chain logs)
 - /docs        — RAG context, reference with @docs/filename.md
-- /src/lib     — data layer (flowEvents.ts, types.ts, mockData.ts, addressRegistry.ts)
+- /src/lib     — data layer (flowEvents.ts, types.ts, lastGood.ts, addressRegistry.ts)
 - /src/components — UI (see subdirectory CLAUDE.md)
 
 ## Tooling
