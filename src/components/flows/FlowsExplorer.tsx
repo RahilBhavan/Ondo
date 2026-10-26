@@ -25,7 +25,7 @@ interface FlowsExplorerProps {
 export function FlowsExplorer({ rows, dataSource }: FlowsExplorerProps) {
   const [range, setRange] = useState<RangeId>('52W');
   const weeks = RANGES.find((r) => r.id === range)!.weeks;
-  const prefix = dataSource === 'mocked' ? '~' : '';
+  const prefix = dataSource === 'cached' ? '~' : '';
 
   return (
     <>
@@ -66,7 +66,7 @@ interface TokenSectionProps {
 }
 
 function TokenSection({ token, rows, weeks, dataSource }: TokenSectionProps) {
-  const prefix = dataSource === 'mocked' ? '~' : '';
+  const prefix = dataSource === 'cached' ? '~' : '';
   const series = useMemo(() => weeklySeries(rows, token), [rows, token]);
   const visible = useMemo(
     () => (Number.isFinite(weeks) ? series.slice(-weeks) : series),
@@ -95,7 +95,7 @@ function TokenSection({ token, rows, weeks, dataSource }: TokenSectionProps) {
           {lastComplete && (
             <div className="space-y-3">
               <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[color:var(--mute)]">
-                <DataSourceBadge source={dataSource} />
+                <DataSourceBadge source={dataSource} asOf={asOf} />
                 <span>Week of {formatWeek(lastComplete.week)}, last complete week</span>
               </p>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-5 md:grid-cols-4">

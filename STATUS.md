@@ -22,9 +22,9 @@ Last updated: 2026-10-24
 ## Sources (ADR-007, ADR-008)
 - Weekly flows + 4-week KPIs: InstantManager event logs from Blockscout, refreshed hourly (ADR-008)
 - Total TVL, chain breakdown, heatmap: on-chain supply on 13 chains × OndoOracle price
-- Top holders: Blockscout, Ethereum only
-- Benchmark: BUIDL from DefiLlama's stablecoin series (circulating supply); Ondo row is the on-chain total when all chains are live; USTB and TBILL are the 2026-09-24 snapshot (DefiLlama's `/tvl` and `/protocol` return nothing for these RWA slugs; needs its keyed RWA API)
-- Every getter falls back to a dated, labeled snapshot in `src/lib/mockData.ts`
+- Top holders: Blockscout for Ethereum, stellar.expert for Stellar USDY
+- Benchmark: BUIDL from DefiLlama's stablecoin series (circulating supply); Ondo row is the on-chain total; USTB and TBILL are the 2026-09-24 snapshot (DefiLlama's `/tvl` and `/protocol` return nothing for these RWA slugs; needs its keyed RWA API)
+- Every getter falls back to its last good rows in `src/data/last-good.json` (real reads, labeled Last good with their date); `mockData.ts` is gone (ADR-010)
 
 ## Open Items
 - After refreshing the snapshots, rebuild the textbook: `npx tsx docs/textbook/build.ts`.

@@ -6,17 +6,17 @@ const SECTIONS = [
   {
     title: 'Data sources',
     content:
-      'Total TVL, the chain breakdown and the heatmap come from on-chain reads. Top holders come from Blockscout. Weekly flows and the three flow KPIs come from InstantManager event logs, read through Blockscout. Competitor TVL comes from DefiLlama. Every number has a badge: Live is read from its source, Mocked is a dated snapshot shown when the source fails, and Estimated mixes the two. Each source is cached for one hour.',
+      'Total TVL, the chain breakdown and the heatmap come from on-chain reads. Top holders come from Blockscout. Weekly flows and the three flow KPIs come from InstantManager event logs, read through Blockscout. Competitor TVL comes from DefiLlama. Every number has a badge: Live is read from its source, Last good is the most recent real read, shown with its date when the source fails, and Estimated mixes the two. Nothing on this page is invented. Each source is cached for one hour.',
   },
   {
     title: 'Total TVL and chains (Pillar 3)',
     content:
-      'TVL is the total token supply on each chain times the OndoOracle price on Ethereum (0x9Cad45a8BF0Ed41Ff33074449B357C7a1fAb4094, getAssetPrice). Every chain uses that one price. EVM chains are read with totalSupply(). Solana uses getTokenSupply, Sui and Aptos their coin supply, Noble its bank supply, Stellar the Horizon asset record, and the XRP Ledger gateway_balances on the issuer. Bridges burn and mint, so each token is counted once, on the chain where it sits. rUSDY, rOUSG and mUSD wrap tokens already counted and are left out. A failed read shows that row\'s dated snapshot, labeled Mocked.',
+      'TVL is the total token supply on each chain times the OndoOracle price on Ethereum (0x9Cad45a8BF0Ed41Ff33074449B357C7a1fAb4094, getAssetPrice). Every chain uses that one price. EVM chains are read with totalSupply(). Solana uses getTokenSupply, Sui and Aptos their coin supply, Noble its bank supply, Stellar the Horizon asset record, and the XRP Ledger gateway_balances on the issuer. Bridges burn and mint, so each token is counted once, on the chain where it sits. rUSDY, rOUSG and mUSD wrap tokens already counted and are left out. A failed read shows that row\'s last good value, labeled Last good with its date.',
   },
   {
-    title: 'Top Ethereum holders (Pillar 1)',
+    title: 'Top holders (Pillar 1)',
     content:
-      'The top 15 holders of OUSG and USDY on Ethereum, from the Blockscout token holders API, valued at the OndoOracle price. Names come from a manual address registry first, then Blockscout public name tags. Tags that only repeat a contract class name are ignored. Unnamed wallets show their address.',
+      'The top 15 holders of OUSG and USDY on Ethereum, from the Blockscout token holders API, and of USDY on Stellar, from the stellar.expert holders API, valued at the OndoOracle price. Names come from a manual address registry first, then Blockscout public name tags. Tags that only repeat a contract class name are ignored. Unnamed wallets show their address.',
   },
   {
     title: 'Weekly mint and redeem (Pillar 2)',
@@ -26,12 +26,12 @@ const SECTIONS = [
   {
     title: 'Competitive benchmark (Pillar 4)',
     content:
-      'TVL for Invesco USTB on Superstate, OpenEden TBILL and BlackRock BUIDL comes from DefiLlama. The Ondo row uses the same on-chain total as Total TVL when every chain read succeeds, else DefiLlama. Chain counts and redemption terms quote each issuer\'s own docs, or say Not disclosed. Accounting may differ between products.',
+      'TVL for Invesco USTB on Superstate, OpenEden TBILL and BlackRock BUIDL comes from DefiLlama. The Ondo row always uses the same on-chain total as Total TVL; if a chain read fell back, the row is labeled with the date of the last good value. USTB and TBILL have no free live source, so they show their last good value and its date. Chain counts and redemption terms quote each issuer\'s own docs, or say Not disclosed. Accounting may differ between products.',
   },
   {
     title: 'Known gaps',
     content:
-      'Holders cover Ethereum only. Supply-based TVL counts every token in circulation, including any inventory Ondo itself holds. The Ondo TVL includes BNB Chain and the XRP Ledger, which DefiLlama does not count.',
+      'Holders cover Ethereum and Stellar USDY only. Supply-based TVL counts every token in circulation, including any inventory Ondo itself holds. The Ondo TVL includes BNB Chain and the XRP Ledger, which DefiLlama does not count.',
   },
 ] as const;
 

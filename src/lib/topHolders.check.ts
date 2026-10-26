@@ -1,7 +1,7 @@
 /** Self-check for the Blockscout holder mapper. Run: npx tsx src/lib/topHolders.check.ts */
 import assert from 'node:assert/strict';
-import { holdersPageUrl, mapHolderItem, publicTag } from './topHolders';
-import { MOCK_DATA } from './mockData';
+import { assembleHolders, holdersPageUrl, mapHolderItem, mapStellarHolder, publicTag, stellarHoldersPageUrl } from './topHolders';
+import { LAST_GOOD } from './lastGood';
 
 const asOf = '2026-09-24T00:00:00.000Z';
 const item = (hash: string, value: unknown, tags: unknown[] = [], name: string | null = null) => ({
@@ -73,18 +73,55 @@ assert.throws(() => mapHolderItem(item(ok, '0'), 'OUSG', 1, asOf), /non-positive
 assert.throws(() => mapHolderItem(item(ok, '1'), 'OUSG', 0, asOf), /non-positive/);
 assert.throws(() => mapHolderItem(item(ok, '1'), 'OUSG', NaN, asOf), /non-positive/);
 
-// Mock snapshot: 15 per token, checksummed, sorted by balance, no placeholder addresses.
-const mock = MOCK_DATA.topHolders;
-for (const token of ['OUSG', 'USDY'] as const) {
-  const rows = mock.filter((r) => r.token === token);
-  assert.equal(rows.length, 15, `${token} mock rows`);
-  rows.forEach((r, i) => i && assert.ok(r.balance <= rows[i - 1].balance, `${token} not sorted`));
-}
-for (const r of mock) {
-  assert.equal(r.dataSource, 'mocked');
-  assert.match(r.address, /^0x[0-9a-fA-F]{40}$/);
-  assert.ok(!/^0x1234|^0xabcdef/i.test(r.address), `placeholder address ${r.address}`);
-}
-assert.equal(mock.find((r) => r.address.startsWith('0xC882'))?.name, 'Gate.io: Deposit Address');
+// Stellar record: balance is 1e7 stroops, valued at the given price, cited to stellar.expert.
+const G = 'GC635K2GGDMIINZBO6WWLQN6QUVDEBODEYCQ74OLEZUOA37K5E2BXSHC';
+const xlm = mapStellarHolder({ address: G, balance: '3532171820000000' }, 1.15, asOf);
+assert.equal(xlm.chain, 'stellar');
+assert.equal(xlm.token, 'USDY');
+assert.equal(xlm.balance, 353217182);
+assert.ok(Math.abs(xlm.tvlUsd - 353217182 * 1.15) < 1e-3);
+assert.equal(xlm.dataSource, 'live');
+assert.equal(xlm.source, stellarHoldersPageUrl);
+assert.equal(xlm.name, 'Unknown wallet (GC635K...XSHC)');
+assert.throws(() => mapStellarHolder({ address: '0xabc', balance: '1' }, 1, asOf), /bad stellar address/);
+assert.throws(() => mapStellarHolder({ address: G, balance: '1.5' }, 1, asOf), /bad balance/);
+assert.throws(() => mapStellarHolder({ address: G, balance: '0' }, 1, asOf), /non-positive/);
+assert.throws(() => mapStellarHolder({ address: G, balance: '10' }, 0, asOf), /non-positive/);
 
-console.log(`topHolders check ok (${mock.length} mock rows)`);
+// Last good snapshot: Ethereum 15 per token plus Stellar USDY 15, sorted, real address shapes, no placeholders.
+const stored = LAST_GOOD.topHolders;
+const GROUPS = [
+  { chain: 'ethereum' as const, token: 'OUSG' as const },
+  { chain: 'ethereum' as const, token: 'USDY' as const },
+  { chain: 'stellar' as const, token: 'USDY' as const },
+];
+for (const g of GROUPS) {
+  const rows = stored.filter((r) => r.chain === g.chain && r.token === g.token);
+  assert.equal(rows.length, 15, `${g.chain} ${g.token} stored rows`);
+  rows.forEach((r, i) => i && assert.ok(r.balance <= rows[i - 1].balance, `${g.chain} ${g.token} not sorted`));
+}
+for (const r of stored) {
+  assert.match(r.address, r.chain === 'stellar' ? /^[GC][A-Z2-7]{55}$/ : /^0x[0-9a-fA-F]{40}$/);
+  assert.ok(!/^0x1234|^0xabcdef/i.test(r.address), `placeholder address ${r.address}`);
+  assert.ok(r.asOf > '2026-10', `${r.address} has no real read date`);
+}
+
+// Assembly: a fulfilled group is live; a rejected group falls back to its own last good rows,
+// labeled cached with their original date; a group with no last good rows is left out.
+const warn = console.warn;
+console.warn = () => {};
+const liveEth = stored.filter((r) => r.chain === 'ethereum');
+const reads: PromiseSettledResult<typeof stored>[] = [
+  { status: 'fulfilled', value: liveEth.filter((r) => r.token === 'OUSG') },
+  { status: 'fulfilled', value: liveEth.filter((r) => r.token === 'USDY') },
+  { status: 'rejected', reason: new Error('stellar.expert down') },
+];
+const mixed = assembleHolders(GROUPS, reads, stored);
+assert.equal(mixed.length, 45);
+const fell = mixed.filter((r) => r.chain === 'stellar');
+assert.equal(fell.length, 15);
+assert.ok(fell.every((r, i) => r.dataSource === 'cached' && r.asOf === stored.filter((s) => s.chain === 'stellar')[i].asOf));
+assert.equal(assembleHolders(GROUPS, reads, liveEth).length, 30);
+console.warn = warn;
+
+console.log(`topHolders check ok (${stored.length} stored rows)`);

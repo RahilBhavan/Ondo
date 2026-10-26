@@ -341,6 +341,8 @@ export function issuanceSummary() {
     startWeek: SNAPSHOT.flowsStartWeek,
     lastWeek: LAST_COMPLETE_WEEK,
     grossUsd: gross,
+    /** Gross if Circle CCTP transfers were counted as issuance: the exclusion is what separates $1.2T from about $1T */
+    grossWithCctpUsd: gross + usdc.bridged,
     usdcShareOfGross: usdc.gross / gross,
     cctpBridgedUsd: usdc.bridged,
     totals: t.map((x) => ({ asset: x.asset.id, issuer: x.asset.issuer, mintUsd: x.mint, redeemUsd: x.redeem, netUsd: x.net, firstWeek: x.firstWeek })),

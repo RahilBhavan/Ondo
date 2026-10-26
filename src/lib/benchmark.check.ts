@@ -1,19 +1,19 @@
 /** Self-check for the benchmark row mapper. Run: npx tsx src/lib/benchmark.check.ts */
 import assert from 'node:assert/strict';
 import { DEFILLAMA_SLUGS, latestStablecoinUsd, mapBenchmarkRow, STABLECOIN_IDS, withOnchainOndo } from './benchmark';
-import { MOCK_DATA } from './mockData';
+import { LAST_GOOD } from './lastGood';
 
 const asOf = '2026-09-24T12:00:00.000Z';
-const [ondo, ustb, tbill, buidl] = MOCK_DATA.competitorBenchmark;
+const [ondo, ustb, tbill, buidl] = LAST_GOOD.competitorBenchmark;
 
-// Mock rows: four products, BUIDL replaces BENJI, every row mocked with a DefiLlama citation.
+// Stored rows: four products, BUIDL replaces BENJI, each with a DefiLlama citation.
 assert.deepEqual(
-  MOCK_DATA.competitorBenchmark.map((r) => r.protocol),
+  LAST_GOOD.competitorBenchmark.map((r) => r.protocol),
   ['nexus', 'superstate', 'openeden', 'blackrock-buidl']
 );
-for (const r of MOCK_DATA.competitorBenchmark) {
-  assert.equal(r.dataSource, 'mocked');
-  assert.ok(r.source.startsWith(`https://defillama.com/protocol/${DEFILLAMA_SLUGS[r.protocol]}`), r.source);
+for (const r of LAST_GOOD.competitorBenchmark) {
+  // Ondo's stored row is the on-chain total (withOnchainOndo); the others cite DefiLlama.
+  if (r.protocol !== 'nexus') assert.ok(r.source.startsWith('https://defillama.com/'), r.source);
   assert.ok(r.tvlUsd > 0);
   // A redemption claim needs a citation; only "Not disclosed" may go without one.
   assert.ok(r.redemptionSpeed === 'Not disclosed' || r.redemptionSource, r.protocol);
@@ -44,15 +44,19 @@ for (const bad of [0, -5, NaN, '123', null, { tvl: 1 }]) {
 }
 
 // Ondo row takes the on-chain total only when every chain row is live; competitors untouched.
-const chain = MOCK_DATA.chainBreakdown.map((r) => ({ ...r, dataSource: 'live' as const, asOf }));
+const chain = LAST_GOOD.chainTvl.map((r) => ({ ...r, dataSource: 'live' as const, asOf }));
 const chainTotal = chain.reduce((s, r) => s + r.tvlUsd, 0);
 const swapped = withOnchainOndo([rwa, live], chain);
 assert.equal(swapped[0].tvlUsd, chainTotal);
 assert.equal(swapped[0].dataSource, 'live');
 assert.equal(swapped[0].chainCount, 14);
 assert.equal(swapped[1], live);
-const partial = [{ ...chain[0], dataSource: 'mocked' as const }, ...chain.slice(1)];
-assert.equal(withOnchainOndo([rwa, live], partial)[0], rwa);
+// Cached chain rows still give the on-chain total, labeled estimated with the cached date.
+const partial = [{ ...chain[0], dataSource: 'cached' as const, asOf: '2026-01-01T00:00:00Z' }, ...chain.slice(1)];
+const mixedOndo = withOnchainOndo([rwa, live], partial)[0];
+assert.equal(mixedOndo.dataSource, 'estimated');
+assert.equal(mixedOndo.asOf, '2026-01-01T00:00:00Z');
+assert.equal(mixedOndo.tvlUsd, chainTotal);
 assert.equal(withOnchainOndo([rwa], [])[0], rwa);
 
 // Stablecoin series: last point wins; a bad shape throws so the caller falls back.

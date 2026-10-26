@@ -43,7 +43,7 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
             {sorted.map((row) => {
               const barWidth = (row.tvlUsd / maxTvl) * 100;
               const isNexus = row.protocol === 'nexus';
-              const isMocked = row.dataSource === 'mocked';
+              const isCached = row.dataSource === 'cached';
 
               return (
                 <tr
@@ -64,7 +64,7 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
                         />
                       </div>
                       <span className="font-mono text-[13px] tabular-nums text-[color:var(--ink)] w-16 text-right">
-                        {isMocked ? '~' : ''}{formatUsdCompact(row.tvlUsd)}
+                        {isCached ? '~' : ''}{formatUsdCompact(row.tvlUsd)}
                       </span>
                     </div>
                   </td>
@@ -76,7 +76,7 @@ export function CompetitiveBenchmark({ data }: CompetitiveBenchmarkProps) {
                   </td>
                   <td className="py-3 text-center">
                     <a href={row.source} title={`TVL: ${row.source}`}>
-                      <DataSourceBadge source={row.dataSource} />
+                      <DataSourceBadge source={row.dataSource} asOf={row.asOf} />
                     </a>
                   </td>
                 </tr>

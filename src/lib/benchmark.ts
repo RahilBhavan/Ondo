@@ -7,12 +7,14 @@
  * dashboard). The one free live source is the stablecoin endpoint, which lists BUIDL:
  * GET stablecoins.llama.fi/stablecoincharts/all?stablecoin=173, last point's total
  * circulating USD, cached 1h by the Next fetch cache. Ondo's row is replaced by the on-chain
- * total (withOnchainOndo); USTB and TBILL keep their dated, labeled mock rows because no
- * free live source exists. A failed BUIDL fetch also falls back to its mock row.
+ * total (withOnchainOndo); USTB and TBILL keep their last good rows (src/data/last-good.json,
+ * labeled cached with the date of the read) because no free live source exists. A failed BUIDL
+ * fetch also falls back to its last good row.
  * Chain count and redemption text always come from the static row, cited to issuer docs.
  */
 
-import { MOCK_DATA } from './mockData';
+import { combinedSource, cachedAsOf } from './dataSource';
+import { asCached, LAST_GOOD } from './lastGood';
 import type { ChainTVL, CompetitorMetric, DataSource, Protocol } from './types';
 
 export interface BenchmarkResult {
@@ -72,34 +74,34 @@ async function fetchJson(url: string): Promise<{ body: unknown; date: string | n
 
 async function getRow(fallback: CompetitorMetric): Promise<CompetitorMetric> {
   const live = STABLECOIN_IDS[fallback.protocol];
-  if (!live) return fallback; // no free live source: the labeled mock row stands
+  if (!live) return fallback; // no free live source: the last good row stands
   try {
     const res = await fetchJson(`https://stablecoins.llama.fi/stablecoincharts/all?stablecoin=${live.id}`);
     return mapBenchmarkRow(fallback, latestStablecoinUsd(res.body), new Date(res.date ?? Date.now()).toISOString(), live.page);
   } catch (err) {
     console.warn(
-      `[benchmark] using mock row for ${fallback.protocol}: ${err instanceof Error ? err.message : String(err)}`
+      `[benchmark] using last good row for ${fallback.protocol}: ${err instanceof Error ? err.message : String(err)}`
     );
     return fallback;
   }
 }
 
 export async function getBenchmark(): Promise<BenchmarkResult> {
-  const rows = await Promise.all(MOCK_DATA.competitorBenchmark.map(getRow));
-  return { rows, dataSource: rows.every((r) => r.dataSource === 'live') ? 'live' : 'mocked' };
+  const rows = await Promise.all(asCached(LAST_GOOD.competitorBenchmark).map(getRow));
+  return { rows, dataSource: combinedSource(rows) };
 }
 
 /**
- * Ondo row TVL = the on-chain total from getChainTVL, when every chain row is live, so the
- * benchmark matches the Total TVL KPI. Otherwise the DefiLlama (or mock) row stays.
+ * Ondo row TVL = the on-chain total from getChainTVL, so the benchmark matches the Total TVL KPI.
+ * The row is live when every chain row is live; otherwise it carries the combined label and the
+ * oldest cached date. With no chain rows the DefiLlama (or last good) row stays.
  */
 export function withOnchainOndo(rows: CompetitorMetric[], chainRows: ChainTVL[]): CompetitorMetric[] {
-  if (chainRows.length === 0 || !chainRows.every((r) => r.dataSource === 'live')) return rows;
+  if (chainRows.length === 0) return rows;
   const tvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
-  const asOf = chainRows.reduce((max, r) => (r.asOf > max ? r.asOf : max), '');
+  const dataSource = combinedSource(chainRows);
+  const asOf = cachedAsOf(chainRows) ?? chainRows.reduce((max, r) => (r.asOf > max ? r.asOf : max), '');
   return rows.map((r) =>
-    r.protocol === 'nexus'
-      ? { ...r, tvlUsd, dataSource: 'live', asOf, source: 'https://docs.ondo.finance/addresses' }
-      : r
+    r.protocol === 'nexus' ? { ...r, tvlUsd, dataSource, asOf, source: 'https://docs.ondo.finance/addresses' } : r
   );
 }

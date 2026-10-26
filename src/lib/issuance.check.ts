@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import issuance from '../data/issuance.json';
 import supply from '../data/supply-by-chain.json';
-import { episodeResults, episodes, grossIssuerVolume, supplyTotalAt, totals, zDuring } from './issuance';
+import { episodeResults, episodes, grossIssuerVolume, issuanceSummary, supplyTotalAt, totals, zDuring } from './issuance';
 
 const B = 1e9;
 const t = new Map(totals().map((x) => [x.asset.id, x]));
@@ -39,6 +39,11 @@ assert.ok(supplyTotalAt('USDC', '2026-10-12') > 70 * B && supplyTotalAt('USDC', 
 
 // 5. Headline is above $0.9T and below $1.1T.
 assert.ok(grossIssuerVolume() > 0.9e12 && grossIssuerVolume() < 1.1e12, `gross ${grossIssuerVolume()}`);
+
+// 5b. The CCTP caveat: counting CCTP transfers would push the same data to about $1.2T.
+const withCctp = issuanceSummary().grossWithCctpUsd;
+assert.ok(withCctp > 1.15e12 && withCctp < 1.25e12, `with CCTP ${withCctp}`);
+assert.ok(Math.abs(withCctp - grossIssuerVolume() - issuanceSummary().cctpBridgedUsd) < 1);
 
 // 6. Claims in app/summary/page.tsx.
 assert.equal(episodes().length, 2);

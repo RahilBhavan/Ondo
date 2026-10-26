@@ -1,6 +1,6 @@
 /** Self-check for the weekly flow series math. Run: npx tsx src/lib/weeklyFlows.check.ts */
 import assert from 'node:assert/strict';
-import { MOCK_DATA } from './mockData';
+import { LAST_GOOD, asCached } from './lastGood';
 import { fourWeekStats, growth12w, isCompleteWeek, mondayOf, weeklySeries } from './flowStats';
 import type { WeeklyFlow } from './types';
 
@@ -20,16 +20,18 @@ const row: WeeklyFlow = {
   source: 'https://eth.blockscout.com/address/0x93358db73B6cd4b98D89c8F5f230E81a95c2643a?tab=logs',
 };
 
-// Mock series: deterministic shape, Monday weeks, both tokens, wallets never exceed minters + redeemers.
-const mock = MOCK_DATA.weeklyFlows;
-assert.equal(mock.length, 156);
-for (const f of mock) {
+// Last good series: a real read, Monday weeks, both tokens, consistent sums, relabeled cached with its own date.
+const stored = LAST_GOOD.weeklyFlows;
+assert.ok(stored.length > 100, 'stored flows missing');
+for (const f of stored) {
   assert.equal(new Date(`${f.week}T00:00:00Z`).getUTCDay(), 1, `${f.week} is not a Monday`);
-  assert.equal(f.netFlowUsd, f.mintVolumeUsd - f.redeemVolumeUsd);
+  assert.ok(Math.abs(f.netFlowUsd - (f.mintVolumeUsd - f.redeemVolumeUsd)) < 1, `${f.week} net`);
   assert.ok(f.uniqueWallets <= f.uniqueMinters + f.uniqueRedeemers);
-  assert.equal(f.dataSource, 'mocked');
+  assert.ok(f.source.startsWith('https://etherscan.io/address/'), 'stored flows must cite the contract, not an illustration');
 }
-assert.ok(mock.some((f) => f.netFlowUsd < 0), 'expected some negative net flow weeks');
+assert.deepEqual([...new Set(stored.map((f) => f.token))].sort(), ['OUSG', 'USDY']);
+const cachedFlows = asCached(stored);
+assert.ok(cachedFlows.every((f, i) => f.dataSource === 'cached' && f.asOf === stored[i].asOf));
 
 // Week math (UTC Mondays).
 assert.equal(mondayOf('2026-04-09'), '2026-04-06');
@@ -96,4 +98,4 @@ const empty = fourWeekStats([]);
 assert.equal(empty.avgTxSizeUsd, null);
 assert.equal(empty.volumeTrend, null);
 
-console.log(`weeklyFlows check ok (${mock.length} mock rows)`);
+console.log(`weeklyFlows check ok (${stored.length} stored rows)`);

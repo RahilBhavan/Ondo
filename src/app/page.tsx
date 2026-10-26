@@ -3,7 +3,7 @@ import { formatUsdCompact, formatNumberCompact, formatPercent } from '@/lib/form
 import { getWeeklyFlows } from '@/lib/weeklyFlows';
 import { formatWeek, fourWeekStats, weeklySeries } from '@/lib/flowStats';
 import { getChainTVL, toLiquidityCells } from '@/lib/chainSupply';
-import { combinedSource } from '@/lib/dataSource';
+import { cachedAsOf, combinedSource } from '@/lib/dataSource';
 import { MetricCard } from '@/components/ui/MetricCard';
 import { TopHoldersChart } from '@/components/dashboard/TopHoldersChart';
 import { FlowCharts } from '@/components/flows/FlowCharts';
@@ -37,11 +37,11 @@ export default async function DashboardPage() {
   const stats = fourWeekStats(flows.rows);
   // formatPercent keeps one decimal of a percent: anything that rounds to 0.0% is flat.
   const trend = stats.volumeTrend === null ? null : Math.round(stats.volumeTrend * 1000) / 1000;
-  const prefix = flows.dataSource === 'mocked' ? '~' : '';
+  const prefix = flows.dataSource === 'cached' ? '~' : '';
   const totalTvlUsd = chainRows.reduce((sum, r) => sum + r.tvlUsd, 0);
   const tvlSource = combinedSource(chainRows);
-  // MetricCard adds '~' itself only when fully mocked; a mixed total needs it too.
-  const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'mocked') ? '~' : '';
+  // MetricCard adds '~' itself only when fully cached; a mixed total needs it too.
+  const tvlPrefix = tvlSource === 'estimated' && chainRows.some((r) => r.dataSource === 'cached') ? '~' : '';
 
   return (
     <PageShell brand={{ label: 'Nexus adoption intelligence', href: '/' }} links={NAV_LINKS}>
@@ -64,12 +64,14 @@ export default async function DashboardPage() {
             label="Total TVL"
             value={`${tvlPrefix}${formatUsdCompact(totalTvlUsd)}`}
             dataSource={tvlSource}
+            asOf={cachedAsOf(chainRows)}
             subValue="13 chains, OUSG + USDY"
           />
           <MetricCard
             label="4-week volume"
             value={formatUsdCompact(stats.volumeUsd)}
             dataSource={flows.dataSource}
+            asOf={flowsAsOf}
             trend={
               trend === null
                 ? undefined
@@ -83,12 +85,14 @@ export default async function DashboardPage() {
             label="4-week net flow"
             value={`${stats.netFlowUsd > 0 ? '+' : ''}${formatUsdCompact(stats.netFlowUsd)}`}
             dataSource={flows.dataSource}
+            asOf={flowsAsOf}
             subValue={flowsAsOf ? `as of ${formatWeek(flowsAsOf)}` : undefined}
           />
           <MetricCard
             label="Avg tx size"
             value={stats.avgTxSizeUsd === null ? 'n/a' : formatUsdCompact(stats.avgTxSizeUsd)}
             dataSource={flows.dataSource}
+            asOf={flowsAsOf}
             subValue={`${formatNumberCompact(stats.txCount)} txns`}
           />
         </div>
@@ -120,7 +124,7 @@ export default async function DashboardPage() {
                 </Link>
               </p>
             </div>
-            <DataSourceBadge source={flows.dataSource} />
+            <DataSourceBadge source={flows.dataSource} asOf={flowsAsOf} />
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {(['OUSG', 'USDY'] as const).map((token) => {

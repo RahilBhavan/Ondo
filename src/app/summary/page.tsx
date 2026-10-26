@@ -3,12 +3,12 @@ import Link from 'next/link';
 import { Figure1, Figure2 } from '@/components/issuance/IssuanceFigures';
 import { TotalsTable } from '@/components/issuance/TotalsTable';
 import { chainShares, eventWindow, issuanceSummary, totals, zDuring } from '@/lib/issuance';
-import { formatUsdCompact } from '@/lib/format';
+import { formatTrillions, formatUsdCompact } from '@/lib/format';
 import { formatWeek } from '@/lib/flowStats';
 
 export const metadata: Metadata = {
   title: 'Stablecoin and Treasury-fund issuance around Fed rate cuts',
-  description: 'One-page summary: $1 trillion of mints and redemptions across five issuers, by chain and around rate cuts.',
+  description: 'One-page summary: about $1 trillion of mints and redemptions across five issuers on Ethereum (Circle CCTP transfers excluded), by chain and around rate cuts.',
 };
 
 const sd = (v: number | null) => (v === null ? 'n/a' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}σ`);
@@ -43,7 +43,8 @@ export default function SummaryPage() {
         </header>
 
         <p className="mt-3 text-[11.5px] leading-[1.5] text-[color:var(--ink)]">
-          <strong>Five issuers, {formatUsdCompact(s.grossUsd)} of mints and redemptions on Ethereum.</strong> In the Fed&apos;s two easing episodes the two largest stablecoins
+          <strong>Five issuers, about $1T of mints and redemptions on Ethereum.</strong>{' '}
+          That is {formatTrillions(s.grossUsd)} after removing {formatUsdCompact(s.cctpBridgedUsd)} of Circle CCTP transfers, which only move USDC between chains; counting them gives {formatTrillions(s.grossWithCctpUsd)}. In the Fed&apos;s two easing episodes the two largest stablecoins
           grew faster than their own norm in 2024 (USDC {sd(zDuring(r, 'USDC', 0))}, USDT {sd(zDuring(r, 'USDT', 0))}) while the Treasury-backed funds ran below theirs (BUIDL {sd(zDuring(r, 'BUIDL', 0))}, OUSG {sd(zDuring(r, 'OUSG', 0))}). 2025 only
           half repeated it: BUIDL fell further ({sd(zDuring(r, 'BUIDL', 1))}, the weakest window in its history) and USDT stayed above average ({sd(zDuring(r, 'USDT', 1))}), but USDC fell back to average and OUSG recovered. With two episodes, this
           is a pattern to watch, not evidence of cause.

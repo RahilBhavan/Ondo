@@ -16,7 +16,7 @@ Why the dashboard is built the way it is: each record gives the context, the dec
 
 ## ADR-002: Mock Data as First-Class Feature
 **Date:** 2026-04-09
-**Status:** Accepted
+**Status:** Superseded by ADR-010 (2026-10-26): the dashboard no longer shows mocked values
 **Context:** Nexus may have limited third-party issuer activity at launch
 **Decision:** Build typed mockData.ts layer with source citations and DataSourceBadge
   UI component from day one, not as a fallback
@@ -111,7 +111,7 @@ Why the dashboard is built the way it is: each record gives the context, the dec
     DefiLlama leaves out, so Ondo TVL runs above DefiLlama's
   - Holders are Ethereum only
   - Flow data is only as fresh as the last Dune run; the page shows its date
-  - Each getter falls back to a dated, labeled snapshot in mockData.ts (ADR-002 still holds)
+  - Each getter falls back to a dated, labeled snapshot (mockData.ts then; last-good.json since ADR-010)
 
 ## ADR-008: Weekly Flows from Blockscout Logs Instead of Dune
 **Date:** 2026-09-24
@@ -169,3 +169,16 @@ Why the dashboard is built the way it is: each record gives the context, the dec
   - BUIDL mints include its daily dividend issuance, about 1% of mint volume; counts are not reported.
   - USDT and USDC volumes on other chains (Tron is the largest USDT chain) are not in the gross flows.
   - No claim about causation: there are two easing episodes in the sample.
+
+## ADR-010: Last Good Values Replace Mocked Fallbacks; Stellar Holders; "About $1T" With the CCTP Caveat
+**Date:** 2026-10-26
+**Status:** Accepted. Supersedes the mockData.ts part of ADR-002 and ADR-007.
+**Context:** The home page fell back to `src/lib/mockData.ts` when a live read failed. Some of those values were invented (the weekly flows were a seeded random series) and others had drifted far from the chain (Noble USDY mock 5.6M against 0.06M live). The headline was also read as "$1 trillion" although the figure depends on excluding Circle CCTP transfers ($1.02T without them, $1.21T with them).
+**Decision:**
+  1. Delete `mockData.ts`. `src/data/last-good.json` stores real reads, written by `scripts/snapshot-last-good.ts` only from a fully live read. A getter that falls back returns those rows labeled `cached` ("Last good") with their original date. A row with no stored value is left out and the page says "Unavailable".
+  2. Add Stellar USDY to the top-holders pillar (stellar.expert holders API, keyless), next to Ethereum. Supply already covered 13 chains; `scripts/verify-supply.ts` checks it against explorers.
+  3. The summary says "about $1T" and states the CCTP exclusion and both figures beside it.
+**Consequences:**
+  - No number on the dashboard is invented. A stale number is labeled with its date.
+  - `last-good.json` goes stale until someone reruns the snapshot script. It adds no scheduled job.
+  - USTB and TBILL have no free live source, so they always show their 2026-09-24 value as Last good.
