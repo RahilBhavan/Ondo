@@ -47,7 +47,7 @@ npm test
 npm run dev        # http://localhost:3000
 ```
 
-`npm test` runs the six self-check scripts in `src/lib/*.check.ts` with `tsx` (pinned in `package.json`). They need no network. All six passed on 2026-10-24. `issuance.check.ts` reconciles the committed snapshots. CI runs lint, the type check, `npm test` and `npm run build`.
+`npm test` runs the seven self-check scripts in `src/lib/*.check.ts` with `tsx` (pinned in `package.json`). They need no network. `issuance.check.ts` reconciles the committed snapshots. CI runs lint, the type check, `npm test` and `npm run build`.
 
 To refresh the stablecoin snapshots (about 25 minutes on the free public RPC), then rebuild the study guide:
 
@@ -57,6 +57,8 @@ node scripts/backfill-context.mjs
 npx tsx src/lib/issuance.check.ts
 npx tsx docs/textbook/build.ts
 ```
+
+The USDC share card (`docs/img/usdc-share-card.svg` and `.png`, 1024px wide, navy and red) is built from the same snapshot. On posting day run `npm run card:usdc-share:fresh`: it re-pulls the event logs, then renders the card with its data-as-of date. `npm run card:usdc-share` renders from the existing snapshot and refuses one that is not from today (`--allow-stale` overrides).
 
 ## Repository layout
 
