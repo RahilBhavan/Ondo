@@ -60,6 +60,8 @@ npx tsx docs/textbook/build.ts
 
 The USDC share card (`docs/img/usdc-share-card.svg` and `.png`, 1024px wide, navy and red) is built from the same snapshot. On posting day run `npm run card:usdc-share:fresh`: it re-pulls the event logs, then renders the card with its data-as-of date. `npm run card:usdc-share` renders from the existing snapshot and refuses one that is not from today (`--allow-stale` overrides).
 
+The Rahil Design gross-flow card (`docs/img/rahil-card/card.png`, 1080x1080, charcoal, off-white and yellow, Anton and IBM Plex Sans) is the current post card. `npm run card:rahil:fresh` re-pulls the logs and redraws it; `npm run card:rahil` redraws from the snapshot and refuses one that is not from today. It also writes the 360px and 390px feed checks, `palette-check.txt` and `brief.json` (artifact hashes). Drawing needs `uv`, Playwright's Firefox and the rahil-design bundle (`RAHIL_DESIGN_DIR`). The card is a design-review draft: no pass is recorded for it.
+
 ## Repository layout
 
 ```

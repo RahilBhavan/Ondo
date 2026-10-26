@@ -1,0 +1,12 @@
+Rahil Design 3.11.0 palette and feed check for card.png
+card.png sha256 bd65dbc1802fcfe5228f1f022a48f3ac8565e7e749daee863b03c1f6c3a4d7be
+size 1080x1080
+
+$ design_check lint: exit 0
+
+
+$ design_check feed: exit 0
+/home/rahil/.t3/worktrees/Ondo/grok-cr-c8c849f9/docs/img/rahil-card/brief.json: at 326px feed width (canvas, 360px inspection) labels 18.1px, point 41.7px: ok
+
+$ pixel_audit: exit 0
+/home/rahil/.t3/worktrees/Ondo/grok-cr-c8c849f9/docs/img/rahil-card/card.png: 0.00% of pixels off-system (limit 0.01%)

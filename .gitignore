@@ -33,3 +33,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated card source (768KB with embedded fonts); rebuild with npm run card:rahil
+/docs/img/rahil-card/card.html
