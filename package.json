@@ -12,11 +12,11 @@
     "card:usdc-share:fresh": "tsx scripts/usdc-share-card.ts --refresh"
   },
   "dependencies": {
-    "next": "^16.4.2",
+    "next": "^16.4.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1",
-    "viem": "^2.57.7"
+    "viem": "^2.57.11"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
@@ -24,8 +24,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.4.0",
-    "postcss": "^8.5.30",
+    "eslint-config-next": "^16.4.3",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5"
