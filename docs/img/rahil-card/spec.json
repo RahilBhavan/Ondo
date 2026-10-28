@@ -1,0 +1,52 @@
+{
+  "id": "ondo-gross-flow-share",
+  "title": "USDC is 85.1% of $1,025.9B flow",
+  "rows": [
+    {
+      "label": "USDC",
+      "share": 0.8512029335993384,
+      "text": "85.1%",
+      "highlight": true
+    },
+    {
+      "label": "USDT",
+      "share": 0.10605125031256797,
+      "text": "10.6%",
+      "highlight": false
+    },
+    {
+      "label": "PYUSD",
+      "share": 0.03611576333177385,
+      "text": "3.6%",
+      "highlight": false
+    },
+    {
+      "label": "BUIDL",
+      "share": 0.004254444287434045,
+      "text": "0.4%",
+      "highlight": false
+    },
+    {
+      "label": "OUSG",
+      "share": 0.0020457134233737274,
+      "text": "0.2%",
+      "highlight": false
+    },
+    {
+      "label": "USDY",
+      "share": 0.00032989504551203823,
+      "text": "<0.1%",
+      "highlight": false
+    }
+  ],
+  "source": "Gross flow = mint + redeem, not supply. Six selected Ethereum assets, through the week of Oct 19, 2026. Event logs.",
+  "alt": "USDC is 85.1% of $1,025.9B flow. Horizontal bars on a zero baseline, each asset's share of the six-asset total: USDC 85.1% ($873.3B), USDT 10.6% ($108.8B), PYUSD 3.6% ($37.1B), BUIDL 0.4% ($4.4B), OUSG 0.2% ($2.1B), USDY <0.1% ($0.3B). Total $1,025.9B of gross flow, mint + redeem, not supply, on six selected Ethereum assets, from January 2023 through the week of Oct 19, 2026, with $194.4B of Circle CCTP transfers removed. Read from Ethereum event logs on Oct 26, 2026.",
+  "data": {
+    "asOf": "2026-10-26T11:54:29.586Z",
+    "lastWeek": "2026-10-19",
+    "usdcGross": 873265321273,
+    "total": 1025919069123,
+    "usdcShare": 0.8512029335993384,
+    "cctpRemoved": 194415809337
+  }
+}

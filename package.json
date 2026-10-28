@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "test": "for f in src/lib/*.check.ts; do tsx \"$f\" || exit 1; done",
     "card:usdc-share": "tsx scripts/usdc-share-card.ts",
-    "card:usdc-share:fresh": "tsx scripts/usdc-share-card.ts --refresh"
+    "card:usdc-share:fresh": "tsx scripts/usdc-share-card.ts --refresh",
+    "card:rahil": "tsx scripts/rahil-card.ts",
+    "card:rahil:fresh": "tsx scripts/rahil-card.ts --refresh"
   },
   "dependencies": {
     "next": "^16.4.3",

@@ -1,31 +1,31 @@
 {
- "asOf": "2026-10-25T19:06:58.998Z",
+ "asOf": "2026-10-26T11:54:29.586Z",
  "startBlock": 16308190,
- "headBlock": 26271672,
+ "headBlock": 26276686,
  "audit": {
-  "USDC:mint": 2017925,
-  "USDC:redeem": 1160746,
+  "USDC:mint": 2020388,
+  "USDC:redeem": 1162301,
   "USDT:mint": 80,
   "USDT:redeem": 12,
-  "PYUSD:mint": 13967,
-  "PYUSD:redeem": 8432,
+  "PYUSD:mint": 13988,
+  "PYUSD:redeem": 8441,
   "BUIDL:mint": 13570,
   "BUIDL:redeem": 225,
   "OUSG:mint": 234,
   "OUSG:redeem": 304,
   "OUSG-legacy:mint": 173,
   "OUSG-legacy:redeem": 203,
-  "USDY:mint": 802,
-  "USDY:redeem": 753
+  "USDY:mint": 805,
+  "USDY:redeem": 755
  },
  "usdcCounterparties": {
   "mint": {
-   "other": 424327937828.7949,
-   "cctp": 112593426868.90857
+   "other": 424360419193.2803,
+   "cctp": 112664004387.95076
   },
   "redeem": {
-   "other": 448936775757.7956,
-   "cctp": 81783747493.26077
+   "other": 449143934898.0152,
+   "cctp": 81887230425.43532
   }
  },
  "rows": [
@@ -8625,37 +8625,73 @@
    "week": "2026-10-19",
    "asset": "PYUSD",
    "issuer": "PayPal (Paxos)",
-   "mintUsd": 305462079,
-   "redeemUsd": 222100773,
+   "mintUsd": 305471593,
+   "redeemUsd": 222535270,
    "bridgeMintUsd": 0,
    "bridgeRedeemUsd": 0,
-   "mintCount": 372,
-   "redeemCount": 134,
-   "wallets": 325
+   "mintCount": 378,
+   "redeemCount": 139,
+   "wallets": 333
   },
   {
    "week": "2026-10-19",
    "asset": "USDC",
    "issuer": "Circle",
-   "mintUsd": 5096327076,
-   "redeemUsd": 5635829894,
-   "bridgeMintUsd": 1311453562,
-   "bridgeRedeemUsd": 926225501,
-   "mintCount": 32270,
-   "redeemCount": 16344,
-   "wallets": 8284
+   "mintUsd": 5111492829,
+   "redeemUsd": 5659906799,
+   "bridgeMintUsd": 1326012628,
+   "bridgeRedeemUsd": 950301406,
+   "mintCount": 32970,
+   "redeemCount": 16763,
+   "wallets": 8459
   },
   {
    "week": "2026-10-19",
    "asset": "USDY",
    "issuer": "Ondo",
-   "mintUsd": 17284764,
+   "mintUsd": 17286827,
    "redeemUsd": 2330443,
    "bridgeMintUsd": 0,
    "bridgeRedeemUsd": 0,
-   "mintCount": 30,
+   "mintCount": 31,
    "redeemCount": 19,
    "wallets": 19
+  },
+  {
+   "week": "2026-10-26",
+   "asset": "PYUSD",
+   "issuer": "PayPal (Paxos)",
+   "mintUsd": 1846980,
+   "redeemUsd": 73422,
+   "bridgeMintUsd": 0,
+   "bridgeRedeemUsd": 0,
+   "mintCount": 15,
+   "redeemCount": 4,
+   "wallets": 16
+  },
+  {
+   "week": "2026-10-26",
+   "asset": "USDC",
+   "issuer": "Circle",
+   "mintUsd": 87893131,
+   "redeemUsd": 286565167,
+   "bridgeMintUsd": 56018452,
+   "bridgeRedeemUsd": 79407027,
+   "mintCount": 1763,
+   "redeemCount": 1136,
+   "wallets": 604
+  },
+  {
+   "week": "2026-10-26",
+   "asset": "USDY",
+   "issuer": "Ondo",
+   "mintUsd": 171505,
+   "redeemUsd": 11009,
+   "bridgeMintUsd": 0,
+   "bridgeRedeemUsd": 0,
+   "mintCount": 2,
+   "redeemCount": 2,
+   "wallets": 4
   }
  ]
 }

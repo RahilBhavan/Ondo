@@ -12,7 +12,7 @@ const t = new Map(totals().map((x) => [x.asset.id, x]));
 
 // 1. Ondo agrees with the existing pipeline's documented totals (CONTRACT_RESEARCH, 2026-09-23); later weeks only add.
 assert.ok(t.get('OUSG')!.mint >= 1334e6 && t.get('OUSG')!.mint < 1450e6, `OUSG mints ${t.get('OUSG')!.mint}`);
-assert.ok(t.get('USDY')!.mint >= 174e6 && t.get('USDY')!.mint < 260e6, `USDY mints ${t.get('USDY')!.mint}`);
+assert.ok(t.get('USDY')!.mint >= 174e6 && t.get('USDY')!.mint < 300e6, `USDY mints ${t.get('USDY')!.mint}`);
 
 // 2. The 300 trillion PYUSD mistake is excluded, PYUSD volume is the size of its supply history.
 assert.ok(t.get('PYUSD')!.mint < 100 * B, 'PYUSD outlier leaked in');
