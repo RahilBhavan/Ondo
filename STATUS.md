@@ -1,5 +1,5 @@
 # Nexus Dashboard — Current Status
-Last updated: 2026-10-24
+Last updated: 2026-10-29
 
 ## Phase
 [x] Phase 0 — Contract Research
@@ -10,7 +10,8 @@ Last updated: 2026-10-24
 [x] Study textbook for the outreach (`docs/textbook/index.html`, rebuilt from the data snapshots)
 [x] Deployed to Vercel (ondo-nexus.vercel.app, personal scope)
 [x] Benchmark: BUIDL live from DefiLlama's stablecoin series (#54); USTB and TBILL stay labeled snapshots (no free source)
-[x] Stablecoin snapshots rerun 2026-10-24
+[x] Stablecoin snapshots rerun 2026-10-25 (event logs), 2026-10-24 (supply, rates)
+[x] Weekly `refresh-snapshots` workflow proposes snapshot refreshes as a pull request; `npm test` runs offline and checks the README against the snapshots
 
 ## Live Pages
 - `/` — home: KPIs, top holders, chain breakdown, heatmap, 12-week flows, benchmark
@@ -28,7 +29,8 @@ Last updated: 2026-10-24
 
 ## Open Items
 - After refreshing the snapshots, rebuild the textbook: `npx tsx docs/textbook/build.ts`.
-- Flows tracker data are dated snapshots (last run 2026-10-24): rerun `node scripts/backfill-issuance.mjs` (about 25 min for the first pass; the dense USDC, PYUSD and BUIDL series take about 40 min at the 10k-block window and Tenderly's public gateway may 429, so rerun those with `node scripts/backfill-issuance.mjs USDC PYUSD BUIDL`) and `node scripts/backfill-context.mjs`, then `npx tsx src/lib/issuance.check.ts`.
+- Flows tracker data are dated snapshots (event logs read 2026-10-25). `.github/workflows/refresh-snapshots.yml` reruns the backfill scripts every Monday and opens a pull request; merge it after reading the hand-written README bullet on the rate cuts. By hand: `node scripts/backfill-issuance.mjs` (about 25 min; the dense USDC, PYUSD and BUIDL series can take 40 min and Tenderly's public gateway may 429), `node scripts/backfill-context.mjs`, `npm run sync:readme`, `npm test`, then `npx tsx docs/textbook/build.ts`.
+- Rahil action: confirm or edit the README section "How this was built" (drafted by an agent from the history), and check Settings > Actions > General allows Actions to create pull requests.
 - Flows tracker is Ethereum logs only; Tron USDT and non-Ethereum USDC issuance are covered through supply, not logs.
 - BUIDL chain count and redemption terms: no issuer page to cite, shown as "Not disclosed".
 - Rahil action: rotate the Dune API key (the app no longer uses Dune; only the MCP server does).
