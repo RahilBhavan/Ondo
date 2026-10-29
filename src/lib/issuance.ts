@@ -292,6 +292,18 @@ export function supplyTotalAt(asset: 'USDC' | 'USDT' | 'PYUSD', week: string): n
   return SUPPLY.filter((r) => r.asset === asset && r.week === week).reduce((a, r) => a + r.supplyUsd, 0);
 }
 
+/**
+ * Ethereum mints less burns from the event logs, against DefiLlama's Ethereum circulating-supply change from the
+ * first week with supply to the last. The log net includes CCTP; diff is |log - supply| / |supply|.
+ */
+export function logVsSupply(asset: 'USDC' | 'USDT' | 'PYUSD'): { logNet: number; supplyChange: number; diff: number } {
+  const w = SUPPLY.filter((r) => r.asset === asset && r.chain === 'Ethereum');
+  const first = w.find((r) => r.supplyUsd > 0)!;
+  const change = w[w.length - 1].supplyUsd - first.supplyUsd;
+  const logNet = ROWS.filter((r) => r.asset === asset).reduce((a, r) => a + r.mintUsd - r.redeemUsd, 0);
+  return { logNet, supplyChange: change, diff: Math.abs(logNet - change) / Math.abs(change) };
+}
+
 export const fedFundsSeries = (): Array<{ date: string; value: number }> => rates.upper as Array<{ date: string; value: number }>;
 
 // --- News events ---

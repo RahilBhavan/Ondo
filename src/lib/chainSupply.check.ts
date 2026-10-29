@@ -1,4 +1,4 @@
-/** Self-check for chain supply parsing and fallback. No network. Run: npx tsx src/lib/chainSupply.check.ts */
+/** Self-check for chain supply parsing and fallback. No network (the failed reads below are simulated). Run: npx tsx src/lib/chainSupply.check.ts */
 import assert from 'node:assert/strict';
 import { buildRows, fromBaseUnits, stellarSupply, SUPPLY_SOURCES, toLiquidityCells, xrplSupply } from './chainSupply';
 import { LAST_GOOD } from './lastGood';
@@ -75,7 +75,9 @@ assert.equal(cells[1].issuer, mixed[1].token);
 assert.equal(cells[5].dataSource, 'cached');
 
 // No last good row and a failed read: the row is left out, never invented.
+console.warn = () => {};
 const gap = buildRows(SUPPLY_SOURCES, oneFail, prices, mock.filter((m) => !(m.chain === SUPPLY_SOURCES[5].chain && m.token === SUPPLY_SOURCES[5].token)), asOf);
+console.warn = warn;
 assert.equal(gap.length, SUPPLY_SOURCES.length - 1);
 
 console.log(`chainSupply check ok (last good total $${(mockTotal / 1e9).toFixed(3)}B, ${SUPPLY_SOURCES.length} rows)`);

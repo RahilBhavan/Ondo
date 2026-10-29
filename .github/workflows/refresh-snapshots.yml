@@ -1,0 +1,140 @@
+name: refresh-snapshots
+
+# Reruns the backfill scripts, rewrites src/data/*.json and the README figures, runs the same checks as CI
+# (type check and every *.check.ts) and opens a pull request with the result. It never pushes to main.
+# No secrets: every source is public and keyless (Tenderly's public gateway, DefiLlama, FRED, Blockscout, public RPCs).
+# Needs the repository setting Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC, after the previous week has closed
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency: refresh-snapshots
+
+env:
+  BRANCH: data/refresh-snapshots
+
+jobs:
+  refresh:
+    if: github.repository == 'RahilBhavan/Ondo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      # About 25 minutes; the dense USDC, PYUSD and BUIDL series can take 40 and the public gateway may answer 429.
+      # The script writes its file only when every asset finished, so a failed attempt leaves the data as it was.
+      - name: backfill stablecoin event logs (src/data/issuance.json)
+        timeout-minutes: 100
+        run: node scripts/backfill-issuance.mjs || { echo "first attempt failed, retrying once"; node scripts/backfill-issuance.mjs; }
+
+      - name: backfill DefiLlama supply and FRED rates (src/data/supply-by-chain.json, rates.json)
+        timeout-minutes: 10
+        run: node scripts/backfill-context.mjs
+
+      # Keeps only parts that came back fully live. If a public source is down it exits 1 and leaves that part as it was,
+      # so this step may fail without blocking the rest; the pull request says which.
+      - name: refresh last good values (src/data/last-good.json)
+        id: lastgood
+        continue-on-error: true
+        timeout-minutes: 10
+        run: npx tsx scripts/snapshot-last-good.ts
+
+      - name: rewrite README figures and the study guide from the new snapshots
+        run: |
+          npm run sync:readme
+          npx tsx docs/textbook/build.ts
+
+      # A failing check must not hide the new data: the pull request still opens, as a draft, and the job then fails.
+      - name: type check
+        id: tsc
+        continue-on-error: true
+        run: npx tsc --noEmit
+      - name: self-checks (offline)
+        id: tests
+        continue-on-error: true
+        run: npm test
+
+      - name: open or update the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LASTGOOD_OUTCOME: ${{ steps.lastgood.outcome }}
+          CHECKS_OUTCOME: ${{ steps.tsc.outcome == 'success' && steps.tests.outcome == 'success' && 'success' || 'failure' }}
+        run: |
+          if [ -z "$(git status --porcelain -- src/data README.md docs/textbook)" ]; then
+            echo "no change to the snapshots"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add src/data README.md docs/textbook/index.html
+          git commit -m "data: refresh snapshots $(date -u +%F)"
+          git push --force origin "$BRANCH"
+
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "## Summary"
+            echo
+            echo "Scheduled refresh of the stablecoin flows snapshots ($run_url)."
+            echo
+            echo '```'
+            git diff --stat HEAD~1 HEAD
+            echo '```'
+            echo
+            if [ "$CHECKS_OUTCOME" = "success" ]; then
+              echo "- Type check and every \`*.check.ts\` passed in the run, offline."
+            else
+              echo "- **A check failed on the new data. Do not merge.** This pull request is a draft; the run log has the failing output."
+            fi
+            if [ "$LASTGOOD_OUTCOME" = "success" ]; then
+              echo "- \`last-good.json\`: every part came back live and was refreshed."
+            else
+              echo "- \`last-good.json\`: **not fully refreshed**, a source was not fully live. Parts that failed keep their earlier dated rows. See the run log."
+            fi
+            echo
+            echo "## Before merging"
+            echo
+            echo "- [ ] Reread the hand-written README bullet on the rate-cut episodes (the sigma values); the workflow does not rewrite it."
+            echo "- [ ] \`ci.yml\` does not start for pull requests opened with the workflow token. Close and reopen this pull request to run lint and build."
+            echo "- [ ] \`docs/img/usdc-share-card.*\` and \`docs/img/summary.png\` are not regenerated here."
+            echo
+            echo "🤖 Opened by .github/workflows/refresh-snapshots.yml"
+          } > "$RUNNER_TEMP/pr-body.md"
+
+          title="data: refresh snapshots $(date -u +%F)"
+          n=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number')
+          draft=""
+          [ "$CHECKS_OUTCOME" = "success" ] || draft="--draft"
+          if [ -n "$n" ]; then
+            gh pr edit "$n" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md"
+            [ -z "$draft" ] || gh pr ready "$n" --undo
+          else
+            gh pr create --base main --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md" $draft
+          fi
+
+      - name: fail the job if a check failed (the alert below then fires)
+        if: always() && (steps.tsc.outcome == 'failure' || steps.tests.outcome == 'failure')
+        run: exit 1
+
+      - name: alert (one open issue per failure streak; comment on it if already open)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Snapshot refresh failed"
+          url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          n=$(gh issue list --state open --search "\"$title\" in:title" --json number -q '.[0].number')
+          if [ -n "$n" ]; then gh issue comment "$n" --body "Failed again: $url"
+          else gh issue create --title "$title" --body "Run: $url"; fi
