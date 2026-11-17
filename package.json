@@ -12,7 +12,7 @@
     "card:usdc-share:fresh": "tsx scripts/usdc-share-card.ts --refresh"
   },
   "dependencies": {
-    "next": "^16.4.3",
+    "next": "^16.4.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1",
